@@ -12,7 +12,7 @@ services:
   web:
     build: .
     container_name: timely_web
-    command: python manage.py runserver 0.0.0.0:8000
+    command: sh -c "python manage.py collectstatic --noinput && gunicorn timely_app.wsgi:application --bind 0.0.0.0:8000"
     volumes:
       - .:/app
     ports:
