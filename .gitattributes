@@ -1,0 +1,4 @@
+* text=auto
+
+# Assurer que les scripts bash (si vous en ajoutez plus tard) gardent les retours à la ligne Linux
+*.sh text eol=lf

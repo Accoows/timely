@@ -1,0 +1,25 @@
+{% load tailwind_tags %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Timely - Accueil</title>
+    <!-- On charge le CSS de Tailwind généré par Django-Tailwind -->
+    {% tailwind_css %}
+</head>
+<body class="bg-base-200 min-h-screen flex items-center justify-center">
+
+    <!-- Exemple d'utilisation d'un composant "Card" DaisyUI avec classes Tailwind -->
+    <div class="card w-96 bg-base-100 shadow-xl">
+        <div class="card-body items-center text-center">
+            <h1 class="card-title text-4xl text-primary font-bold mb-4">Timely</h1>
+            <p class="text-lg">Votre nouvelle plateforme de réservation est prête au développement.</p>
+            <div class="card-actions mt-6">
+                <button class="btn btn-primary">Commencer</button>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>
