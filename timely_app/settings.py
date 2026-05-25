@@ -78,7 +78,14 @@ WSGI_APPLICATION = 'timely_app.wsgi.application'
 
 # Database configuration via environment variables
 DATABASES = {
-    'default': env.db('DATABASE_URL', default=f"postgres://{env('POSTGRES_USER')}:{env('POSTGRES_PASSWORD')}@{env('DB_HOST')}:{env('DB_PORT')}/{env('POSTGRES_DB')}")
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': env('POSTGRES_DB'),
+        'USER': env('POSTGRES_USER'),
+        'PASSWORD': env('POSTGRES_PASSWORD'),
+        'HOST': env('DB_HOST'),
+        'PORT': env('DB_PORT'),
+    }
 }
 
 # Password validation
