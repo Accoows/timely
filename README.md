@@ -109,14 +109,50 @@ Le projet utilisant un système de branches de développement (feature branches)
 
 ## Architecture et Structure du Projet
 
-Le projet respecte la modularité standard de Django via la création d'applications (modules).
+Le projet respecte la modularité standard de Django via la création d'applications (modules). L'architecture interne d'un module suit le patron de conception **MVT (Model-View-Template)**, dont le cycle de vie est illustré ci-dessous :
+
+Voici le schéma de l'arborescence standard de votre projet :
+
+```text
+timely/
+├── .env                      # Variables d'environnement locales (Ignoré par Git, Mots de passe)
+├── docker-compose.yml        # Configuration des services Docker (Web, PostgreSQL)
+├── Dockerfile                # Recette de l'image Linux pour le conteneur Python/Node
+├── manage.py                 # Outil en ligne de commande de Django
+├── README.md                 # Documentation du projet
+├── requirements.txt          # Liste des dépendances Python (Django, psycopg2, etc.)
+│
+├── timely_app/               # Application Principale (Cœur de la configuration)
+│   ├── __init__.py
+│   ├── asgi.py               # Point d'entrée pour les serveurs asynchrones (ex: WebSockets)
+│   ├── settings.py           # Configuration centrale (DB, Tailwind, Middlewares)
+│   ├── urls.py               # Routeur principal (Lien vers les autres modules)
+│   └── wsgi.py               # Point d'entrée pour les serveurs synchrones (Production)
+│
+├── theme/                    # Configuration Front-end (TailwindCSS généré automatiquement)
+│   ├── apps.py
+│   ├── static/               # Dossier de destination du CSS compilé (styles.css minifié)
+│   ├── static_src/           # Fichiers sources (Node.js package.json, Tailwind config)
+│   └── templates/            # Fichiers HTML globaux (base.html pour l'héritage)
+│
+└── pages/                    # Exemple de Module Métier (ex: Gestion de l'accueil)
+    ├── __init__.py
+    ├── apps.py               # Configuration de l'application
+    ├── models.py             # Modèles de base de données (Schéma SQL)
+    ├── views.py              # Logique applicative (Traitement Python)
+    ├── urls.py               # Routes spécifiques au module (ex: /accueil)
+    └── templates/
+        └── pages/
+            └── home.html     # Fichiers HTML liés à ce module (avec classes Tailwind)
+```
 
 - **`timely_app/` (Configuration globale)** : Contient les variables d'environnement, les configurations de la base de données (`settings.py`), et le routeur principal (`urls.py`). Ce répertoire ne doit contenir aucune logique métier (views/models).
 - **`theme/` (Configuration front-end)** : Généré par `django-tailwind`. Contient la configuration Node.js et les fichiers CSS d'entrée. La modification des règles CSS globales s'effectue dans `theme/static_src/styles.css`. Les fichiers Python de ce répertoire ne nécessitent pas de modification.
-- **`pages/` (Application Django type)** : Module dédié à la logique métier (ex: pages statiques). Les futures fonctionnalités (ex: `accounts`, `bookings`) suivront cette même architecture :
-  - `urls.py` : Routage interne du module.
-  - `views.py` : Logique applicative et traitement des requêtes.
-  - `templates/` : Fichiers HTML utilisant les classes utilitaires Tailwind.
+- **`pages/` (Application métier type)** : Chaque fonctionnalité majeure (ex: `accounts`, `bookings`) disposera de son propre module respectant l'architecture MVT (Model-View-Template) de Django :
+  - `models.py` : **(Base de données)** Définition des schémas SQL via l'ORM Python.
+  - `views.py` : **(Logique métier)** Algorithmes de traitement, requêtes BDD et préparation des données.
+  - `urls.py` : **(Routage)** Définition des endpoints spécifiques au module.
+  - `templates/` : **(Front-end)** Fichiers HTML (rendu côté serveur). Le code HTML global commun à toutes les pages (Navbar, Footer, `<html>`) sera stocké dans un fichier d'héritage `base.html` (souvent à la racine des templates) pour respecter le principe DRY.
 
 **Création d'une nouvelle application métier :**
 ```bash
