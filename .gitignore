@@ -21,4 +21,8 @@ db.sqlite3-journal
 /static/
 /media/
 
+# Tailwind CSS node_modules et fichiers compilés
+theme/static/css/dist/
+theme/static_src/node_modules/
+
 DEPLOYMENT.md
