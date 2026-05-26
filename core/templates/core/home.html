@@ -108,28 +108,28 @@
                 
                 <button hx-get="{% url 'core:popular_filter' %}?category=all" 
                         hx-target="#popular-cards-container" 
-                        hx-swap="innerHTML transition:true"
+                        hx-swap="innerHTML"
                         onclick="updateActiveTab(this)"
                         class="tab-btn active-init text-neutral-900">
                     Tous
                 </button>
                 <button hx-get="{% url 'core:popular_filter' %}?category=beauty" 
                         hx-target="#popular-cards-container" 
-                        hx-swap="innerHTML transition:true"
+                        hx-swap="innerHTML"
                         onclick="updateActiveTab(this)"
                         class="tab-btn text-neutral-500">
                     Beauté
                 </button>
                 <button hx-get="{% url 'core:popular_filter' %}?category=restaurant" 
                         hx-target="#popular-cards-container" 
-                        hx-swap="innerHTML transition:true"
+                        hx-swap="innerHTML"
                         onclick="updateActiveTab(this)"
                         class="tab-btn text-neutral-500">
                     Restauration
                 </button>
                 <button hx-get="{% url 'core:popular_filter' %}?category=hotel" 
                         hx-target="#popular-cards-container" 
-                        hx-swap="innerHTML transition:true"
+                        hx-swap="innerHTML"
                         onclick="updateActiveTab(this)"
                         class="tab-btn text-neutral-500">
                     Hôtels

@@ -4,21 +4,27 @@
 .navbar-global {
     @apply w-full bg-white border-b border-neutral-200/60 sticky top-0 z-50;
 }
+
 .navbar-container {
     @apply max-w-7xl mx-auto px-6 h-20 flex items-center justify-between;
 }
+
 .navbar-logo {
-    @apply text-2xl font-extrabold tracking-tight text-neutral-900;
+    @apply text-3xl font-extrabold tracking-tight text-neutral-900;
 }
+
 .navbar-nav {
     @apply flex items-center gap-6;
 }
+
 .navbar-link {
     @apply text-sm font-semibold text-neutral-600 hover:text-neutral-900 transition-colors hidden md:block;
 }
+
 .navbar-btn-ghost {
     @apply btn btn-ghost btn-sm text-neutral-700 hover:text-neutral-900 font-medium capitalize;
 }
+
 .navbar-btn-primary {
     @apply btn btn-sm bg-neutral-900 hover:bg-neutral-800 text-white font-medium border-none rounded-full px-5 capitalize;
 }
@@ -27,16 +33,44 @@
    GLOBAL FOOTER
    ========================================================================== */
 .footer-global {
-    @apply w-full border-t border-neutral-200 bg-white py-8 mt-auto;
+    @apply w-full border-t border-neutral-200 bg-[#fbfaf7] pt-16 pb-8 mt-auto;
 }
-.footer-container {
-    @apply max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-4 text-neutral-400 text-xs font-semibold;
+
+.footer-top-container {
+    @apply max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-12 gap-10 pb-12;
 }
-.footer-links {
-    @apply flex gap-6;
+
+.footer-brand-col {
+    @apply md:col-span-5 flex flex-col gap-4;
 }
+
+.footer-brand-logo {
+    @apply text-4xl font-black text-neutral-900 tracking-tight;
+}
+
+.footer-brand-desc {
+    @apply text-sm text-neutral-500 max-w-sm leading-relaxed;
+}
+
+.footer-links-col {
+    @apply md:col-span-2 md:col-start-auto flex flex-col gap-3;
+}
+
+/* La dernière colonne prend le reste (col-span-3) pour équilibrer la ligne */
+.footer-links-col:last-child {
+    @apply md:col-span-3;
+}
+
+.footer-col-title {
+    @apply text-xs font-bold uppercase tracking-wider text-neutral-800 mb-1;
+}
+
 .footer-link {
-    @apply hover:text-neutral-800 transition-colors;
+    @apply text-sm text-neutral-500 hover:text-neutral-900 transition-colors duration-150;
+}
+
+.footer-bottom-container {
+    @apply max-w-7xl mx-auto px-6 pt-6 border-t border-neutral-200/60 flex flex-col md:flex-row items-center justify-between gap-4 text-neutral-400 text-xs font-semibold;
 }
 
 /* ==========================================================================
@@ -47,6 +81,7 @@
     opacity: 0;
     transition: opacity 150ms ease-in-out;
 }
+
 .htmx-request .htmx-indicator,
 .htmx-request.htmx-indicator {
     display: flex !important;
