@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>{% block title %}Timely — Vos rendez-vous beauté en un clic{% endblock %}</title>
+    <title>{% block title %}Timely — Vos rendez-vous beauté, restaurants, hôtels et démarches{% endblock %}</title>
     {% tailwind_css %}
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
@@ -19,15 +19,15 @@
 <body class="text-neutral-900 min-h-screen flex flex-col">
 
     <!-- Header / Navbar global -->
-    <header class="w-full bg-white border-b border-neutral-200/60 sticky top-0 z-50">
-        <div class="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+    <header class="navbar-global">
+        <div class="navbar-container">
             <div class="flex items-center gap-2">
-                <a href="/" class="text-2xl font-extrabold tracking-tight text-neutral-900">timely.</a>
+                <a href="/" class="navbar-logo">timely.</a>
             </div>
-            <nav class="flex items-center gap-6">
-                <a href="#" class="text-sm font-semibold text-neutral-600 hover:text-neutral-900 transition-colors hidden md:block">Inscrire mon établissement</a>
-                <a href="#" class="btn btn-ghost btn-sm text-neutral-700 hover:text-neutral-900 font-medium capitalize">Se connecter</a>
-                <a href="#" class="btn btn-sm bg-neutral-900 hover:bg-neutral-800 text-white font-medium border-none rounded-full px-5 capitalize">S'inscrire</a>
+            <nav class="navbar-nav">
+                <a href="#" class="navbar-link">Inscrire mon établissement</a>
+                <a href="#" class="navbar-btn-ghost">Se connecter</a>
+                <a href="#" class="navbar-btn-primary">S'inscrire</a>
             </nav>
         </div>
     </header>
@@ -39,15 +39,15 @@
     </main>
 
     <!-- Footer global -->
-    <footer class="w-full border-t border-neutral-200 bg-white py-8 mt-auto">
-        <div class="max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-4 text-neutral-400 text-xs font-semibold">
+    <footer class="footer-global">
+        <div class="footer-container">
             <div>
                 <span>© 2026 Timely. Tous droits réservés.</span>
             </div>
-            <div class="flex gap-6">
-                <a href="#" class="hover:text-neutral-800 transition-colors">Confidentialité</a>
-                <a href="#" class="hover:text-neutral-800 transition-colors">CGU</a>
-                <a href="#" class="hover:text-neutral-800 transition-colors">Mentions légales</a>
+            <div class="footer-links">
+                <a href="#" class="footer-link">Confidentialité</a>
+                <a href="#" class="footer-link">CGU</a>
+                <a href="#" class="footer-link">Mentions légales</a>
             </div>
         </div>
     </footer>

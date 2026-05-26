@@ -129,10 +129,14 @@ timely/
 │   ├── urls.py               # Routeur principal (Lien vers les autres modules)
 │   └── wsgi.py               # Point d'entrée pour les serveurs synchrones (Production)
 │
-├── theme/                    # Configuration Front-end (TailwindCSS généré automatiquement)
+├── theme/                    # Configuration Front-end (TailwindCSS)
 │   ├── apps.py
 │   ├── static/               # Dossier de destination du CSS compilé (styles.css minifié)
 │   ├── static_src/           # Fichiers sources (Node.js package.json, Tailwind config)
+│   │   └── src/
+│   │       ├── styles.css    # Point d'entrée CSS (Importe les autres fichiers)
+│   │       ├── global.css    # Styles sémantiques globaux (Header, Footer, Navbar)
+│   │       └── home.css      # Styles sémantiques de la page d'accueil
 │   └── templates/            # Fichiers HTML globaux (base.html pour l'héritage)
 │
 └── pages/                    # Exemple de Module Métier (ex: Gestion de l'accueil)
@@ -147,7 +151,12 @@ timely/
 ```
 
 - **`timely_app/` (Configuration globale)** : Contient les variables d'environnement, les configurations de la base de données (`settings.py`), et le routeur principal (`urls.py`). Ce répertoire ne doit contenir aucune logique métier (views/models).
-- **`theme/` (Configuration front-end)** : Généré par `django-tailwind`. Contient la configuration Node.js et les fichiers CSS d'entrée. La modification des règles CSS globales s'effectue dans `theme/static_src/styles.css`. Les fichiers Python de ce répertoire ne nécessitent pas de modification.
+- **`theme/` (Configuration front-end)** : Généré par `django-tailwind`. Contient la configuration Node.js et les fichiers CSS d'entrée. 
+  - **Organisation CSS (Option A)** : Pour éviter de surcharger les fichiers HTML avec des dizaines de classes utilitaires et garder un code sémantique propre, nous utilisons des fichiers CSS découpés dans `theme/static_src/src/` :
+    - `styles.css` : Le point d'entrée principal qui importe les autres modules.
+    - `global.css` : Contient le design sémantique de la barre de navigation globale et du pied de page.
+    - `home.css` : Contient les classes sémantiques spécifiques à la page d'accueil (Hero, Recherche, Catégories, Établissements populaires).
+    - Tout ajout de style personnalisé se fait dans ces fichiers en utilisant la directive `@apply` de TailwindCSS.
 - **`pages/` (Application métier type)** : Chaque fonctionnalité majeure (ex: `accounts`, `bookings`) disposera de son propre module respectant l'architecture MVT (Model-View-Template) de Django :
   - `models.py` : **(Base de données)** Définition des schémas SQL via l'ORM Python.
   - `views.py` : **(Logique métier)** Algorithmes de traitement, requêtes BDD et préparation des données.

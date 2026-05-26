@@ -5,150 +5,150 @@
 
 {% block content %}
     <!-- Hero Section (Asymétrique, multisectorielle) -->
-    <section class="max-w-7xl mx-auto px-6 py-12 md:py-20 grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+    <section class="hero-section">
         <!-- Texte & Recherche (Gauche) -->
-        <div class="lg:col-span-7 flex flex-col justify-center">
-            <h1 class="text-4xl md:text-5xl lg:text-6xl font-extrabold text-neutral-900 tracking-tight leading-[1.1] mb-6">
+        <div class="hero-content">
+            <h1 class="hero-title">
                 Tous vos rendez-vous, au même endroit.
             </h1>
-            <p class="text-lg text-neutral-500 font-medium max-w-xl mb-8 leading-relaxed">
+            <p class="hero-desc">
                 Trouvez et réservez instantanément une table, un soin, une chambre d'hôtel ou un rendez-vous administratif en quelques clics.
             </p>
 
             <!-- Module de recherche robuste -->
-            <div class="w-full bg-white border border-neutral-200 p-2 rounded-2xl flex flex-col md:flex-row gap-2 shadow-xl shadow-neutral-100 focus-within:border-neutral-300 transition-colors">
+            <div class="search-bar">
                 <!-- Quoi -->
-                <div class="flex-1 flex items-center px-3 py-2 border-b md:border-b-0 md:border-r border-neutral-100">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-neutral-400 mr-3 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
-                    <input type="text" placeholder="Service, établissement, prestation..." class="bg-transparent border-none text-neutral-800 focus:outline-none w-full text-sm placeholder-slate-400" />
+                <div class="search-input-group search-input-group-border">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="search-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                    <input type="text" placeholder="Service, établissement, prestation..." class="search-input" />
                 </div>
                 <!-- Où -->
-                <div class="flex-1 flex items-center px-3 py-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-neutral-400 mr-3 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.243-4.243a8 8 0 1111.314 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-                    <input type="text" placeholder="Ville, code postal..." class="bg-transparent border-none text-neutral-800 focus:outline-none w-full text-sm placeholder-slate-400" />
+                <div class="search-input-group">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="search-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.243-4.243a8 8 0 1111.314 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                    <input type="text" placeholder="Ville, code postal..." class="search-input" />
                 </div>
                 <!-- Bouton -->
-                <button class="btn bg-neutral-900 hover:bg-neutral-800 text-white font-semibold border-none px-8 rounded-xl h-12 md:h-14">
+                <button class="search-btn">
                     Rechercher
                 </button>
             </div>
         </div>
 
         <!-- Image d'ambiance haut de gamme (Droite) -->
-        <div class="lg:col-span-5 hidden lg:block">
-            <div class="relative pl-4">
+        <div class="hero-image-wrapper">
+            <div class="hero-image-decor">
                 <!-- Cadre décoratif -->
-                <div class="absolute -inset-1 rounded-3xl bg-gradient-to-tr from-neutral-200 to-neutral-100 -rotate-3 scale-[0.98] z-0"></div>
+                <div class="hero-image-bg"></div>
                 <img src="{% static 'pages/images/hero.jpg' %}" 
                      alt="Expériences de réservation" 
-                     class="relative rounded-3xl object-cover h-[450px] w-full shadow-2xl z-10 hover:scale-[1.01] transition-transform duration-300" />
+                     class="hero-image" />
             </div>
         </div>
     </section>
 
     <!-- Secteurs d'activité (Beauté, Restaurant, Hôtel, Voyage, Admin) -->
-    <section class="bg-white border-y border-neutral-200/50 py-16 w-full">
-        <div class="max-w-7xl mx-auto px-6">
-            <h2 class="text-2xl font-extrabold text-neutral-900 tracking-tight mb-8">Découvrez nos secteurs d'activité</h2>
+    <section class="categories-section">
+        <div class="categories-container">
+            <h2 class="categories-title">Découvrez nos secteurs d'activité</h2>
             
-            <div class="grid grid-cols-2 lg:grid-cols-5 gap-6">
+            <div class="categories-grid">
                 <!-- Beauté -->
-                <a href="#" class="group flex flex-col gap-3">
-                    <div class="aspect-[4/3] rounded-2xl overflow-hidden bg-neutral-100">
-                        <img src="{% static 'pages/images/cat_beauty.jpg' %}" alt="Beauté et Bien-être" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                <a href="#" class="category-card group">
+                    <div class="category-image-wrapper">
+                        <img src="{% static 'pages/images/cat_beauty.jpg' %}" alt="Beauté et Bien-être" class="category-image" />
                     </div>
-                    <span class="font-bold text-neutral-800 text-sm group-hover:underline">Beauté & Soins</span>
+                    <span class="category-name">Beauté & Soins</span>
                 </a>
                 <!-- Restauration -->
-                <a href="#" class="group flex flex-col gap-3">
-                    <div class="aspect-[4/3] rounded-2xl overflow-hidden bg-neutral-100">
-                        <img src="{% static 'pages/images/cat_restaurant.jpg' %}" alt="Restauration" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                <a href="#" class="category-card group">
+                    <div class="category-image-wrapper">
+                        <img src="{% static 'pages/images/cat_restaurant.jpg' %}" alt="Restauration" class="category-image" />
                     </div>
-                    <span class="font-bold text-neutral-800 text-sm group-hover:underline">Tables de Restaurant</span>
+                    <span class="category-name">Tables de Restaurant</span>
                 </a>
                 <!-- Hôtellerie -->
-                <a href="#" class="group flex flex-col gap-3">
-                    <div class="aspect-[4/3] rounded-2xl overflow-hidden bg-neutral-100">
-                        <img src="{% static 'pages/images/cat_hotel.jpg' %}" alt="Hôtellerie" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                <a href="#" class="category-card group">
+                    <div class="category-image-wrapper">
+                        <img src="{% static 'pages/images/cat_hotel.jpg' %}" alt="Hôtellerie" class="category-image" />
                     </div>
-                    <span class="font-bold text-neutral-800 text-sm group-hover:underline">Hôtels & Hébergements</span>
+                    <span class="category-name">Hôtels & Hébergements</span>
                 </a>
                 <!-- Voyage -->
-                <a href="#" class="group flex flex-col gap-3">
-                    <div class="aspect-[4/3] rounded-2xl overflow-hidden bg-neutral-100">
-                        <img src="{% static 'pages/images/cat_travel.jpg' %}" alt="Voyages" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                <a href="#" class="category-card group">
+                    <div class="category-image-wrapper">
+                        <img src="{% static 'pages/images/cat_travel.jpg' %}" alt="Voyages" class="category-image" />
                     </div>
-                    <span class="font-bold text-neutral-800 text-sm group-hover:underline">Voyages & Transports</span>
+                    <span class="category-name">Voyages & Transports</span>
                 </a>
                 <!-- Administration -->
-                <a href="#" class="group flex flex-col gap-3 col-span-2 lg:col-span-1">
-                    <div class="aspect-[4/3] rounded-2xl overflow-hidden bg-neutral-100">
-                        <img src="{% static 'pages/images/cat_admin.jpg' %}" alt="Administration" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                <a href="#" class="category-card group col-span-2 lg:col-span-1">
+                    <div class="category-image-wrapper">
+                        <img src="{% static 'pages/images/cat_admin.jpg' %}" alt="Administration" class="category-image" />
                     </div>
-                    <span class="font-bold text-neutral-800 text-sm group-hover:underline">Démarches Administratives</span>
+                    <span class="category-name">Démarches Administratives</span>
                 </a>
             </div>
         </div>
     </section>
 
     <!-- Établissements à la une / populaires (Multisectoriel) -->
-    <section class="max-w-7xl mx-auto px-6 py-20 w-full">
-        <div class="flex items-center justify-between mb-10">
-            <h2 class="text-2xl font-extrabold text-neutral-900 tracking-tight">Populaires sur Timely</h2>
-            <a href="#" class="text-sm font-bold text-neutral-600 hover:text-neutral-950 underline transition-colors">Tout afficher</a>
+    <section class="popular-section">
+        <div class="popular-header">
+            <h2 class="popular-title">Populaires sur Timely</h2>
+            <a href="#" class="popular-link-all">Tout afficher</a>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div class="popular-grid">
             <!-- Restaurant -->
-            <div class="flex flex-col gap-3 group cursor-pointer">
-                <div class="aspect-[16/10] rounded-2xl overflow-hidden bg-neutral-100 relative">
-                    <img src="{% static 'pages/images/pop_restaurant.jpg' %}" alt="Le Bistrot Gourmet" class="w-full h-full object-cover" />
-                    <span class="absolute top-4 left-4 bg-white/95 backdrop-blur text-neutral-900 text-xs font-bold px-3 py-1.5 rounded-full shadow-sm">Restaurant</span>
+            <div class="popular-card group">
+                <div class="popular-card-image-wrapper">
+                    <img src="{% static 'pages/images/pop_restaurant.jpg' %}" alt="Le Bistrot Gourmet" class="popular-card-image" />
+                    <span class="popular-card-badge">Restaurant</span>
                 </div>
-                <div class="flex justify-between items-start mt-1">
+                <div class="popular-card-info">
                     <div>
-                        <h3 class="font-bold text-base text-neutral-900 group-hover:text-neutral-700 transition-colors">Le Bistrot Gourmet</h3>
-                        <p class="text-xs text-neutral-500 mt-0.5">8 Rue des Dames, Lyon</p>
+                        <h3 class="popular-card-name">Le Bistrot Gourmet</h3>
+                        <p class="popular-card-address">8 Rue des Dames, Lyon</p>
                     </div>
-                    <div class="flex items-center gap-1 bg-neutral-100 px-2 py-1 rounded-lg">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 text-amber-500 fill-amber-500" viewBox="0 0 20 20"><path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z"/></svg>
-                        <span class="text-xs font-bold text-neutral-800">4.9</span>
+                    <div class="popular-card-rating">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="popular-card-rating-icon" viewBox="0 0 20 20"><path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z"/></svg>
+                        <span class="popular-card-rating-text">4.9</span>
                     </div>
                 </div>
             </div>
 
             <!-- Hôtel -->
-            <div class="flex flex-col gap-3 group cursor-pointer">
-                <div class="aspect-[16/10] rounded-2xl overflow-hidden bg-neutral-100 relative">
-                    <img src="{% static 'pages/images/pop_hotel.jpg' %}" alt="Villa L'Horizon" class="w-full h-full object-cover" />
-                    <span class="absolute top-4 left-4 bg-white/95 backdrop-blur text-neutral-900 text-xs font-bold px-3 py-1.5 rounded-full shadow-sm">Hôtel</span>
+            <div class="popular-card group">
+                <div class="popular-card-image-wrapper">
+                    <img src="{% static 'pages/images/pop_hotel.jpg' %}" alt="Villa L'Horizon" class="popular-card-image" />
+                    <span class="popular-card-badge">Hôtel</span>
                 </div>
-                <div class="flex justify-between items-start mt-1">
+                <div class="popular-card-info">
                     <div>
-                        <h3 class="font-bold text-base text-neutral-900 group-hover:text-neutral-700 transition-colors">Hôtel & Spa L'Horizon</h3>
-                        <p class="text-xs text-neutral-500 mt-0.5">Promenade des Anglais, Nice</p>
+                        <h3 class="popular-card-name">Hôtel & Spa L'Horizon</h3>
+                        <p class="popular-card-address">Promenade des Anglais, Nice</p>
                     </div>
-                    <div class="flex items-center gap-1 bg-neutral-100 px-2 py-1 rounded-lg">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 text-amber-500 fill-amber-500" viewBox="0 0 20 20"><path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z"/></svg>
-                        <span class="text-xs font-bold text-neutral-800">4.7</span>
+                    <div class="popular-card-rating">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="popular-card-rating-icon" viewBox="0 0 20 20"><path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z"/></svg>
+                        <span class="popular-card-rating-text">4.7</span>
                     </div>
                 </div>
             </div>
 
             <!-- Beauté -->
-            <div class="flex flex-col gap-3 group cursor-pointer">
-                <div class="aspect-[16/10] rounded-2xl overflow-hidden bg-neutral-100 relative">
-                    <img src="{% static 'pages/images/pop_beauty.jpg' %}" alt="L'Atelier Coiffure" class="w-full h-full object-cover" />
-                    <span class="absolute top-4 left-4 bg-white/95 backdrop-blur text-neutral-900 text-xs font-bold px-3 py-1.5 rounded-full shadow-sm">Beauté</span>
+            <div class="popular-card group">
+                <div class="popular-card-image-wrapper">
+                    <img src="{% static 'pages/images/pop_beauty.jpg' %}" alt="L'Atelier Coiffure" class="popular-card-image" />
+                    <span class="popular-card-badge">Beauté</span>
                 </div>
-                <div class="flex justify-between items-start mt-1">
+                <div class="popular-card-info">
                     <div>
-                        <h3 class="font-bold text-base text-neutral-900 group-hover:text-neutral-700 transition-colors">L'Atelier Coiffure & Barbe</h3>
-                        <p class="text-xs text-neutral-500 mt-0.5">21 Boulevard Saint-Germain, Paris</p>
+                        <h3 class="popular-card-name">L'Atelier Coiffure & Barbe</h3>
+                        <p class="popular-card-address">21 Boulevard Saint-Germain, Paris</p>
                     </div>
-                    <div class="flex items-center gap-1 bg-neutral-100 px-2 py-1 rounded-lg">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 text-amber-500 fill-amber-500" viewBox="0 0 20 20"><path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z"/></svg>
-                        <span class="text-xs font-bold text-neutral-800">4.9</span>
+                    <div class="popular-card-rating">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="popular-card-rating-icon" viewBox="0 0 20 20"><path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z"/></svg>
+                        <span class="popular-card-rating-text">4.9</span>
                     </div>
                 </div>
             </div>
