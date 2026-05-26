@@ -1,26 +1,56 @@
 {% load static tailwind_tags %}
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fr" data-theme="light">
 <head>
-    <title>Django Tailwind</title>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>{% block title %}Timely — Vos rendez-vous beauté en un clic{% endblock %}</title>
     {% tailwind_css %}
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #faf9f6; /* Blanc cassé chaud premium */
+        }
+    </style>
+    {% block extra_head %}{% endblock %}
 </head>
+<body class="text-neutral-900 min-h-screen flex flex-col">
 
-<body class="bg-gray-50 text-black font-serif leading-normal tracking-normal">
-
-    <div class="toast toast-top toast-end">
-        <div class="alert alert-info">
-            <span>Hello from daisyUi 👋</span>
+    <!-- Header / Navbar global -->
+    <header class="w-full bg-white border-b border-neutral-200/60 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+                <a href="/" class="text-2xl font-extrabold tracking-tight text-neutral-900">timely.</a>
+            </div>
+            <nav class="flex items-center gap-6">
+                <a href="#" class="text-sm font-semibold text-neutral-600 hover:text-neutral-900 transition-colors hidden md:block">Inscrire mon établissement</a>
+                <a href="#" class="btn btn-ghost btn-sm text-neutral-700 hover:text-neutral-900 font-medium capitalize">Se connecter</a>
+                <a href="#" class="btn btn-sm bg-neutral-900 hover:bg-neutral-800 text-white font-medium border-none rounded-full px-5 capitalize">S'inscrire</a>
+            </nav>
         </div>
-    </div>
+    </header>
 
-<div class="container mx-auto">
-    <section class="flex items-center justify-center h-screen">
-        <h1 class="text-5xl">Django + Tailwind = ❤️</h1>
-    </section>
-</div>
+    <!-- Contenu principal de la page -->
+    <main class="flex-1 flex flex-col">
+        {% block content %}
+        {% endblock %}
+    </main>
+
+    <!-- Footer global -->
+    <footer class="w-full border-t border-neutral-200 bg-white py-8 mt-auto">
+        <div class="max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-4 text-neutral-400 text-xs font-semibold">
+            <div>
+                <span>© 2026 Timely. Tous droits réservés.</span>
+            </div>
+            <div class="flex gap-6">
+                <a href="#" class="hover:text-neutral-800 transition-colors">Confidentialité</a>
+                <a href="#" class="hover:text-neutral-800 transition-colors">CGU</a>
+                <a href="#" class="hover:text-neutral-800 transition-colors">Mentions légales</a>
+            </div>
+        </div>
+    </footer>
+
 </body>
 </html>
