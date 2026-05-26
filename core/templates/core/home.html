@@ -4,224 +4,230 @@
 {% block title %}Timely — Réservez vos rendez-vous beauté, restaurants, hôtels et démarches{% endblock %}
 
 {% block content %}
-    <!-- Hero Section (Asymétrique, multisectorielle) -->
-    <section class="hero-section">
-        <!-- Texte & Recherche (Gauche) -->
-        <div class="hero-content">
-            <h1 class="hero-title">
-                Tous vos rendez-vous, au même endroit.
-            </h1>
-            <p class="hero-desc">
-                Trouvez et réservez instantanément une table, un soin, une chambre d'hôtel ou un rendez-vous administratif en quelques clics.
-            </p>
+<section class="hero-section">
+    <div class="hero-content">
+        <h1 class="hero-title">
+            Tous vos rendez-vous, au même endroit.
+        </h1>
+        <p class="hero-desc">
+            Trouvez et réservez instantanément une table, un soin, une chambre d'hôtel ou un rendez-vous administratif
+            en quelques clics.
+        </p>
 
-            <!-- Module de recherche robuste -->
-            <div class="search-bar">
-                <!-- Quoi -->
-                <div class="search-input-group search-input-group-border">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="search-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
-                    <input type="text" placeholder="Service, établissement, prestation..." class="search-input" />
-                </div>
-                <!-- Où -->
-                <div class="search-input-group">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="search-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.243-4.243a8 8 0 1111.314 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-                    <input type="text" placeholder="Ville, code postal..." class="search-input" />
-                </div>
-                <!-- Bouton -->
-                <button class="search-btn">
-                    Rechercher
-                </button>
+        <div class="search-bar">
+            <div class="search-input-group search-input-group-border">
+                <svg xmlns="http://www.w3.org/2000/svg" class="search-icon" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+                <input type="text" placeholder="Service, établissement, prestation..." class="search-input" />
             </div>
+            <div class="search-input-group">
+                <svg xmlns="http://www.w3.org/2000/svg" class="search-icon" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.243-4.243a8 8 0 1111.314 0z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+                <input type="text" placeholder="Ville, code postal..." class="search-input" />
+            </div>
+            <button class="search-btn">
+                Rechercher
+            </button>
+        </div>
+    </div>
+
+    <div class="hero-image-wrapper">
+        <div class="hero-image-decor">
+            <div class="hero-image-bg"></div>
+            <img src="{% static 'core/images/hero.jpg' %}" alt="Expériences de réservation" class="hero-image" />
+        </div>
+    </div>
+</section>
+
+<section class="categories-section">
+    <div class="categories-container">
+        <h2 class="categories-title">Découvrez nos secteurs d'activité</h2>
+
+        <div class="categories-grid">
+            <a href="#" class="category-card group">
+                <div class="category-image-wrapper">
+                    <img src="{% static 'core/images/cat_beauty.jpg' %}" alt="Beauté et Bien-être"
+                        class="category-image" />
+                </div>
+                <span class="category-name">Beauté & Soins</span>
+            </a>
+            <a href="#" class="category-card group">
+                <div class="category-image-wrapper">
+                    <img src="{% static 'core/images/cat_restaurant.jpg' %}" alt="Restauration"
+                        class="category-image" />
+                </div>
+                <span class="category-name">Tables de Restaurant</span>
+            </a>
+            <a href="#" class="category-card group">
+                <div class="category-image-wrapper">
+                    <img src="{% static 'core/images/cat_hotel.jpg' %}" alt="Hôtellerie" class="category-image" />
+                </div>
+                <span class="category-name">Hôtels & Hébergements</span>
+            </a>
+            <a href="#" class="category-card group">
+                <div class="category-image-wrapper">
+                    <img src="{% static 'core/images/cat_travel.jpg' %}" alt="Voyages" class="category-image" />
+                </div>
+                <span class="category-name">Voyages & Transports</span>
+            </a>
+            <a href="#" class="category-card group col-span-2 lg:col-span-1">
+                <div class="category-image-wrapper">
+                    <img src="{% static 'core/images/cat_admin.jpg' %}" alt="Administration" class="category-image" />
+                </div>
+                <span class="category-name">Démarches Administratives</span>
+            </a>
+        </div>
+    </div>
+</section>
+
+<section class="popular-section relative py-12">
+    <div class="popular-header">
+        <div>
+            <h2 class="popular-title">Populaires sur Timely</h2>
+            <p class="text-neutral-500 text-sm mt-1">Découvrez les adresses préférées de la communauté.</p>
+        </div>
+        <a href="#" class="popular-link-all">Tout afficher</a>
+    </div>
+
+    <div class="flex justify-center mb-8">
+        <div class="tabs-slider-container" style="--active-tab-left: 4px; --active-tab-width: 68px;">
+            <div class="tab-active-indicator"></div>
+
+            <button hx-get="{% url 'core:popular_filter' %}?category=all" hx-target="#popular-cards-container"
+                hx-swap="innerHTML transition:true" onclick="updateActiveTab(this)"
+                class="tab-btn active-init text-neutral-900">
+                Tous
+            </button>
+            <button hx-get="{% url 'core:popular_filter' %}?category=beauty" hx-target="#popular-cards-container"
+                hx-swap="innerHTML transition:true" onclick="updateActiveTab(this)" class="tab-btn text-neutral-500">
+                Beauté
+            </button>
+            <button hx-get="{% url 'core:popular_filter' %}?category=restaurant" hx-target="#popular-cards-container"
+                hx-swap="innerHTML transition:true" onclick="updateActiveTab(this)" class="tab-btn text-neutral-500">
+                Restauration
+            </button>
+            <button hx-get="{% url 'core:popular_filter' %}?category=hotel" hx-target="#popular-cards-container"
+                hx-swap="innerHTML transition:true" onclick="updateActiveTab(this)" class="tab-btn text-neutral-500">
+                Hôtels
+            </button>
+        </div>
+    </div>
+
+    <div id="popular-cards-container" class="popular-grid min-h-[300px]">
+        {% include 'core/partials/popular_cards.html' %}
+    </div>
+</section>
+
+<section class="benefits-section py-12 bg-neutral-50 border-t border-neutral-100">
+    <div class="max-w-6xl mx-auto px-6">
+        <div class="text-center mb-10">
+            <h2 class="text-3xl font-extrabold text-neutral-900 mb-2">La vision de Timely</h2>
+            <p class="text-neutral-500 max-w-xl mx-auto">Une approche axée sur le respect de votre temps et le soutien
+                aux acteurs locaux.</p>
         </div>
 
-        <!-- Image d'ambiance haut de gamme (Droite) -->
-        <div class="hero-image-wrapper">
-            <div class="hero-image-decor">
-                <!-- Cadre décoratif -->
-                <div class="hero-image-bg"></div>
-                <img src="{% static 'core/images/hero.jpg' %}" 
-                     alt="Expériences de réservation" 
-                     class="hero-image" />
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div
+                class="p-6 bg-white rounded-2xl shadow-sm border border-neutral-100 hover:shadow-md transition-shadow duration-300">
+                <div class="w-10 h-10 rounded-xl bg-neutral-100 text-neutral-800 flex items-center justify-center mb-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                    </svg>
+                </div>
+                <h3 class="font-bold text-neutral-800 mb-2">Centralisation des services</h3>
+                <p class="text-neutral-500 text-xs leading-relaxed">
+                    Un espace unique pour planifier vos rendez-vous dans différents secteurs (beauté, restauration,
+                    hébergement et démarches).
+                </p>
+            </div>
+
+            <div
+                class="p-6 bg-white rounded-2xl shadow-sm border border-neutral-100 hover:shadow-md transition-shadow duration-300">
+                <div class="w-10 h-10 rounded-xl bg-neutral-100 text-neutral-800 flex items-center justify-center mb-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                </div>
+                <h3 class="font-bold text-neutral-800 mb-2">Respect de votre temps</h3>
+                <p class="text-neutral-500 text-xs leading-relaxed">
+                    Accédez directement aux plannings réels sans intermédiaires pour bloquer le créneau qui vous
+                    convient en quelques secondes.
+                </p>
+            </div>
+
+            <div
+                class="p-6 bg-white rounded-2xl shadow-sm border border-neutral-100 hover:shadow-md transition-shadow duration-300">
+                <div class="w-10 h-10 rounded-xl bg-neutral-100 text-neutral-800 flex items-center justify-center mb-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                    </svg>
+                </div>
+                <h3 class="font-bold text-neutral-800 mb-2">Relation de proximité</h3>
+                <p class="text-neutral-500 text-xs leading-relaxed">
+                    Mise en relation directe avec les artisans et commerçants locaux pour encourager l'activité de
+                    proximité.
+                </p>
+            </div>
+
+            <div
+                class="p-6 bg-white rounded-2xl shadow-sm border border-neutral-100 hover:shadow-md transition-shadow duration-300">
+                <div class="w-10 h-10 rounded-xl bg-neutral-100 text-neutral-800 flex items-center justify-center mb-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                </div>
+                <h3 class="font-bold text-neutral-800 mb-2">Sobriété & Légèreté</h3>
+                <p class="text-neutral-500 text-xs leading-relaxed">
+                    Une interface rapide et épurée, sans outils de traçage abusifs ni publicités, focalisée
+                    exclusivement sur vos besoins.
+                </p>
             </div>
         </div>
-    </section>
+    </div>
+</section>
 
-    <!-- Secteurs d'activité (Beauté, Restaurant, Hôtel, Voyage, Admin) -->
-    <section class="categories-section">
-        <div class="categories-container">
-            <h2 class="categories-title">Découvrez nos secteurs d'activité</h2>
-            
-            <div class="categories-grid">
-                <!-- Beauté -->
-                <a href="#" class="category-card group">
-                    <div class="category-image-wrapper">
-                        <img src="{% static 'core/images/cat_beauty.jpg' %}" alt="Beauté et Bien-être" class="category-image" />
-                    </div>
-                    <span class="category-name">Beauté & Soins</span>
+<section class="pro-cta-section py-12 bg-white">
+    <div class="max-w-5xl mx-auto px-6">
+        <div
+            class="rounded-3xl bg-[#f4f2ee] border border-neutral-200/50 shadow-sm p-8 md:p-12 flex flex-col md:flex-row items-center justify-between gap-8">
+
+            <div class="max-w-lg text-center md:text-left">
+                <span class="text-neutral-500 text-xs font-semibold uppercase tracking-wider">Espace
+                    Professionnels</span>
+                <h2 class="text-2xl md:text-3xl font-extrabold text-neutral-900 mt-2 mb-4 leading-tight">
+                    Vous gérez un établissement ?
+                </h2>
+                <p class="text-neutral-600 text-sm leading-relaxed">
+                    Rejoignez Timely pour digitaliser vos plannings, réduire vos rendez-vous manqués et attirer de
+                    nouveaux clients dès aujourd'hui.
+                </p>
+            </div>
+
+            <div class="flex-shrink-0">
+                <a href="#"
+                    class="inline-flex items-center justify-center px-6 py-3 border border-transparent text-sm font-semibold rounded-xl text-white bg-neutral-900 hover:bg-neutral-800 transition-colors duration-200 shadow-md">
+                    Inscrire mon établissement
                 </a>
-                <!-- Restauration -->
-                <a href="#" class="category-card group">
-                    <div class="category-image-wrapper">
-                        <img src="{% static 'core/images/cat_restaurant.jpg' %}" alt="Restauration" class="category-image" />
-                    </div>
-                    <span class="category-name">Tables de Restaurant</span>
-                </a>
-                <!-- Hôtellerie -->
-                <a href="#" class="category-card group">
-                    <div class="category-image-wrapper">
-                        <img src="{% static 'core/images/cat_hotel.jpg' %}" alt="Hôtellerie" class="category-image" />
-                    </div>
-                    <span class="category-name">Hôtels & Hébergements</span>
-                </a>
-                <!-- Voyage -->
-                <a href="#" class="category-card group">
-                    <div class="category-image-wrapper">
-                        <img src="{% static 'core/images/cat_travel.jpg' %}" alt="Voyages" class="category-image" />
-                    </div>
-                    <span class="category-name">Voyages & Transports</span>
-                </a>
-                <!-- Administration -->
-                <a href="#" class="category-card group col-span-2 lg:col-span-1">
-                    <div class="category-image-wrapper">
-                        <img src="{% static 'core/images/cat_admin.jpg' %}" alt="Administration" class="category-image" />
-                    </div>
-                    <span class="category-name">Démarches Administratives</span>
-                </a>
             </div>
         </div>
-    </section>
-
-    <!-- Établissements à la une / populaires (Filtrage HTMX) -->
-    <section class="popular-section relative py-12">
-        <div class="popular-header">
-            <div>
-                <h2 class="popular-title">Populaires sur Timely</h2>
-                <p class="text-neutral-500 text-sm mt-1">Découvrez les adresses préférées de la communauté.</p>
-            </div>
-            <a href="#" class="popular-link-all">Tout afficher</a>
-        </div>
-
-        <!-- Filtres HTMX -->
-        <div class="flex justify-center mb-8">
-            <div class="tabs-slider-container" style="--active-tab-left: 4px; --active-tab-width: 68px;">
-                <div class="tab-active-indicator"></div>
-                
-                <button hx-get="{% url 'core:popular_filter' %}?category=all" 
-                        hx-target="#popular-cards-container" 
-                        hx-swap="innerHTML transition:true"
-                        onclick="updateActiveTab(this)"
-                        class="tab-btn active-init text-neutral-900">
-                    Tous
-                </button>
-                <button hx-get="{% url 'core:popular_filter' %}?category=beauty" 
-                        hx-target="#popular-cards-container" 
-                        hx-swap="innerHTML transition:true"
-                        onclick="updateActiveTab(this)"
-                        class="tab-btn text-neutral-500">
-                    Beauté
-                </button>
-                <button hx-get="{% url 'core:popular_filter' %}?category=restaurant" 
-                        hx-target="#popular-cards-container" 
-                        hx-swap="innerHTML transition:true"
-                        onclick="updateActiveTab(this)"
-                        class="tab-btn text-neutral-500">
-                    Restauration
-                </button>
-                <button hx-get="{% url 'core:popular_filter' %}?category=hotel" 
-                        hx-target="#popular-cards-container" 
-                        hx-swap="innerHTML transition:true"
-                        onclick="updateActiveTab(this)"
-                        class="tab-btn text-neutral-500">
-                    Hôtels
-                </button>
-            </div>
-        </div>
-
-        <!-- Conteneur des cartes injectées par HTMX -->
-        <div id="popular-cards-container" class="popular-grid min-h-[300px]">
-            {% include 'core/partials/popular_cards.html' %}
-        </div>
-    </section>
-
-    <!-- POURQUOI CHOISIR TIMELY ? (Bénéfices / Valeurs) -->
-    <section class="benefits-section py-12 bg-neutral-50 border-t border-neutral-100">
-        <div class="max-w-6xl mx-auto px-6">
-            <div class="text-center mb-10">
-                <h2 class="text-3xl font-extrabold text-neutral-900 mb-2">La vision de Timely</h2>
-                <p class="text-neutral-500 max-w-xl mx-auto">Une approche axée sur le respect de votre temps et le soutien aux acteurs locaux.</p>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <!-- Valeur 1 -->
-                <div class="p-6 bg-white rounded-2xl shadow-sm border border-neutral-100 hover:shadow-md transition-shadow duration-300">
-                    <div class="w-10 h-10 rounded-xl bg-neutral-100 text-neutral-800 flex items-center justify-center mb-4">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>
-                    </div>
-                    <h3 class="font-bold text-neutral-800 mb-2">Centralisation des services</h3>
-                    <p class="text-neutral-500 text-xs leading-relaxed">
-                        Un espace unique pour planifier vos rendez-vous dans différents secteurs (beauté, restauration, hébergement et démarches).
-                    </p>
-                </div>
-
-                <!-- Valeur 2 -->
-                <div class="p-6 bg-white rounded-2xl shadow-sm border border-neutral-100 hover:shadow-md transition-shadow duration-300">
-                    <div class="w-10 h-10 rounded-xl bg-neutral-100 text-neutral-800 flex items-center justify-center mb-4">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                    </div>
-                    <h3 class="font-bold text-neutral-800 mb-2">Respect de votre temps</h3>
-                    <p class="text-neutral-500 text-xs leading-relaxed">
-                        Accédez directement aux plannings réels sans intermédiaires pour bloquer le créneau qui vous convient en quelques secondes.
-                    </p>
-                </div>
-
-                <!-- Valeur 3 -->
-                <div class="p-6 bg-white rounded-2xl shadow-sm border border-neutral-100 hover:shadow-md transition-shadow duration-300">
-                    <div class="w-10 h-10 rounded-xl bg-neutral-100 text-neutral-800 flex items-center justify-center mb-4">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
-                    </div>
-                    <h3 class="font-bold text-neutral-800 mb-2">Relation de proximité</h3>
-                    <p class="text-neutral-500 text-xs leading-relaxed">
-                        Mise en relation directe avec les artisans et commerçants locaux pour encourager l'activité de proximité.
-                    </p>
-                </div>
-
-                <!-- Valeur 4 -->
-                <div class="p-6 bg-white rounded-2xl shadow-sm border border-neutral-100 hover:shadow-md transition-shadow duration-300">
-                    <div class="w-10 h-10 rounded-xl bg-neutral-100 text-neutral-800 flex items-center justify-center mb-4">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
-                    </div>
-                    <h3 class="font-bold text-neutral-800 mb-2">Sobriété & Légèreté</h3>
-                    <p class="text-neutral-500 text-xs leading-relaxed">
-                        Une interface rapide et épurée, sans outils de traçage abusifs ni publicités, focalisée exclusivement sur vos besoins.
-                    </p>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- BANNIÈRE PRO (CTA adoucie) -->
-    <section class="pro-cta-section py-12 bg-white">
-        <div class="max-w-5xl mx-auto px-6">
-            <div class="rounded-3xl bg-[#f4f2ee] border border-neutral-200/50 shadow-sm p-8 md:p-12 flex flex-col md:flex-row items-center justify-between gap-8">
-                
-                <div class="max-w-lg text-center md:text-left">
-                    <span class="text-neutral-500 text-xs font-semibold uppercase tracking-wider">Espace Professionnels</span>
-                    <h2 class="text-2xl md:text-3xl font-extrabold text-neutral-900 mt-2 mb-4 leading-tight">
-                        Vous gérez un établissement ?
-                    </h2>
-                    <p class="text-neutral-600 text-sm leading-relaxed">
-                        Rejoignez Timely pour digitaliser vos plannings, réduire vos rendez-vous manqués et attirer de nouveaux clients dès aujourd'hui.
-                    </p>
-                </div>
-                
-                <div class="flex-shrink-0">
-                    <a href="#" class="inline-flex items-center justify-center px-6 py-3 border border-transparent text-sm font-semibold rounded-xl text-white bg-neutral-900 hover:bg-neutral-800 transition-colors duration-200 shadow-md">
-                        Inscrire mon établissement
-                    </a>
-                </div>
-            </div>
-        </div>
-    </section>
+    </div>
+</section>
 {% endblock %}
 
 {% block extra_js %}
@@ -229,16 +235,13 @@
     function updateActiveTab(btn) {
         const container = btn.closest('.tabs-slider-container');
         if (!container) return;
-        
-        // Calcule la position relative
+
         const left = btn.offsetLeft;
         const width = btn.offsetWidth;
-        
-        // Applique les variables CSS au conteneur parent
+
         container.style.setProperty('--active-tab-left', left + 'px');
         container.style.setProperty('--active-tab-width', width + 'px');
-        
-        // Met à jour les classes actives du texte
+
         container.querySelectorAll('.tab-btn').forEach(b => {
             b.classList.remove('text-neutral-900', 'font-bold');
             b.classList.add('text-neutral-500');
@@ -247,7 +250,6 @@
         btn.classList.add('text-neutral-900', 'font-bold');
     }
 
-    // Initialise la position au chargement complet
     window.addEventListener('load', () => {
         const activeBtn = document.querySelector('.tab-btn.active-init');
         if (activeBtn) {

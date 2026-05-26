@@ -1,112 +1,67 @@
 # Timely
 
-Timely est une plateforme de réservation multisectorielle centralisant les secteurs de la beauté, de la restauration, de l'hôtellerie, du voyage et des démarches administratives.
+Timely est une plateforme moderne et sémantique de réservation multisectorielle (Beauté, Restauration, Hôtellerie, Administration). 
+Elle est conçue avec une architecture modulaire pour être simple à faire évoluer et performante au quotidien.
 
-## Architecture technique
-- **Framework MVC** : Django (Python)
-- **Base de données** : PostgreSQL
-- **Front-end** : TailwindCSS v4 + DaisyUI
-- **Environnement** : Docker & Docker Compose
+---
 
-## Prérequis
-- Docker Desktop (Windows/Mac) ou OrbStack (Mac)
-- Git
+## Stack Technique
+* **Back-end** : Django 5.2 (Python)
+* **Base de données** : PostgreSQL
+* **Front-end** : TailwindCSS v4 + DaisyUI 5
+* **Environnement** : Docker & Docker Compose
+* **Dynamisme** : HTMX (échanges asynchrones légers)
 
-## Installation et démarrage du projet (Pour Sara et Arthur)
+---
 
-1. **Cloner le projet**
-   ```bash
-   git clone https://github.com/Accoows/timely.git
-   cd timely
-   ```
+## Démarrage Rapide
 
-2. **Configuration de l'environnement**
-   Copier le fichier d'exemple pour créer votre configuration locale :
-   ```bash
-   cp .env.example .env
-   ```
-   (Vous pouvez modifier les mots de passe locaux dans ce fichier `.env` si besoin, il ne sera pas versionné sur Git).
-
-3. **Lancer les conteneurs Docker**
-   Cette commande télécharge les images, installe les dépendances Python et Node.js, et lance le serveur web ainsi que la base de données.
-   ```bash
-   docker-compose up --build -d
-   ```
-   *(Le flag `-d` permet de lancer les conteneurs en arrière-plan).*
-
-4. **Appliquer les migrations de la base de données**
-   ```bash
-   docker-compose exec web python manage.py migrate
-   ```
-
- 5. **Automatisation du Design (TailwindCSS)**
-    Le projet est entièrement configuré pour automatiser la gestion du CSS. Lorsque vous démarrez Docker via `docker-compose up`, le conteneur va de lui-même :
-    - Détecter si les dépendances front-end sont installées (sinon il exécute `tailwind install` dans le conteneur).
-    - Lancer le watcher Tailwind en arrière-plan (`tailwind start`).
-    
-    Vous n'avez donc **plus besoin** de lancer ces commandes manuellement. Si vous voulez suivre l'état de la compilation CSS, observez simplement les logs de votre conteneur :
-    ```bash
-    docker-compose logs -f web
-    ```
-
-### Accès au site et Dépannage
-- Le site est accessible **uniquement** sur : `http://localhost:8000` ou `http://127.0.0.1:8000`. 
-- **Attention** : Si les logs affichent `0.0.0.0:8000`, n'utilisez pas cette adresse dans votre navigateur (cela provoque une erreur sur Mac/Windows).
-- **En cas de crash du serveur** (par exemple `ERR_CONNECTION_RESET` suite à l'installation d'un package), redémarrez simplement le conteneur web avec :
-  ```bash
-  docker-compose restart web
-  ```
-- **Pour voir les logs du serveur** si quelque chose ne marche pas :
-  ```bash
-  docker-compose logs -f web
-  ```
-
-### Gestion de la Base de Données (PostgreSQL)
-Si suite à de multiples changements de branches Git, votre schéma de base de données local est corrompu ou désynchronisé (erreurs SQL au démarrage), vous pouvez réinitialiser totalement la base de données locale. 
-**ATTENTION : Cette action effacera toutes les données locales de développement.**
+### 1. Cloner et configurer
 ```bash
-# 1. Arrêter les conteneurs et détruire le volume de la base de données
+git clone https://github.com/Accoows/timely.git
+cd timely
+cp .env.example .env
+```
+
+### 2. Lancer les conteneurs
+Cette commande télécharge les images, installe les dépendances Node/Python et démarre le serveur ainsi que la base de données.
+```bash
+docker-compose up --build -d
+```
+*(Le watcher Tailwind CSS se lance automatiquement en arrière-plan dans le conteneur).*
+
+### 3. Appliquer les migrations
+Synchronisez votre base de données locale avec les modèles Django :
+```bash
+docker-compose exec web python manage.py migrate
+```
+
+> [!TIP]
+> Le site est disponible sur [http://localhost:8000](http://localhost:8000). Ne pas utiliser `0.0.0.0:8000` sur Mac/Windows sous peine d'erreur de connexion.
+
+---
+
+## Commandes Utiles & Dépannage
+
+### Voir les logs du serveur
+```bash
+docker-compose logs -f web
+```
+
+### Réinitialiser la base de données (en cas de conflit ou corruption local)
+> [!WARNING]
+> Cette commande efface toutes vos données locales de développement.
+```bash
 docker-compose down -v
-
-# 2. Relancer l'environnement (une BDD vierge sera créée)
 docker-compose up -d
-
-# 3. Réappliquer les migrations propres depuis zéro
 docker-compose exec web python manage.py migrate
 ```
 
 ---
 
-## Workflow Git & Docker (Développement quotidien)
+## Architecture & Organisation du Code
 
-Le projet utilisant un système de branches de développement (feature branches), suivez cette procédure pour garantir la synchronisation de l'environnement lors d'un changement de contexte ou d'une reprise de session :
-
-1. **Synchronisation et sélection de la branche de travail :**
-   Mettez à jour les références distantes et positionnez-vous sur la branche adéquate.
-   ```bash
-   git fetch origin
-   git checkout <nom-de-la-branche>
-   git pull origin <nom-de-la-branche>
-   ```
-2. **Démarrage des conteneurs :**
-   ```bash
-   docker-compose up -d
-   ```
-   *Note : Ajoutez le flag `--build` si le fichier `requirements.txt` a été modifié sur cette branche.*
-3. **Application des migrations :**
-   Permet de synchroniser le schéma de base de données local avec les potentiels nouveaux modèles liés à la branche active.
-   ```bash
-   docker-compose exec web python manage.py migrate
-   ```
-*(Note : Le watcher et l'installation de Tailwind CSS s'exécutent désormais automatiquement en arrière-plan dès l'étape 2).*
-
----
-
-## Architecture et Structure du Projet
-
-Le projet respecte la modularité standard de Django via la création d'applications (modules). L'architecture interne d'un module suit le patron de conception **MVT (Model-View-Template)**, dont le cycle de vie est illustré ci-dessous :
-
-Voici le schéma de l'arborescence standard de votre projet :
+Voici la structure complète de l'arborescence du projet :
 
 ```text
 timely/
@@ -133,58 +88,130 @@ timely/
 │   │       ├── global.css    # Styles sémantiques globaux (Header, Footer, Navbar)
 │   │       └── home.css      # Styles sémantiques de la page d'accueil
 │   └── templates/            # Fichiers HTML globaux (base.html pour l'héritage)
-│
-└── pages/                    # Exemple de Module Métier (ex: Gestion de l'accueil)
+│   
+└── core/                     # Application principale (Gestion de la page d'accueil)
     ├── __init__.py
     ├── apps.py               # Configuration de l'application
     ├── models.py             # Modèles de base de données (Schéma SQL)
     ├── views.py              # Logique applicative (Traitement Python)
     ├── urls.py               # Routes spécifiques au module (ex: /accueil)
     └── templates/
-        └── pages/
+        └── core/
             └── home.html     # Fichiers HTML liés à ce module (avec classes Tailwind)
 ```
 
 - **`timely_app/` (Configuration globale)** : Contient les variables d'environnement, les configurations de la base de données (`settings.py`), et le routeur principal (`urls.py`). Ce répertoire ne doit contenir aucune logique métier (views/models).
 - **`theme/` (Configuration front-end)** : Généré par `django-tailwind`. Contient la configuration Node.js et les fichiers CSS d'entrée. 
-  - **Organisation CSS (Option A)** : Pour éviter de surcharger les fichiers HTML avec des dizaines de classes utilitaires et garder un code sémantique propre, nous utilisons des fichiers CSS découpés dans `theme/static_src/src/` :
+  - **Organisation CSS** : Pour éviter de surcharger les fichiers HTML avec des dizaines de classes utilitaires et garder un code sémantique propre, nous utilisons des fichiers CSS découpés dans `theme/static_src/src/` :
     - `styles.css` : Le point d'entrée principal qui importe les autres modules.
     - `global.css` : Contient le design sémantique de la barre de navigation globale et du pied de page.
-    - `home.css` : Contient les classes sémantiques spécifiques à la page d'accueil (Hero, Recherche, Catégories, Établissements populaires).
+    - `home.css` : Contient les classes sémantiques spécifiques à la page d'accueil.
     - Tout ajout de style personnalisé se fait dans ces fichiers en utilisant la directive `@apply` de TailwindCSS.
-- **`pages/` (Application métier type)** : Chaque fonctionnalité majeure (ex: `accounts`, `bookings`) disposera de son propre module respectant l'architecture MVT (Model-View-Template) de Django :
-  - `models.py` : **(Base de données)** Définition des schémas SQL via l'ORM Python.
-  - `views.py` : **(Logique métier)** Algorithmes de traitement, requêtes BDD et préparation des données.
-  - `urls.py` : **(Routage)** Définition des endpoints spécifiques au module.
-  - `templates/` : **(Front-end)** Fichiers HTML (rendu côté serveur). Le code HTML global commun à toutes les pages (Navbar, Footer, `<html>`) sera stocké dans un fichier d'héritage `base.html` (souvent à la racine des templates) pour respecter le principe DRY.
-
-**Création d'une nouvelle application métier :**
-```bash
-docker-compose exec web python manage.py startapp accounts
-```
-*Toute nouvelle application doit être déclarée dans la variable `INSTALLED_APPS` du fichier `settings.py`.*
-
+- **`core/` (Application métier d'accueil)** : Module de base gérant l'affichage de la page d'accueil, le routage générique et les fonctions utilitaires globales (ex: filtres HTMX).
 
 ---
 
-## Prochaines étapes de développement (CRITIQUE)
+## Guide Pratique : Comment créer un module (Exemple : `accounts`)
 
-Avant de commencer a coder la logique métier ou de modifier la base de données, la prochaine étape obligatoire est la creation du système d'authentification.
+Chaque fonctionnalité majeure du site doit avoir son propre module indépendant. Voici la marche à suivre :
 
-### 1. Creation d'un Modèle Utilisateur Personnalisé (Custom User Model)
-Puisque Timely gère deux types d'utilisateurs distincts (Clients et Professionnels), il est imperatif de configurer un `Custom User Model` dans Django avant toute autre migration.
+### 1. Générer le squelette
+Générez l'application Django depuis votre terminal :
+```bash
+docker-compose exec web python manage.py startapp accounts
+```
 
-**Etapes a suivre lors de la prochaine session :**
-- Creer une nouvelle application Django nommée `accounts`.
-- Creer un modèle `User` héritant de `AbstractUser`.
-- Ajouter un champ pour definir le role (par exemple un champ booleen `is_professional` ou un Enum pour les roles).
-- Definir `AUTH_USER_MODEL = 'accounts.User'` dans `settings.py`.
-- Faire la premiere migration initiale de ce modèle.
+### 2. Déclarer le module dans le projet
+Ajoutez `'accounts',` dans la liste `INSTALLED_APPS` du fichier `timely_app/settings.py`.
 
-### 2. Creation de la configuration dynamique par secteur
-- Modelisation des secteurs d'activite (Beauté, Restauration, etc.).
-- Mise en place des systemes de tri et de recherche.
+### 3. Définir le modèle (M) dans `models.py`
+Créez la structure de la table utilisateur personnalisée avec ses rôles :
+```python
+from django.contrib.auth.models import AbstractUser
+from django.db import models
 
-### 3. Integration du calendrier
-- Mise en place de la bibliotheque FullCalendar.
-- Creation des routes API pour communiquer les disponibilites entre le back-end et FullCalendar.
+class User(AbstractUser):
+    ROLE_CHOICES = (
+        ('client', 'Client'),
+        ('professional', 'Professionnel'),
+    )
+    role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='client')
+```
+*Enregistrez le modèle dans `settings.py` via `AUTH_USER_MODEL = 'accounts.User'`, puis générez les migrations :*
+```bash
+docker-compose exec web python manage.py makemigrations
+docker-compose exec web python manage.py migrate
+```
+
+### 4. Valider les données (Forms) dans `forms.py`
+Gère la validation du formulaire d'inscription et l'unicité de l'email :
+```python
+from django import forms
+from django.contrib.auth.forms import UserCreationForm
+from .models import User
+
+class RegistrationForm(UserCreationForm):
+    email = forms.EmailField(required=True)
+
+    class Meta(UserCreationForm.Meta):
+        model = User
+        fields = UserCreationForm.Meta.fields + ('email', 'role')
+
+    def clean_email(self):
+        email = self.cleaned_data.get('email')
+        if User.objects.filter(email=email).exists():
+            raise forms.ValidationError("Cet email est déjà enregistré.")
+        return email
+```
+
+### 5. Traiter la logique métier (V) dans `views.py`
+Reçoit la requête, traite le formulaire et connecte l'utilisateur :
+```python
+from django.shortcuts import render, redirect
+from django.contrib.auth import login
+from .forms import RegistrationForm
+
+def register_view(request):
+    if request.method == 'POST':
+        form = RegistrationForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            login(request, user)
+            return redirect('core:home')
+    else:
+        form = RegistrationForm()
+    return render(request, 'accounts/register.html', {'form': form})
+```
+
+### 6. Configurer le routage dans `urls.py`
+Liez la vue à une URL avec un espace de nommage :
+```python
+from django.urls import path
+from . import views
+
+app_name = 'accounts'
+
+urlpatterns = [
+    path('inscription/', views.register_view, name='register'),
+]
+```
+*Puis incluez-le dans le routeur principal du projet ([timely_app/urls.py](file:///Users/agnzls/Documents/Ynov-Campus/Ynov%202025-2026/Fil_Rouge_Dev/Timely/timely_app/urls.py)) : `path('compte/', include('accounts.urls'))`.*
+
+### 7. Afficher le formulaire dans le Template (T)
+Créez le fichier HTML de rendu visuel :
+```html
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="max-w-md mx-auto py-12">
+    <h2>Créer un compte</h2>
+    <form method="POST">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">S'inscrire</button>
+    </form>
+</div>
+{% endblock %}
+```
+> [!IMPORTANT]
+> **Règle du Namespace** : Respectez le double dossier pour vos templates (`templates/nom_du_module/fichier.html`) pour éviter que Django ne confonde les fichiers HTML de différents modules.
