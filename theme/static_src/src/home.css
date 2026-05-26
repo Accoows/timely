@@ -52,7 +52,7 @@
    CATEGORIES SECTION
    ========================================================================== */
 .categories-section {
-    @apply bg-white border-y border-neutral-200/50 py-16 w-full;
+    @apply bg-white border-y border-neutral-200/50 py-12 w-full;
 }
 .categories-container {
     @apply max-w-7xl mx-auto px-6;
@@ -80,7 +80,7 @@
    POPULAR ESTABLISHMENTS SECTION
    ========================================================================== */
 .popular-section {
-    @apply max-w-7xl mx-auto px-6 py-20 w-full;
+    @apply max-w-7xl mx-auto px-6 py-12 w-full;
 }
 .popular-header {
     @apply flex items-center justify-between mb-10;
@@ -96,6 +96,7 @@
 }
 .popular-card {
     @apply flex flex-col gap-3 cursor-pointer;
+    animation: fadeInUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 .popular-card-image-wrapper {
     @apply aspect-[16/10] rounded-2xl overflow-hidden bg-neutral-100 relative;
@@ -123,4 +124,36 @@
 }
 .popular-card-rating-icon {
     @apply h-3.5 w-3.5 text-amber-500 fill-amber-500;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(12px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ==========================================================================
+   SLIDING TABS INDICATOR
+   ========================================================================== */
+.tabs-slider-container {
+    @apply relative inline-flex bg-neutral-100 p-1 rounded-2xl gap-1 z-10;
+}
+
+.tab-active-indicator {
+    position: absolute;
+    top: 4px;
+    bottom: 4px;
+    left: var(--active-tab-left, 4px);
+    width: var(--active-tab-width, 64px);
+    transition: left 0.3s cubic-bezier(0.16, 1, 0.3, 1), width 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    @apply bg-white rounded-xl shadow-md z-0;
+}
+
+.tab-btn {
+    @apply relative z-10 px-5 py-2.5 rounded-xl text-sm font-semibold transition-colors duration-200 focus:outline-none focus:ring-0;
 }

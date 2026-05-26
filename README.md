@@ -39,16 +39,15 @@ Timely est une plateforme de réservation multisectorielle centralisant les sect
    docker-compose exec web python manage.py migrate
    ```
 
-5. **Travailler sur le design (TailwindCSS)**
-   **TRÈS IMPORTANT** : Si vos pages s'affichent sans aucun style (texte brut noir et blanc), c'est que le compilateur Tailwind n'est pas lancé ! 
-   Pour que vos classes CSS et composants DaisyUI soient pris en compte à chaque modification de vos fichiers HTML, vous devez **toujours** laisser tourner ce "watcher" dans un terminal séparé :
-   ```bash
-   docker-compose exec web python manage.py tailwind start
-   ```
-   *Note pour la production* : En environnement de production, le watcher n'est pas utilisé. Lors du déploiement, il suffira de générer le fichier CSS compressé et optimisé une seule fois avec la commande :
-   ```bash
-   python manage.py tailwind build
-   ```
+ 5. **Automatisation du Design (TailwindCSS)**
+    Le projet est entièrement configuré pour automatiser la gestion du CSS. Lorsque vous démarrez Docker via `docker-compose up`, le conteneur va de lui-même :
+    - Détecter si les dépendances front-end sont installées (sinon il exécute `tailwind install` dans le conteneur).
+    - Lancer le watcher Tailwind en arrière-plan (`tailwind start`).
+    
+    Vous n'avez donc **plus besoin** de lancer ces commandes manuellement. Si vous voulez suivre l'état de la compilation CSS, observez simplement les logs de votre conteneur :
+    ```bash
+    docker-compose logs -f web
+    ```
 
 ### Accès au site et Dépannage
 - Le site est accessible **uniquement** sur : `http://localhost:8000` ou `http://127.0.0.1:8000`. 
@@ -99,11 +98,7 @@ Le projet utilisant un système de branches de développement (feature branches)
    ```bash
    docker-compose exec web python manage.py migrate
    ```
-4. **Initialisation du watcher TailwindCSS :**
-   À exécuter dans une session de terminal distincte pour activer la compilation CSS JIT (Just-In-Time).
-   ```bash
-   docker-compose exec web python manage.py tailwind start
-   ```
+*(Note : Le watcher et l'installation de Tailwind CSS s'exécutent désormais automatiquement en arrière-plan dès l'étape 2).*
 
 ---
 
