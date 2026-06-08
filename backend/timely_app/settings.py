@@ -20,6 +20,8 @@ SECRET_KEY = env('SECRET_KEY', default='django-insecure-cle-generee-localement')
 DEBUG = env('DEBUG')
 
 ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=['localhost', '127.0.0.1', '0.0.0.0', 'timely.stellarbit.cc'])
+CSRF_TRUSTED_ORIGINS = env.list('CSRF_TRUSTED_ORIGINS', default=['https://timely.stellarbit.cc', 'http://localhost', 'http://127.0.0.1'])
+ADMIN_URL = env('ADMIN_URL', default='backoffice/')
 
 # Application definition
 INSTALLED_APPS = [

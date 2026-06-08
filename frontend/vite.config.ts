@@ -18,6 +18,10 @@ export default defineConfig({
         target: 'http://localhost:8000',
         changeOrigin: true,
       },
+      '/backoffice': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+      },
     },
   },
 })
