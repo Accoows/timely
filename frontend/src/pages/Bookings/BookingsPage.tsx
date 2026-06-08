@@ -13,7 +13,7 @@ export default function BookingsPage() {
 
   useEffect(() => {
     // In dev mode, we'll try fetching from backend, with local fallbacks if offline.
-    fetch('http://localhost:8000/api/bookings/')
+    fetch('/api/bookings/')
       .then(res => {
         if (!res.ok) throw new Error('API server offline');
         return res.json();

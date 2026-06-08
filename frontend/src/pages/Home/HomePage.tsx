@@ -38,7 +38,7 @@ export default function HomePage() {
   }, [activeCategory]);
 
   useEffect(() => {
-    fetch(`http://localhost:8000/api/popular-filter/?category=${activeCategory}`)
+    fetch(`/api/popular-filter/?category=${activeCategory}`)
       .then(res => {
         if (!res.ok) throw new Error('API server not responding');
         return res.json();
@@ -48,7 +48,7 @@ export default function HomePage() {
           ...est,
           image: est.image.startsWith('http') 
             ? est.image 
-            : `http://localhost:8000/static/${est.image}`
+            : `/static/${est.image}`
         }));
         setEstablishments(formatted);
         setLoading(false);
