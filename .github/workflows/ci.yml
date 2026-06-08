@@ -8,9 +8,6 @@ on:
     branches:
       - '**' # Déclenche la CI sur n'importe quelle PR
 
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
-
 jobs:
   # 1. Vérification et compilation du Frontend
   frontend-check:
