@@ -177,4 +177,37 @@ git pull origin prod
 # 2. Reconstruire et relancer la stack
 docker compose -f docker-compose.prod.yml up --build -d
 ```
+
+---
+
+## 9. Déploiement Continu (CI/CD) avec GitHub Actions (Optionnel)
+
+Pour automatiser le déploiement sur votre VM à chaque `git push` sur la branche `prod`, un workflow GitHub Actions a été configuré. Il s'exécute directement sur votre VM via un agent de liaison sécurisé (**Self-Hosted Runner**).
+
+### A. Le fichier de workflow
+Le fichier de workflow se situe dans `.github/workflows/deploy.yml`. Il réagit aux poussées sur `prod` et exécute localement le rafraîchissement du code et la reconstruction des conteneurs Docker.
+
+### B. Commandes pour le Runner sur votre VM Debian (en tant que Root)
+Si vous devez réinstaller ou réinitialiser le runner sur la VM :
+
+1. Créez un répertoire externe et téléchargez le package (ex: version 2.335.0) :
+   ```bash
+   mkdir ~/actions-runner && cd ~/actions-runner
+   curl -o actions-runner-linux-x64-2.335.0.tar.gz -L https://github.com/actions/runner/releases/download/v2.335.0/actions-runner-linux-x64-2.335.0.tar.gz
+   tar xzf ./actions-runner-linux-x64-2.335.0.tar.gz
+   ```
+
+2. Associez le runner à votre dépôt (en bypassant la protection d'utilisateur root) :
+   ```bash
+   RUNNER_ALLOW_RUNASROOT=1 ./config.sh --url https://github.com/Accoows/timely --token VOTRE_TOKEN
+   ```
+
+3. Installez et démarrez le runner en arrière-plan en tant que service système Debian :
+   ```bash
+   RUNNER_ALLOW_RUNASROOT=1 ./svc.sh install
+   ./svc.sh start
+   ```
+
+Une fois actif, toutes vos modifications poussées sur la branche `prod` seront appliquées en quelques secondes sur le site de production de manière totalement transparente.
+
 *Remarque : Les migrations et la collecte des fichiers statiques se lancent automatiquement au démarrage du conteneur grâce au script `start-prod.sh`.*
