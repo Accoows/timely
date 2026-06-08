@@ -1,190 +1,109 @@
-# Timely
+# Timely 🗓️
 
-Timely est une plateforme de réservation multisectorielle centralisant les secteurs de la beauté, de la restauration, de l'hôtellerie, du voyage et des démarches administratives.
+Timely est une plateforme de réservation multisectorielle moderne centralisant les secteurs de la beauté, de la restauration, de l'hôtellerie, du voyage et des démarches administratives.
 
-## Architecture technique
-- **Framework MVC** : Django (Python)
+Le projet utilise une architecture **découplée (SPA)** moderne pour faciliter le travail collaboratif en équipe (deux développeurs travaillant de manière indépendante).
+
+---
+
+## 🛠️ La Stack Technique
+
+Le projet est divisé en deux parties autonomes :
+
+### 1. Backend (API REST) — `/backend`
+- **Framework** : Django 5 (Python)
+- **API Engine** : Django REST Framework (DRF)
 - **Base de données** : PostgreSQL
-- **Front-end** : TailwindCSS v4 + DaisyUI
-- **Environnement** : Docker & Docker Compose
+- **CORS Management** : `django-cors-headers` pour sécuriser les appels depuis l'interface React.
 
-## Prérequis
-- Docker Desktop (Windows/Mac) ou OrbStack (Mac)
+### 2. Frontend (Single Page Application) — `/frontend`
+- **Framework** : React (avec TypeScript)
+- **Build Tool** : Vite
+- **Styling** : Tailwind CSS v4 & DaisyUI v5 (Composants prêts à l'emploi et thèmes préconfigurés).
+- **Communication** : Fetch API (avec système de fallback local en cas de coupure de l'API).
+
+### 3. Orchestration & Docker
+- **Docker & Docker Compose** pour lancer l'environnement complet (Base de données, API Backend et Client Frontend) en une seule commande avec rechargement à chaud (hot-reload).
+
+---
+
+## 📂 Structure du Workspace
+
+```text
+timely/
+├── backend/                  # Partie Backend (Django API)
+│   ├── core/                 # Application métier de base (Modèles, API)
+│   ├── timely_app/           # Fichiers de configuration globale Django
+│   ├── manage.py             # Script utilitaire Django
+│   ├── requirements.txt      # Dépendances Python
+│   ├── Dockerfile            # Recette Docker pour l'API
+│   └── start.sh              # Script de démarrage du container API
+│
+├── frontend/                 # Partie Frontend (React Client)
+│   ├── src/                  # Composants, styles, et pages React
+│   ├── public/               # Ressources statiques accessibles au front
+│   ├── package.json          # Dépendances Node.js (Vite, React, Tailwind)
+│   ├── Dockerfile            # Recette Docker pour le client
+│   └── vite.config.ts        # Configuration du bundler Vite
+│
+└── docker-compose.yml        # Orchestration locale
+```
+
+---
+
+## 🚀 Guide de Démarrage Rapide
+
+### Prérequis
+- Docker Desktop ou OrbStack (Mac/Windows)
 - Git
 
-## Installation et démarrage du projet (Pour Sara et Arthur)
-
-1. **Cloner le projet**
+### 1. Installation
+1. Cloner le projet :
    ```bash
    git clone https://github.com/Accoows/timely.git
    cd timely
    ```
-
-2. **Configuration de l'environnement**
-   Copier le fichier d'exemple pour créer votre configuration locale :
+2. Configurer les variables d'environnement locales (Copier `.env.example` vers `.env` à la racine) :
    ```bash
    cp .env.example .env
    ```
-   (Vous pouvez modifier les mots de passe locaux dans ce fichier `.env` si besoin, il ne sera pas versionné sur Git).
 
-3. **Lancer les conteneurs Docker**
-   Cette commande télécharge les images, installe les dépendances Python et Node.js, et lance le serveur web ainsi que la base de données.
-   ```bash
-   docker-compose up --build -d
-   ```
-   *(Le flag `-d` permet de lancer les conteneurs en arrière-plan).*
-
-4. **Appliquer les migrations de la base de données**
-   ```bash
-   docker-compose exec web python manage.py migrate
-   ```
-
- 5. **Automatisation du Design (TailwindCSS)**
-    Le projet est entièrement configuré pour automatiser la gestion du CSS. Lorsque vous démarrez Docker via `docker-compose up`, le conteneur va de lui-même :
-    - Détecter si les dépendances front-end sont installées (sinon il exécute `tailwind install` dans le conteneur).
-    - Lancer le watcher Tailwind en arrière-plan (`tailwind start`).
-    
-    Vous n'avez donc **plus besoin** de lancer ces commandes manuellement. Si vous voulez suivre l'état de la compilation CSS, observez simplement les logs de votre conteneur :
-    ```bash
-    docker-compose logs -f web
-    ```
-
-### Accès au site et Dépannage
-- Le site est accessible **uniquement** sur : `http://localhost:8000` ou `http://127.0.0.1:8000`. 
-- **Attention** : Si les logs affichent `0.0.0.0:8000`, n'utilisez pas cette adresse dans votre navigateur (cela provoque une erreur sur Mac/Windows).
-- **En cas de crash du serveur** (par exemple `ERR_CONNECTION_RESET` suite à l'installation d'un package), redémarrez simplement le conteneur web avec :
-  ```bash
-  docker-compose restart web
-  ```
-- **Pour voir les logs du serveur** si quelque chose ne marche pas :
-  ```bash
-  docker-compose logs -f web
-  ```
-
-### Gestion de la Base de Données (PostgreSQL)
-Si suite à de multiples changements de branches Git, votre schéma de base de données local est corrompu ou désynchronisé (erreurs SQL au démarrage), vous pouvez réinitialiser totalement la base de données locale. 
-**ATTENTION : Cette action effacera toutes les données locales de développement.**
+### 2. Démarrage de l'Environnement de Dev
+Lancez tous les services en arrière-plan via Docker Compose :
 ```bash
-# 1. Arrêter les conteneurs et détruire le volume de la base de données
-docker-compose down -v
-
-# 2. Relancer l'environnement (une BDD vierge sera créée)
-docker-compose up -d
-
-# 3. Réappliquer les migrations propres depuis zéro
-docker-compose exec web python manage.py migrate
+docker-compose up --build -d
 ```
+*Cette commande télécharge les images, installe les dépendances Python et Node.js, applique les migrations de base de données PostgreSQL, puis démarre les serveurs.*
+
+### 3. Accès aux Liens Locaux
+- **Site Web (React Frontend)** : [http://localhost:5173](http://localhost:5173) (avec hot-reload instantané lorsque vous modifiez le code du front).
+- **API REST & Console Django Admin** : [http://localhost:8000](http://localhost:8000)
 
 ---
 
-## Workflow Git & Docker (Développement quotidien)
+## 💻 Workflow de Développement Quotidien
 
-Le projet utilisant un système de branches de développement (feature branches), suivez cette procédure pour garantir la synchronisation de l'environnement lors d'un changement de contexte ou d'une reprise de session :
+Puisque le code est scindé, chaque développeur peut se focaliser sur sa partie :
 
-1. **Synchronisation et sélection de la branche de travail :**
-   Mettez à jour les références distantes et positionnez-vous sur la branche adéquate.
+### Si vous travaillez sur le Frontend (React)
+1. Tout votre code se trouve dans `/frontend`.
+2. Pour ajouter des dépendances NPM (ex: un calendrier React) :
    ```bash
-   git fetch origin
-   git checkout <nom-de-la-branche>
-   git pull origin <nom-de-la-branche>
+   cd frontend
+   npm install <package-name>
    ```
-2. **Démarrage des conteneurs :**
+3. L'application utilise Tailwind v4 et DaisyUI. Vous pouvez utiliser n'importe quelle classe ou composant DaisyUI directement.
+
+### Si vous travaillez sur le Backend (Django)
+1. Tout votre code se trouve dans `/backend`.
+2. Pour ajouter des dépendances Python (requirements) :
+   - Ajoutez le package dans `backend/requirements.txt`.
+   - Redémarrez le container avec `--build` : `docker-compose up --build -d`.
+3. Pour créer des tables en base de données ou faire des migrations :
    ```bash
-   docker-compose up -d
+   # Créer les fichiers de migration après modification d'un models.py
+   docker-compose exec backend python manage.py makemigrations
+   
+   # Appliquer les migrations
+   docker-compose exec backend python manage.py migrate
    ```
-   *Note : Ajoutez le flag `--build` si le fichier `requirements.txt` a été modifié sur cette branche.*
-3. **Application des migrations :**
-   Permet de synchroniser le schéma de base de données local avec les potentiels nouveaux modèles liés à la branche active.
-   ```bash
-   docker-compose exec web python manage.py migrate
-   ```
-*(Note : Le watcher et l'installation de Tailwind CSS s'exécutent désormais automatiquement en arrière-plan dès l'étape 2).*
-
----
-
-## Architecture et Structure du Projet
-
-Le projet respecte la modularité standard de Django via la création d'applications (modules). L'architecture interne d'un module suit le patron de conception **MVT (Model-View-Template)**, dont le cycle de vie est illustré ci-dessous :
-
-Voici le schéma de l'arborescence standard de votre projet :
-
-```text
-timely/
-├── .env                      # Variables d'environnement locales (Ignoré par Git, Mots de passe)
-├── docker-compose.yml        # Configuration des services Docker (Web, PostgreSQL)
-├── Dockerfile                # Recette de l'image Linux pour le conteneur Python/Node
-├── manage.py                 # Outil en ligne de commande de Django
-├── README.md                 # Documentation du projet
-├── requirements.txt          # Liste des dépendances Python (Django, psycopg2, etc.)
-│
-├── timely_app/               # Application Principale (Cœur de la configuration)
-│   ├── __init__.py
-│   ├── asgi.py               # Point d'entrée pour les serveurs asynchrones (ex: WebSockets)
-│   ├── settings.py           # Configuration centrale (DB, Tailwind, Middlewares)
-│   ├── urls.py               # Routeur principal (Lien vers les autres modules)
-│   └── wsgi.py               # Point d'entrée pour les serveurs synchrones (Production)
-│
-├── theme/                    # Configuration Front-end (TailwindCSS)
-│   ├── apps.py
-│   ├── static/               # Dossier de destination du CSS compilé (styles.css minifié)
-│   ├── static_src/           # Fichiers sources (Node.js package.json, Tailwind config)
-│   │   └── src/
-│   │       ├── styles.css    # Point d'entrée CSS (Importe les autres fichiers)
-│   │       ├── global.css    # Styles sémantiques globaux (Header, Footer, Navbar)
-│   │       └── home.css      # Styles sémantiques de la page d'accueil
-│   └── templates/            # Fichiers HTML globaux (base.html pour l'héritage)
-│
-└── pages/                    # Exemple de Module Métier (ex: Gestion de l'accueil)
-    ├── __init__.py
-    ├── apps.py               # Configuration de l'application
-    ├── models.py             # Modèles de base de données (Schéma SQL)
-    ├── views.py              # Logique applicative (Traitement Python)
-    ├── urls.py               # Routes spécifiques au module (ex: /accueil)
-    └── templates/
-        └── pages/
-            └── home.html     # Fichiers HTML liés à ce module (avec classes Tailwind)
-```
-
-- **`timely_app/` (Configuration globale)** : Contient les variables d'environnement, les configurations de la base de données (`settings.py`), et le routeur principal (`urls.py`). Ce répertoire ne doit contenir aucune logique métier (views/models).
-- **`theme/` (Configuration front-end)** : Généré par `django-tailwind`. Contient la configuration Node.js et les fichiers CSS d'entrée. 
-  - **Organisation CSS (Option A)** : Pour éviter de surcharger les fichiers HTML avec des dizaines de classes utilitaires et garder un code sémantique propre, nous utilisons des fichiers CSS découpés dans `theme/static_src/src/` :
-    - `styles.css` : Le point d'entrée principal qui importe les autres modules.
-    - `global.css` : Contient le design sémantique de la barre de navigation globale et du pied de page.
-    - `home.css` : Contient les classes sémantiques spécifiques à la page d'accueil (Hero, Recherche, Catégories, Établissements populaires).
-    - Tout ajout de style personnalisé se fait dans ces fichiers en utilisant la directive `@apply` de TailwindCSS.
-- **`pages/` (Application métier type)** : Chaque fonctionnalité majeure (ex: `accounts`, `bookings`) disposera de son propre module respectant l'architecture MVT (Model-View-Template) de Django :
-  - `models.py` : **(Base de données)** Définition des schémas SQL via l'ORM Python.
-  - `views.py` : **(Logique métier)** Algorithmes de traitement, requêtes BDD et préparation des données.
-  - `urls.py` : **(Routage)** Définition des endpoints spécifiques au module.
-  - `templates/` : **(Front-end)** Fichiers HTML (rendu côté serveur). Le code HTML global commun à toutes les pages (Navbar, Footer, `<html>`) sera stocké dans un fichier d'héritage `base.html` (souvent à la racine des templates) pour respecter le principe DRY.
-
-**Création d'une nouvelle application métier :**
-```bash
-docker-compose exec web python manage.py startapp accounts
-```
-*Toute nouvelle application doit être déclarée dans la variable `INSTALLED_APPS` du fichier `settings.py`.*
-
-
----
-
-## Prochaines étapes de développement (CRITIQUE)
-
-Avant de commencer a coder la logique métier ou de modifier la base de données, la prochaine étape obligatoire est la creation du système d'authentification.
-
-### 1. Creation d'un Modèle Utilisateur Personnalisé (Custom User Model)
-Puisque Timely gère deux types d'utilisateurs distincts (Clients et Professionnels), il est imperatif de configurer un `Custom User Model` dans Django avant toute autre migration.
-
-**Etapes a suivre lors de la prochaine session :**
-- Creer une nouvelle application Django nommée `accounts`.
-- Creer un modèle `User` héritant de `AbstractUser`.
-- Ajouter un champ pour definir le role (par exemple un champ booleen `is_professional` ou un Enum pour les roles).
-- Definir `AUTH_USER_MODEL = 'accounts.User'` dans `settings.py`.
-- Faire la premiere migration initiale de ce modèle.
-
-### 2. Creation de la configuration dynamique par secteur
-- Modelisation des secteurs d'activite (Beauté, Restauration, etc.).
-- Mise en place des systemes de tri et de recherche.
-
-### 3. Integration du calendrier
-- Mise en place de la bibliotheque FullCalendar.
-- Creation des routes API pour communiquer les disponibilites entre le back-end et FullCalendar.
