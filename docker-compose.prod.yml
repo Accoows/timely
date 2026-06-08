@@ -1,0 +1,36 @@
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: timely_db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    env_file:
+      - .env
+    # We do NOT expose port 5432 to the host in production for security
+    restart: always
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: timely_backend
+    command: sh /app/start-prod.sh
+    env_file:
+      - .env
+    depends_on:
+      - db
+    restart: always
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.prod
+    container_name: timely_frontend
+    ports:
+      - "80:80"  # Expose port 80 (HTTP) to the public host / Cloudflare tunnel
+    restart: always
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:
