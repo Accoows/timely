@@ -26,3 +26,4 @@ theme/static/css/dist/
 theme/static_src/node_modules/
 
 DEPLOYMENT.md
+DEVELOP.md
