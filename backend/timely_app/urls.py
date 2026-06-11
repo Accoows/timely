@@ -8,5 +8,10 @@ if not admin_url.endswith('/'):
 
 urlpatterns = [
     path(admin_url, admin.site.urls),
-    path('', include('core.urls')), # Redirige l'URL racine vers l'app "core"
+    path('api/auth/', include('authentication.urls')),
+    path('api/establishments/', include('establishments.urls')),
+    path('api/bookings/', include('bookings.urls')),
+    path('api/messaging/', include('messaging.urls')),
+    path('api/interactions/', include('interactions.urls')),
+    path('', include('core.urls')), 
 ]
