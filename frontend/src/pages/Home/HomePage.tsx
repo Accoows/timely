@@ -1,14 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
-
-interface Establishment {
-  id: number;
-  name: string;
-  category: string;
-  address: string;
-  rating: string;
-  image: string;
-  badge: string;
-}
+import { api } from '../../services/api';
+import type { Etablissement } from '../../types';
 
 const CATEGORIES = [
   { id: 'all', label: 'Tous' },
@@ -19,7 +11,7 @@ const CATEGORIES = [
 
 export default function HomePage() {
   const [activeCategory, setActiveCategory] = useState('all');
-  const [establishments, setEstablishments] = useState<Establishment[]>([]);
+  const [establishments, setEstablishments] = useState<Etablissement[]>([]);
   const [loading, setLoading] = useState(true);
 
   // Tab indicator calculations
@@ -38,58 +30,12 @@ export default function HomePage() {
   }, [activeCategory]);
 
   useEffect(() => {
-    fetch(`/api/popular-filter/?category=${activeCategory}`)
-      .then(res => {
-        if (!res.ok) throw new Error('API server not responding');
-        return res.json();
-      })
-      .then((data: Establishment[]) => {
-        const formatted = data.map(est => ({
-          ...est,
-          image: est.image.startsWith('http') 
-            ? est.image 
-            : `/static/${est.image}`
-        }));
-        setEstablishments(formatted);
+    api.establishments.getPopular(activeCategory)
+      .then(data => {
+        setEstablishments(data);
         setLoading(false);
       })
-      .catch(err => {
-        console.warn('Backend offline, using fallback mock data.', err);
-        const mockData: Establishment[] = [
-          {
-            id: 1,
-            name: 'Le Bistrot Gourmet',
-            category: 'restaurant',
-            address: '8 Rue des Dames, Lyon',
-            rating: '4.9',
-            image: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=600&q=80',
-            badge: 'Restaurant'
-          },
-          {
-            id: 2,
-            name: "Hôtel & Spa L'Horizon",
-            category: 'hotel',
-            address: 'Promenade des Anglais, Nice',
-            rating: '4.7',
-            image: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=600&q=80',
-            badge: 'Hôtel'
-          },
-          {
-            id: 3,
-            name: "L'Atelier Coiffure & Barbe",
-            category: 'beauty',
-            address: '21 Boulevard Saint-Germain, Paris',
-            rating: '4.9',
-            image: 'https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=600&q=80',
-            badge: 'Beauté'
-          }
-        ];
-        
-        const filtered = activeCategory === 'all' 
-          ? mockData 
-          : mockData.filter(est => est.category === activeCategory);
-          
-        setEstablishments(filtered);
+      .catch(() => {
         setLoading(false);
       });
   }, [activeCategory]);
@@ -167,12 +113,7 @@ export default function HomePage() {
               </div>
               <span className="category-name">Voyages & Transports</span>
             </a>
-            <a href="#" className="category-card group col-span-2 lg:col-span-1">
-              <div className="category-image-wrapper">
-                <img src="https://images.unsplash.com/photo-1450133064473-71024230f91b?auto=format&fit=crop&w=600&q=80" alt="Administration" className="category-image" />
-              </div>
-              <span className="category-name">Démarches Administratives</span>
-            </a>
+
           </div>
         </div>
       </section>
@@ -259,7 +200,7 @@ export default function HomePage() {
               </div>
               <h3 className="font-bold text-neutral-800 mb-2">Centralisation des services</h3>
               <p className="text-neutral-500 text-xs leading-relaxed">
-                Un espace unique pour planifier vos rendez-vous dans différents secteurs (beauté, restauration, hébergement et démarches).
+                Un espace unique pour planifier vos rendez-vous dans différents secteurs (beauté, restauration et hébergement).
               </p>
             </div>
 

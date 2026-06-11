@@ -1,6 +1,13 @@
 @import "tailwindcss";
 @plugin "daisyui";
 
+@theme {
+  --color-neutral-900: #1a1a1e; /* Perfect premium middle-ground charcoal black */
+  --color-neutral-850: #29292e;
+  --color-neutral-800: #38383e;
+  --color-neutral-950: #101013;
+}
+
 @layer base {
   body {
     @apply bg-[#faf9f6] text-neutral-900 antialiased min-h-screen flex flex-col;
@@ -145,7 +152,7 @@
     @apply text-2xl font-extrabold text-neutral-900 tracking-tight mb-8;
 }
 .categories-grid {
-    @apply grid grid-cols-2 lg:grid-cols-5 gap-6;
+    @apply grid grid-cols-2 lg:grid-cols-4 gap-6;
 }
 .category-card {
     @apply flex flex-col gap-3;
