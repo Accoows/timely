@@ -1,10 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
 
-# MODULE 1 : Les rôles de comptes utilisateurs
-
 class Client(models.Model):
-    # Lien unique vers le compte utilisateur de base (email, mot de passe, nom, prenom)
     utilisateur = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profil_client')
     telephone = models.CharField(max_length=20, blank=True, null=True)
     date_inscription = models.DateTimeField(auto_now_add=True)
