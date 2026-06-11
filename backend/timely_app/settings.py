@@ -19,8 +19,8 @@ environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
 SECRET_KEY = env('SECRET_KEY', default='django-insecure-cle-generee-localement')
 DEBUG = env('DEBUG')
 
-ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=['localhost', '127.0.0.1', '0.0.0.0', 'timely.stellarbit.cc'])
-CSRF_TRUSTED_ORIGINS = env.list('CSRF_TRUSTED_ORIGINS', default=['https://timely.stellarbit.cc', 'http://localhost', 'http://127.0.0.1'])
+ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=['localhost', '127.0.0.1', '0.0.0.0', 'backend', 'timely_backend', 'timely.stellarbit.cc'])
+CSRF_TRUSTED_ORIGINS = env.list('CSRF_TRUSTED_ORIGINS', default=['https://timely.stellarbit.cc', 'http://localhost', 'http://127.0.0.1', 'http://localhost:5173', 'http://127.0.0.1:5173'])
 ADMIN_URL = env('ADMIN_URL', default='backoffice/')
 
 # Application definition
