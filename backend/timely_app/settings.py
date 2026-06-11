@@ -39,6 +39,10 @@ INSTALLED_APPS = [
     # Tes applications
     'core',
     'authentication',
+    'establishments',
+    'bookings',
+    'messaging',
+    'interactions',
 ]
 
 MIDDLEWARE = [

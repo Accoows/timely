@@ -82,3 +82,11 @@ class StaffListView(View):
             })
 
         return JsonResponse({"staff": liste_staff}, safe=False)
+
+
+class ForgotPasswordView(View):
+    def post(self, request):
+        return JsonResponse({
+            "status": "success", 
+            "message": "Si l'adresse email existe, un lien de réinitialisation a été envoyé."
+        }, status=200)

@@ -23,7 +23,7 @@ class Gerant(models.Model):
 
 class Professionnel(models.Model):
     # Un professionnel est un employé créé par le gérant pour s'occuper des RDV
-    utilisateur = models.OneToOneField(User, on_delete=models.CASCADE, relative_name='profil_pro')
+    utilisateur = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profil_pro')
     etablissement = models.ForeignKey('establishments.Etablissement', on_delete=models.CASCADE, related_name='collaborateurs')
     poste = models.CharField(max_length=100, default="Coiffeur / Esthéticienne")
     description = models.TextField(blank=True, null=True)
