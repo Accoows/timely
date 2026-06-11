@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     
     # Tes applications
     'core',
+    'authentication',
 ]
 
 MIDDLEWARE = [

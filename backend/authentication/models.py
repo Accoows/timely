@@ -14,7 +14,7 @@ class Gerant(models.Model):
     utilisateur = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profil_gerant')
     # Un gérant possède ou gère un établissement spécifique
     # On utilise du texte pour éviter l'import circulaire si le modèle est dans un autre dossier
-    etablissement = models.ForeignKey('establishments.Etablissement', on_delete=models.SET_Null, null=True, blank=True)
+    etablissement = models.ForeignKey('establishments.Etablissement', on_delete=models.SET_NULL, null=True, blank=True)
     stripe_account_id = models.CharField(max_length=255, blank=True, null=True) # Utile pour Stripe Connect !
 
     def __str__(self):
