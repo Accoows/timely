@@ -31,7 +31,7 @@ export default function LoginPage({ onNavigate }: LoginPageProps) {
 
   return (
     <div className="flex-1 flex items-center justify-center py-16 px-4 bg-neutral-50">
-      <div className="w-full max-w-md bg-white border border-neutral-200/60 p-8 rounded-3xl shadow-lg transition-all duration-300 hover:shadow-xl">
+      <div className="w-full max-w-md bg-white border border-neutral-200/80 p-8 rounded-2xl shadow-sm">
         {/* Title */}
         <div className="text-center mb-8">
           <h2 className="text-3xl font-extrabold text-neutral-900 tracking-tight">Connexion</h2>
@@ -41,7 +41,7 @@ export default function LoginPage({ onNavigate }: LoginPageProps) {
         </div>
 
         {error && (
-          <div className="mb-6 p-4 bg-rose-50 border border-rose-200 text-rose-700 text-sm rounded-xl flex items-start gap-2 animate-shake">
+          <div className="mb-6 p-4 bg-rose-50 border border-rose-200 text-rose-700 text-sm rounded-lg flex items-start gap-2 animate-shake">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
             </svg>

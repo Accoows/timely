@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { api } from '../../services/api';
 import type { Etablissement } from '../../types';
+import CategoryCard from '../../components/CategoryCard';
+import EstablishmentCard from '../../components/EstablishmentCard';
 
 const CATEGORIES = [
   { id: 'all', label: 'Tous' },
@@ -54,13 +56,13 @@ export default function HomePage() {
 
           {/* Search Bar */}
           <div className="search-bar">
-            <div className="search-input-group search-input-group-border">
+            <div className="search-input-group search-input-group-border flex-[1.4]">
               <svg xmlns="http://www.w3.org/2000/svg" className="search-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
-              <input type="text" placeholder="Service, établissement, prestation..." className="search-input" />
+              <input type="text" placeholder="Prestation, établissement..." className="search-input" />
             </div>
-            <div className="search-input-group">
+            <div className="search-input-group flex-1">
               <svg xmlns="http://www.w3.org/2000/svg" className="search-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.243-4.243a8 8 0 1111.314 0z" />
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -89,31 +91,10 @@ export default function HomePage() {
           <h2 className="categories-title">Découvrez nos secteurs d'activité</h2>
           
           <div className="categories-grid">
-            <a href="#" className="category-card group">
-              <div className="category-image-wrapper">
-                <img src="https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=600&q=80" alt="Beauté" className="category-image" />
-              </div>
-              <span className="category-name">Beauté & Soins</span>
-            </a>
-            <a href="#" className="category-card group">
-              <div className="category-image-wrapper">
-                <img src="https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=600&q=80" alt="Restauration" className="category-image" />
-              </div>
-              <span className="category-name">Tables de Restaurant</span>
-            </a>
-            <a href="#" className="category-card group">
-              <div className="category-image-wrapper">
-                <img src="https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=600&q=80" alt="Hôtellerie" className="category-image" />
-              </div>
-              <span className="category-name">Hôtels & Hébergements</span>
-            </a>
-            <a href="#" className="category-card group">
-              <div className="category-image-wrapper">
-                <img src="https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&w=600&q=80" alt="Voyages" className="category-image" />
-              </div>
-              <span className="category-name">Voyages & Transports</span>
-            </a>
-
+            <CategoryCard name="Beauté & Soins" image="https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=600&q=80" />
+            <CategoryCard name="Tables de Restaurant" image="https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=600&q=80" />
+            <CategoryCard name="Hôtels & Hébergements" image="https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=600&q=80" />
+            <CategoryCard name="Voyages & Transports" image="https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&w=600&q=80" />
           </div>
         </div>
       </section>
@@ -160,24 +141,14 @@ export default function HomePage() {
             </div>
           ) : (
             establishments.map(est => (
-              <div key={est.id} className="popular-card group">
-                <div className="popular-card-image-wrapper">
-                  <img src={est.image} alt={est.name} className="popular-card-image" />
-                  <span className="popular-card-badge">{est.badge}</span>
-                </div>
-                <div className="popular-card-info">
-                  <div>
-                    <h3 className="popular-card-name">{est.name}</h3>
-                    <p className="popular-card-address">{est.address}</p>
-                  </div>
-                  <div className="popular-card-rating">
-                    <span className="popular-card-rating-text">{est.rating}</span>
-                    <svg xmlns="http://www.w3.org/2000/svg" className="popular-card-rating-icon" viewBox="0 0 20 20" fill="currentColor">
-                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                    </svg>
-                  </div>
-                </div>
-              </div>
+              <EstablishmentCard
+                key={est.id}
+                name={est.name}
+                image={est.image}
+                badge={est.badge}
+                address={est.address}
+                rating={est.rating}
+              />
             ))
           )}
         </div>

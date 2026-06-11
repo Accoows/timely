@@ -24,7 +24,7 @@ export default function ForgotPasswordPage({ onNavigate }: ForgotPasswordPagePro
 
   return (
     <div className="flex-1 flex items-center justify-center py-16 px-4 bg-neutral-50">
-      <div className="w-full max-w-md bg-white border border-neutral-200/60 p-8 rounded-3xl shadow-lg transition-all duration-300 hover:shadow-xl">
+      <div className="w-full max-w-md bg-white border border-neutral-200/80 p-8 rounded-2xl shadow-sm">
         {/* Title */}
         <div className="text-center mb-8">
           <h2 className="text-3xl font-extrabold text-neutral-900 tracking-tight">Mot de passe oublié</h2>

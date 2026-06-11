@@ -49,7 +49,10 @@ export default function RegisterEstablishmentPage({ onNavigate }: RegisterEstabl
       desc: 'Gastronomie, bistrots, cafés et services de restauration.',
       icon: (
         <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+          {/* Fork */}
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 3v6a3 3 0 003 3h0a3 3 0 003-3V3M8 12v9M7 3v5M9 3v5" />
+          {/* Knife */}
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 3v18M17 3a3 3 0 013 3v6a3 3 0 01-3 3" />
         </svg>
       )
     },
@@ -79,7 +82,7 @@ export default function RegisterEstablishmentPage({ onNavigate }: RegisterEstabl
     <div className="flex-1 bg-neutral-50 py-16 px-4">
       <div className="max-w-4xl mx-auto">
         {submitted ? (
-          <div className="bg-white border border-neutral-200/60 p-12 rounded-3xl shadow-lg text-center space-y-6">
+          <div className="bg-white border border-neutral-200/80 p-12 rounded-2xl shadow-sm text-center space-y-6">
             <div className="w-20 h-20 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center mx-auto">
               <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -96,7 +99,7 @@ export default function RegisterEstablishmentPage({ onNavigate }: RegisterEstabl
             </div>
           </div>
         ) : (
-          <div className="bg-white border border-neutral-200/60 p-8 md:p-12 rounded-3xl shadow-lg">
+          <div className="bg-white border border-neutral-200/80 p-8 md:p-12 rounded-2xl shadow-sm">
             {/* Header */}
             <div className="mb-10 text-center md:text-left">
               <h2 className="text-3xl md:text-4xl font-extrabold text-neutral-900 tracking-tight">
@@ -120,13 +123,13 @@ export default function RegisterEstablishmentPage({ onNavigate }: RegisterEstabl
                       key={cat.id}
                       type="button"
                       onClick={() => setCategory(cat.id)}
-                      className={`p-5 text-left border rounded-2xl flex gap-4 transition-all duration-200 cursor-pointer ${
+                      className={`p-5 text-left border rounded-xl flex gap-4 transition-all duration-200 cursor-pointer ${
                         category === cat.id
-                          ? 'border-neutral-900 bg-neutral-900 text-white shadow-md'
+                          ? 'border-neutral-900 bg-neutral-900 text-white shadow-none'
                           : 'border-neutral-200 bg-white text-neutral-800 hover:bg-neutral-50'
                       }`}
                     >
-                      <div className={`p-3 rounded-xl shrink-0 ${
+                      <div className={`p-3 rounded-lg shrink-0 ${
                         category === cat.id ? 'bg-white/10 text-white' : 'bg-neutral-50 text-neutral-600'
                       }`}>
                         {cat.icon}

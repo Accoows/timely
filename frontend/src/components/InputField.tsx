@@ -26,7 +26,7 @@ export default function InputField({
         id={id}
         className={`w-full px-4 py-3 border ${
           error ? 'border-rose-400 focus:border-rose-500' : 'border-neutral-200 focus:border-neutral-900'
-        } rounded-xl text-neutral-900 placeholder-neutral-400 focus:outline-none transition-colors ${className}`}
+        } rounded-lg text-neutral-900 placeholder-neutral-400 focus:outline-none transition-colors ${className}`}
         {...props}
       />
       {error && (
