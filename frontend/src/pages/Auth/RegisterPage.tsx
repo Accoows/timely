@@ -13,12 +13,19 @@ export default function RegisterPage({ onNavigate }: RegisterPageProps) {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+
+    if (password !== confirmPassword) {
+      setError("Les mots de passe ne correspondent pas.");
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -78,7 +85,7 @@ export default function RegisterPage({ onNavigate }: RegisterPageProps) {
             required
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            placeholder="arthur.martin@example.com"
+            placeholder="timely.pro@example.com"
           />
 
           <InputField
@@ -88,6 +95,16 @@ export default function RegisterPage({ onNavigate }: RegisterPageProps) {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder="•••••••• (8 caractères min.)"
+            minLength={8}
+          />
+
+          <InputField
+            label="Confirmer le mot de passe"
+            type="password"
+            required
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            placeholder="••••••••"
             minLength={8}
           />
 

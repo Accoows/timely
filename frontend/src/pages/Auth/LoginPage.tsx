@@ -57,7 +57,7 @@ export default function LoginPage({ onNavigate }: LoginPageProps) {
             required
             value={username}
             onChange={(e) => setUsername(e.target.value)}
-            placeholder="arthur.martin@example.com"
+            placeholder="timely.pro@example.com"
           />
 
           <InputField
