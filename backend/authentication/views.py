@@ -1,7 +1,7 @@
 import json
 from django.views import View
 from django.http import JsonResponse
-from django.contrib.auth import authenticate, login
+from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
 from .models import Professionnel, Gerant
 
@@ -14,6 +14,7 @@ class LoginView(View):
             user = authenticate(username=email, password=password)
 
             if user is not None:
+                login(request, user) 
                 role = "client"
                 if hasattr(user, 'profil_gerant'):
                     role = "gerant"
@@ -56,11 +57,22 @@ class RegisterView(View):
             from .models import Client
             Client.objects.create(utilisateur=nouvel_user, telephone=data.get('phone', ''))
 
+            login(request, nouvel_user)
+
             return JsonResponse({"status": "success", "message": "Compte créé avec succès !"}, status=201)
 
         except Exception as e:
             return JsonResponse({"status": "error", "message": str(e)}, status=400)
+        
 
+class LogoutView(View):
+    def post(self, request):
+        try:
+            logout(request) 
+            return JsonResponse({"status": "success", "message": "Déconnexion réussie"})
+        
+        except Exception as e:
+            return JsonResponse({"status": "error", "message": str(e)}, status=400)
 
 class StaffListView(View):
     def get(self, request):
