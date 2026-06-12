@@ -1,11 +1,19 @@
 @import "tailwindcss";
 @plugin "daisyui";
 
+@theme {
+    --color-neutral-900: #1a1a1e;
+    /* Perfect premium middle-ground charcoal black */
+    --color-neutral-850: #29292e;
+    --color-neutral-800: #38383e;
+    --color-neutral-950: #101013;
+}
+
 @layer base {
-  body {
-    @apply bg-[#faf9f6] text-neutral-900 antialiased min-h-screen flex flex-col;
-    font-family: 'Plus Jakarta Sans', 'Outfit', sans-serif;
-  }
+    body {
+        @apply bg-[#faf9f6] text-neutral-900 antialiased min-h-screen flex flex-col;
+        font-family: 'Plus Jakarta Sans', 'Outfit', sans-serif;
+    }
 }
 
 /* ==========================================================================
@@ -88,48 +96,60 @@
 .hero-section {
     @apply max-w-7xl mx-auto px-6 py-12 md:py-20 grid grid-cols-1 lg:grid-cols-12 gap-12 items-center;
 }
+
 .hero-content {
     @apply lg:col-span-7 flex flex-col justify-center;
 }
+
 .hero-title {
     @apply text-4xl md:text-5xl lg:text-6xl font-extrabold text-neutral-900 tracking-tight leading-[1.1] mb-6;
 }
+
 .hero-desc {
     @apply text-lg text-neutral-500 font-medium max-w-xl mb-8 leading-relaxed;
 }
+
 .hero-image-wrapper {
     @apply lg:col-span-5 hidden lg:block;
 }
+
 .hero-image-decor {
     @apply relative pl-4;
 }
+
 .hero-image-bg {
-    @apply absolute -inset-1 rounded-3xl bg-gradient-to-tr from-neutral-200 to-neutral-100 -rotate-3 scale-[0.98] z-0;
+    @apply absolute -inset-1 rounded-2xl bg-gradient-to-tr from-neutral-200 to-neutral-100 -rotate-3 scale-[0.98] z-0;
 }
+
 .hero-image {
-    @apply relative rounded-3xl object-cover h-[450px] w-full shadow-2xl z-10 hover:scale-[1.01] transition-transform duration-300;
+    @apply relative rounded-2xl object-cover h-[450px] w-full shadow-lg z-10 hover:scale-[1.01] transition-transform duration-300;
 }
 
 /* ==========================================================================
    SEARCH BAR MODULE
    ========================================================================== */
 .search-bar {
-    @apply w-full bg-white border border-neutral-200 p-2 rounded-2xl flex flex-col md:flex-row gap-2 shadow-xl shadow-neutral-100 focus-within:border-neutral-300 transition-colors;
+    @apply w-full bg-white border border-neutral-200 p-2 rounded-xl flex flex-col lg:flex-row gap-2 shadow-sm focus-within:border-neutral-300 transition-colors;
 }
+
 .search-input-group {
     @apply flex-1 flex items-center px-3 py-2;
 }
+
 .search-input-group-border {
-    @apply border-b md:border-b-0 md:border-r border-neutral-100;
+    @apply border-b lg:border-b-0 lg:border-r border-neutral-100;
 }
+
 .search-icon {
     @apply h-5 w-5 text-neutral-400 mr-3 shrink-0;
 }
+
 .search-input {
-    @apply bg-transparent border-none text-neutral-800 focus:outline-none w-full text-sm placeholder-slate-400;
+    @apply bg-transparent border-none text-neutral-800 focus:outline-none w-full text-xs md:text-sm placeholder-slate-400;
 }
+
 .search-btn {
-    @apply btn bg-neutral-900 hover:bg-neutral-800 text-white font-semibold border-none px-8 rounded-xl h-12 md:h-14;
+    @apply btn bg-neutral-900 hover:bg-neutral-800 text-white font-semibold border-none px-8 rounded-lg h-12 lg:h-14;
 }
 
 /* ==========================================================================
@@ -138,24 +158,31 @@
 .categories-section {
     @apply bg-white border-y border-neutral-200/50 py-12 w-full;
 }
+
 .categories-container {
     @apply max-w-7xl mx-auto px-6;
 }
+
 .categories-title {
     @apply text-2xl font-extrabold text-neutral-900 tracking-tight mb-8;
 }
+
 .categories-grid {
-    @apply grid grid-cols-2 lg:grid-cols-5 gap-6;
+    @apply grid grid-cols-2 lg:grid-cols-4 gap-6;
 }
+
 .category-card {
     @apply flex flex-col gap-3;
 }
+
 .category-image-wrapper {
-    @apply aspect-[4/3] rounded-2xl overflow-hidden bg-neutral-100;
+    @apply aspect-[4/3] rounded-xl overflow-hidden bg-neutral-100;
 }
+
 .category-image {
     @apply w-full h-full object-cover group-hover:scale-105 transition-transform duration-300;
 }
+
 .category-name {
     @apply font-bold text-neutral-800 text-sm group-hover:underline;
 }
@@ -166,46 +193,60 @@
 .popular-section {
     @apply max-w-7xl mx-auto px-6 py-12 w-full;
 }
+
 .popular-header {
     @apply flex items-center justify-between mb-10;
 }
+
 .popular-title {
     @apply text-2xl font-extrabold text-neutral-900 tracking-tight;
 }
+
 .popular-link-all {
     @apply text-sm font-bold text-neutral-600 hover:text-neutral-950 underline transition-colors;
 }
+
 .popular-grid {
     @apply grid grid-cols-1 md:grid-cols-3 gap-8;
 }
+
 .popular-card {
     @apply flex flex-col gap-3 cursor-pointer;
     animation: fadeInUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
+
 .popular-card-image-wrapper {
-    @apply aspect-[16/10] rounded-2xl overflow-hidden bg-neutral-100 relative;
+    @apply aspect-[16/10] rounded-xl overflow-hidden bg-neutral-100 relative;
 }
+
 .popular-card-image {
     @apply w-full h-full object-cover;
 }
+
 .popular-card-badge {
     @apply absolute top-4 left-4 bg-white/95 backdrop-blur text-neutral-900 text-xs font-bold px-3 py-1.5 rounded-full shadow-sm;
 }
+
 .popular-card-info {
     @apply flex justify-between items-start mt-1;
 }
+
 .popular-card-name {
     @apply font-bold text-base text-neutral-900 group-hover:text-neutral-700 transition-colors;
 }
+
 .popular-card-address {
     @apply text-xs text-neutral-500 mt-0.5;
 }
+
 .popular-card-rating {
     @apply flex items-center gap-1 bg-neutral-100 px-2 py-1 rounded-lg;
 }
+
 .popular-card-rating-text {
     @apply text-xs font-bold text-neutral-800;
 }
+
 .popular-card-rating-icon {
     @apply h-3.5 w-3.5 text-amber-500 fill-amber-500;
 }
@@ -215,6 +256,7 @@
         opacity: 0;
         transform: translateY(12px);
     }
+
     to {
         opacity: 1;
         transform: translateY(0);
@@ -225,7 +267,7 @@
    SLIDING TABS INDICATOR
    ========================================================================== */
 .tabs-slider-container {
-    @apply relative inline-flex bg-neutral-100 p-1 rounded-2xl gap-1 z-10;
+    @apply relative inline-flex bg-neutral-100 p-1 rounded-xl gap-1 z-10;
 }
 
 .tab-active-indicator {
@@ -235,9 +277,9 @@
     left: var(--active-tab-left, 4px);
     width: var(--active-tab-width, 64px);
     transition: left 0.3s cubic-bezier(0.16, 1, 0.3, 1), width 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-    @apply bg-white rounded-xl shadow-md z-0;
+    @apply bg-white rounded-lg shadow-sm z-0;
 }
 
 .tab-btn {
-    @apply relative z-10 px-5 py-2.5 rounded-xl text-sm font-semibold transition-colors duration-200 focus:outline-none focus:ring-0 cursor-pointer;
+    @apply relative z-10 px-5 py-2.5 rounded-lg text-sm font-semibold transition-colors duration-200 focus:outline-none focus:ring-0 cursor-pointer;
 }
