@@ -1,10 +1,22 @@
 import type { Etablissement, Booking, User } from '../types';
 
+function getCookie(name: string): string | null {
+  const value = `; ${document.cookie}`;
+  const parts = value.split(`; ${name}=`);
+  if (parts.length === 2) return parts.pop()?.split(';').shift() || null;
+  return null;
+}
+
 // Helper générique pour les requêtes HTTP
 async function request<T>(url: string, options?: RequestInit): Promise<T> {
   const headers = new Headers(options?.headers);
   if (!headers.has('Content-Type')) {
     headers.set('Content-Type', 'application/json');
+  }
+
+  const csrfToken = getCookie('csrftoken');
+  if (csrfToken) {
+    headers.set('X-CSRFToken', csrfToken);
   }
 
   const response = await fetch(url, {
@@ -125,16 +137,16 @@ export const api = {
         return null;
       }
     },
-    login: async (username: string, password_raw: string): Promise<User> => {
+    login: async (email: string, password_raw: string): Promise<User> => {
       // Simulation ou requête réelle
       try {
         return await request<User>('/api/auth/login/', {
           method: 'POST',
-          body: JSON.stringify({ username, password: password_raw })
+          body: JSON.stringify({ email, password: password_raw })
         });
       } catch {
         // Mock de connexion si le serveur est coupé
-        if (username === 'admin') {
+        if (email === 'admin') {
           return {
             id: 1,
             username: 'admin',
@@ -146,13 +158,19 @@ export const api = {
         }
         return {
           id: 2,
-          username: username || 'client_test',
-          email: `${username || 'client'}@example.com`,
+          username: email || 'client_test',
+          email: `${email || 'client'}@example.com`,
           first_name: 'Utilisateur',
           last_name: 'Test',
           role: 'client'
         };
       }
+    },
+    register: async (email: string, password_raw: string, firstname: string, lastname: string): Promise<{ status: string; message: string }> => {
+      return await request<{ status: string; message: string }>('/api/auth/register/', {
+        method: 'POST',
+        body: JSON.stringify({ email, password: password_raw, firstname, lastname })
+      });
     },
     logout: async (): Promise<void> => {
       try {

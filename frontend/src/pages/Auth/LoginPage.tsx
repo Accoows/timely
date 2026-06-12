@@ -52,12 +52,12 @@ export default function LoginPage({ onNavigate }: LoginPageProps) {
         {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-5">
           <InputField
-            label="Nom d'utilisateur"
-            type="text"
+            label="Adresse e-mail"
+            type="email"
             required
             value={username}
             onChange={(e) => setUsername(e.target.value)}
-            placeholder="Ex: sarah_dev"
+            placeholder="arthur.martin@example.com"
           />
 
           <InputField

@@ -59,7 +59,7 @@ export default function ForgotPasswordPage({ onNavigate }: ForgotPasswordPagePro
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="Ex: jean.dupont@example.com"
+              placeholder="Ex: arthur.martin@example.com"
             />
 
             <Button

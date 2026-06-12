@@ -19,10 +19,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
   }, []);
 
-  const login = async (username: string, password_raw: string) => {
+  const login = async (email: string, password_raw: string) => {
     setLoading(true);
     try {
-      const loggedUser = await api.auth.login(username, password_raw);
+      const loggedUser = await api.auth.login(email, password_raw);
+      setUser(loggedUser);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const register = async (email: string, password_raw: string, firstname: string, lastname: string) => {
+    setLoading(true);
+    try {
+      await api.auth.register(email, password_raw, firstname, lastname);
+      const loggedUser = await api.auth.login(email, password_raw);
       setUser(loggedUser);
     } finally {
       setLoading(false);
@@ -40,7 +51,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, register, logout }}>
       {children}
     </AuthContext.Provider>
   );

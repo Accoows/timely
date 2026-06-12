@@ -4,7 +4,8 @@ import type { User } from '../types';
 export interface AuthContextType {
   user: User | null;
   loading: boolean;
-  login: (username: string, password_raw: string) => Promise<void>;
+  login: (email: string, password_raw: string) => Promise<void>;
+  register: (email: string, password_raw: string, firstname: string, lastname: string) => Promise<void>;
   logout: () => Promise<void>;
 }
 

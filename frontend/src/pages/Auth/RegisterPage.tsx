@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import type { UserRole } from '../../types';
 import InputField from '../../components/InputField';
 import Button from '../../components/Button';
 
@@ -9,13 +8,11 @@ interface RegisterPageProps {
 }
 
 export default function RegisterPage({ onNavigate }: RegisterPageProps) {
-  const { login } = useAuth(); // On pourra se connecter directement après inscription
-  const [username, setUsername] = useState('');
+  const { register } = useAuth();
   const [email, setEmail] = useState('');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [password, setPassword] = useState('');
-  const role: UserRole = 'client';
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -25,12 +22,7 @@ export default function RegisterPage({ onNavigate }: RegisterPageProps) {
     setLoading(true);
 
     try {
-      // Simulation d'inscription réussie
-      // Dans le futur, appeler un endpoint API d'inscription
-      console.log('Inscription avec:', { username, email, firstName, lastName, password, role });
-      
-      // Auto-login après inscription pour confort utilisateur
-      await login(username, password);
+      await register(email, password, firstName, lastName);
       onNavigate('home');
     } catch {
       setError("Une erreur est survenue lors de l'inscription.");
@@ -68,7 +60,7 @@ export default function RegisterPage({ onNavigate }: RegisterPageProps) {
               required
               value={firstName}
               onChange={(e) => setFirstName(e.target.value)}
-              placeholder="Jean"
+              placeholder="Arthur"
             />
             <InputField
               label="Nom"
@@ -76,18 +68,9 @@ export default function RegisterPage({ onNavigate }: RegisterPageProps) {
               required
               value={lastName}
               onChange={(e) => setLastName(e.target.value)}
-              placeholder="Dupont"
+              placeholder="Martin"
             />
           </div>
-
-          <InputField
-            label="Nom d'utilisateur"
-            type="text"
-            required
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            placeholder="Ex: jean_dupont"
-          />
 
           <InputField
             label="Adresse e-mail"
@@ -95,7 +78,7 @@ export default function RegisterPage({ onNavigate }: RegisterPageProps) {
             required
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            placeholder="jean.dupont@example.com"
+            placeholder="arthur.martin@example.com"
           />
 
           <InputField
