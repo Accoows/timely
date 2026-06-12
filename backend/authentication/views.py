@@ -3,6 +3,8 @@ from django.views import View
 from django.http import JsonResponse
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
+from django.views.decorators.csrf import ensure_csrf_cookie
+from django.utils.decorators import method_decorator
 from .models import Professionnel, Gerant
 
 class LoginView(View):
@@ -102,3 +104,24 @@ class ForgotPasswordView(View):
             "status": "success", 
             "message": "Si l'adresse email existe, un lien de réinitialisation a été envoyé."
         }, status=200)
+
+@method_decorator(ensure_csrf_cookie, name='dispatch')
+class UserView(View):
+    def get(self, request):
+        if request.user.is_authenticated:
+            role = "client"
+            if hasattr(request.user, 'profil_gerant'):
+                role = "gerant"
+            elif hasattr(request.user, 'profil_pro'):
+                role = "professionnel"
+
+            return JsonResponse({
+                "id": request.user.id,
+                "username": request.user.username,
+                "email": request.user.email,
+                "first_name": request.user.first_name,
+                "last_name": request.user.last_name,
+                "role": role
+            })
+        else:
+            return JsonResponse({"error": "Non authentifié"}, status=401)
