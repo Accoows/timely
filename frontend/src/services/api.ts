@@ -1,5 +1,14 @@
 import type { Etablissement, Booking, User } from '../types';
 
+export class ApiError extends Error {
+  status: number;
+  constructor(status: number, message: string) {
+    super(message);
+    this.status = status;
+    this.name = 'ApiError';
+  }
+}
+
 function getCookie(name: string): string | null {
   const value = `; ${document.cookie}`;
   const parts = value.split(`; ${name}=`);
@@ -25,7 +34,7 @@ async function request<T>(url: string, options?: RequestInit): Promise<T> {
   });
 
   if (!response.ok) {
-    throw new Error(`Erreur API: ${response.status} ${response.statusText}`);
+    throw new ApiError(response.status, `Erreur API: ${response.status} ${response.statusText}`);
   }
 
   // Si pas de contenu (ex: 204 No Content), renvoyer vide
@@ -144,7 +153,13 @@ export const api = {
           method: 'POST',
           body: JSON.stringify({ email, password: password_raw })
         });
-      } catch {
+      } catch (error) {
+        // Si c'est une erreur HTTP explicite du backend (400 ou 401),
+        // on la propage pour que le formulaire de connexion affiche l'erreur.
+        if (error instanceof ApiError && (error.status === 400 || error.status === 401)) {
+          throw error;
+        }
+
         // Mock de connexion si le serveur est coupé
         if (email === 'admin') {
           return {
