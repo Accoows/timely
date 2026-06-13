@@ -2,6 +2,7 @@ import type { ButtonHTMLAttributes } from 'react';
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'primary' | 'secondary' | 'ghost' | 'outline';
+  size?: 'sm' | 'md' | 'lg';
   loading?: boolean;
   fullWidth?: boolean;
 }
@@ -9,6 +10,7 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 export default function Button({
   children,
   variant = 'primary',
+  size = 'lg',
   loading = false,
   fullWidth = false,
   className = '',
@@ -24,8 +26,14 @@ export default function Button({
     ghost: 'bg-transparent hover:bg-neutral-50 text-neutral-700 border border-transparent',
   };
 
+  const sizes = {
+    sm: 'px-3 py-1.5 text-xs',
+    md: 'px-4 py-2 text-sm',
+    lg: 'px-6 py-3 text-sm md:text-base',
+  };
+
   const widthStyle = fullWidth ? 'w-full' : '';
-  const paddingStyle = variant === 'ghost' ? 'px-3 py-2 text-sm' : 'px-6 py-3 text-sm md:text-base';
+  const paddingStyle = variant === 'ghost' ? 'px-3 py-1.5 text-sm' : sizes[size];
 
   return (
     <button

@@ -1,4 +1,4 @@
-import type { Etablissement, Booking, User, Secteur, Lieu } from '../types';
+import type { Etablissement, Booking, User, Secteur, UserRole } from '../types';
 
 export class ApiError extends Error {
   status: number;
@@ -102,7 +102,7 @@ const getEstablishmentImage = (sectorName?: string) => {
   return 'https://images.unsplash.com/photo-1521791136368-1a8b27526d5f?auto=format&fit=crop&w=600&q=80';
 };
 
-function mapBackendEtablissement(est: any): Etablissement {
+function mapBackendEtablissement(est: Etablissement): Etablissement {
   const sectorName = est.secteur?.nom || '';
   return {
     ...est,
@@ -122,10 +122,13 @@ export const api = {
       try {
         const data = await request<Etablissement[]>(`/api/popular-filter/?category=${category}`);
         // Corriger les chemins d'images relatifs en absolus/statiques si besoin
-        return data.map(est => ({
-          ...est,
-          image: est.image.startsWith('http') ? est.image : `/static/${est.image}`
-        }));
+        return data.map(est => {
+          const img = est.image || '';
+          return {
+            ...est,
+            image: img.startsWith('http') ? img : img ? `/static/${img}` : undefined
+          };
+        });
       } catch (error) {
         console.warn('API populaire indisponible, chargement des fausses données.', error);
         return category === 'all' 
@@ -142,7 +145,7 @@ export const api = {
         
         const queryString = params.toString();
         const url = `/api/establishments/explore/${queryString ? `?${queryString}` : ''}`;
-        const response = await request<{ status: string; establishments: any[] }>(url);
+        const response = await request<{ status: string; establishments: Etablissement[] }>(url);
         return response.establishments.map(mapBackendEtablissement);
       } catch (error) {
         console.warn('API explore indisponible, repli sur explore local.', error);
@@ -151,10 +154,10 @@ export const api = {
           results = results.filter(e => e.category === filters.sector || e.badge === filters.sector);
         }
         if (filters.query) {
-          results = results.filter(e => e.name.toLowerCase().includes(filters.query!.toLowerCase()));
+          results = results.filter(e => (e.name || '').toLowerCase().includes(filters.query!.toLowerCase()));
         }
         if (filters.location) {
-          results = results.filter(e => e.address.toLowerCase().includes(filters.location!.toLowerCase()));
+          results = results.filter(e => (e.address || '').toLowerCase().includes(filters.location!.toLowerCase()));
         }
         return results;
       }
@@ -216,10 +219,18 @@ export const api = {
     login: async (email: string, password_raw: string): Promise<User> => {
       // Simulation ou requête réelle
       try {
-        return await request<User>('/api/auth/login/', {
+        const response = await request<{ status: string; message: string; user: { id: number; firstname: string; lastname: string; role: UserRole } }>('/api/auth/login/', {
           method: 'POST',
           body: JSON.stringify({ email, password: password_raw })
         });
+        return {
+          id: response.user.id,
+          username: email,
+          email: email,
+          first_name: response.user.firstname,
+          last_name: response.user.lastname,
+          role: response.user.role
+        };
       } catch (error) {
         // Si c'est une erreur HTTP explicite du backend (400 ou 401),
         // on la propage pour que le formulaire de connexion affiche l'erreur.

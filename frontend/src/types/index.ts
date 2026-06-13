@@ -24,7 +24,7 @@ export interface Lieu {
 
 export interface Etablissement {
   id: number;
-  nom: string;
+  nom?: string;
   secteur?: Secteur | null;
   lieu?: Lieu | null;
   // Propriétés mappées pour la compatibilité avec l'affichage de l'interface
