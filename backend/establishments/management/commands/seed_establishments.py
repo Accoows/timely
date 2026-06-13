@@ -13,7 +13,15 @@ class Command(BaseCommand):
 
     def handle(self, *args, **kwargs):
         # 1. Create Sectors
-        sectors_data = ["Coiffure", "Beauté & Soins", "Massage & Bien-être", "Barbier"]
+        sectors_data = [
+            "Coiffure", 
+            "Beauté & Soins", 
+            "Massage & Bien-être", 
+            "Barbier",
+            "Restauration",
+            "Hébergement",
+            "Voyages & Transports"
+        ]
         sectors = {}
         for name in sectors_data:
             secteur, created = Secteur.objects.get_or_create(nom=name)
@@ -64,6 +72,30 @@ class Command(BaseCommand):
                 "code_postal": "69002",
                 "region": "Auvergne-Rhône-Alpes",
                 "secteur": sectors["Massage & Bien-être"]
+            },
+            {
+                "nom": "Le Bistrot Gourmet",
+                "adresse": "8 Rue des Dames",
+                "ville": "Lyon",
+                "code_postal": "69006",
+                "region": "Auvergne-Rhône-Alpes",
+                "secteur": sectors["Restauration"]
+            },
+            {
+                "nom": "Hôtel & Spa L'Horizon",
+                "adresse": "Promenade des Anglais",
+                "ville": "Nice",
+                "code_postal": "06000",
+                "region": "Provence-Alpes-Côte d'Azur",
+                "secteur": sectors["Hébergement"]
+            },
+            {
+                "nom": "Évasion Voyages",
+                "adresse": "14 Rue du Faubourg Saint-Honoré",
+                "ville": "Paris",
+                "code_postal": "75008",
+                "region": "Île-de-France",
+                "secteur": sectors["Voyages & Transports"]
             }
         ]
 

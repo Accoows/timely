@@ -369,6 +369,12 @@ docker compose ps
 # Lancer une commande Django depuis votre terminal
 docker compose exec backend python manage.py <commande>
 
+# Appliquer les migrations de la base de données
+docker compose exec backend python manage.py migrate
+
+# Remplir la base de données avec les données de test initiales (seed)
+docker compose exec backend python manage.py seed_establishments
+
 # Ouvrir un shell Python interactif dans le conteneur backend (utile pour déboguer)
 docker compose exec backend python manage.py shell
 

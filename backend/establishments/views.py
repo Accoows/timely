@@ -37,7 +37,20 @@ class ExploreListView(View):
         queryset = Etablissement.objects.all()
 
         if sector_id:
-            queryset = queryset.filter(secteur_id=sector_id)
+            if sector_id.isdigit():
+                queryset = queryset.filter(secteur_id=sector_id)
+            else:
+                sector_lower = sector_id.lower()
+                if sector_lower in ['beauty', 'beauté']:
+                    queryset = queryset.filter(secteur__nom__in=["Coiffure", "Beauté & Soins", "Massage & Bien-être", "Barbier"])
+                elif sector_lower in ['restaurant', 'restauration']:
+                    queryset = queryset.filter(secteur__nom__icontains="restaurant")
+                elif sector_lower in ['hotel', 'hôtel', 'hôtels', 'hébergements']:
+                    queryset = queryset.filter(Q(secteur__nom__icontains="hotel") | Q(secteur__nom__icontains="hébergement"))
+                elif sector_lower in ['travel', 'voyage', 'voyages', 'transport', 'transports']:
+                    queryset = queryset.filter(Q(secteur__nom__icontains="voyage") | Q(secteur__nom__icontains="transport"))
+                else:
+                    queryset = queryset.filter(secteur__nom__icontains=sector_id)
 
         if query:
             queryset = queryset.filter(nom__icontains=query)

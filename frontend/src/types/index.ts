@@ -9,14 +9,31 @@ export interface User {
   role: UserRole;
 }
 
+export interface Secteur {
+  id: number;
+  nom: string;
+}
+
+export interface Lieu {
+  id: number;
+  adresse: string;
+  ville: string;
+  code_postal?: string | null;
+  region?: string | null;
+}
+
 export interface Etablissement {
   id: number;
-  name: string;
-  category: string;
-  address: string;
-  rating: string;
-  image: string;
-  badge: string;
+  nom: string;
+  secteur?: Secteur | null;
+  lieu?: Lieu | null;
+  // Propriétés mappées pour la compatibilité avec l'affichage de l'interface
+  name?: string;
+  category?: string;
+  address?: string;
+  rating?: string;
+  image?: string;
+  badge?: string;
 }
 
 export interface Booking {
