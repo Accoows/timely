@@ -12,13 +12,11 @@ class Client(models.Model):
 
 class Gerant(models.Model):
     utilisateur = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profil_gerant')
-    # Un gérant possède ou gère un établissement spécifique
-    # On utilise du texte pour éviter l'import circulaire si le modèle est dans un autre dossier
-    etablissement = models.ForeignKey('establishments.Etablissement', on_delete=models.SET_NULL, null=True, blank=True)
-    stripe_account_id = models.CharField(max_length=255, blank=True, null=True) # Utile pour Stripe Connect !
+    stripe_account_id = models.CharField(max_length=255, blank=True, null=True)
 
     def __str__(self):
-        return f"Gérant de : {self.etablissement.nom if self.etablissement else 'Aucun salon'}"
+        first_etab = self.etablissements.first()
+        return f"Gérant de : {first_etab.nom if first_etab else 'Aucun salon'}"
 
 
 class Professionnel(models.Model):
