@@ -267,7 +267,7 @@
    SLIDING TABS INDICATOR
    ========================================================================== */
 .tabs-slider-container {
-    @apply relative inline-flex bg-neutral-100 p-1 rounded-xl gap-1 z-10;
+    @apply relative inline-flex bg-neutral-100 p-1 rounded-xl gap-1 z-10 whitespace-nowrap flex-nowrap shrink-0;
 }
 
 .tab-active-indicator {
@@ -281,5 +281,13 @@
 }
 
 .tab-btn {
-    @apply relative z-10 px-5 py-2.5 rounded-lg text-sm font-semibold transition-colors duration-200 focus:outline-none focus:ring-0 cursor-pointer;
+    @apply relative z-10 px-5 py-2.5 rounded-lg text-sm font-semibold transition-colors duration-200 focus:outline-none focus:ring-0 cursor-pointer shrink-0;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+    display: none;
+}
+.no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
 }

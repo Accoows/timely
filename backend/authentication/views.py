@@ -1,7 +1,7 @@
 import json
 from django.views import View
 from django.http import JsonResponse
-from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth import authenticate, login, logout, update_session_auth_hash
 from django.contrib.auth.models import User
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.utils.decorators import method_decorator
@@ -125,3 +125,57 @@ class UserView(View):
             })
         else:
             return JsonResponse({"error": "Non authentifié"}, status=401)
+
+    def put(self, request):
+        if not request.user.is_authenticated:
+            return JsonResponse({"error": "Non authentifié"}, status=401)
+        try:
+            data = json.loads(request.body)
+            first_name = data.get('first_name')
+            last_name = data.get('last_name')
+            email = data.get('email')
+
+            user = request.user
+            if first_name is not None:
+                user.first_name = first_name
+            if last_name is not None:
+                user.last_name = last_name
+            if email is not None:
+                # Check uniqueness if email changed
+                if email != user.email and User.objects.filter(email=email).exists():
+                    return JsonResponse({"error": "Cet email est déjà utilisé"}, status=400)
+                user.email = email
+                user.username = email
+
+            # Password change logic
+            old_password = data.get('old_password')
+            new_password = data.get('new_password')
+            if new_password:
+                if not old_password:
+                    return JsonResponse({"error": "L'ancien mot de passe est requis pour modifier le mot de passe"}, status=400)
+                if not user.check_password(old_password):
+                    return JsonResponse({"error": "L'ancien mot de passe est incorrect"}, status=400)
+                if len(new_password) < 6:
+                    return JsonResponse({"error": "Le nouveau mot de passe doit faire au moins 6 caractères"}, status=400)
+                user.set_password(new_password)
+                
+            user.save()
+            if new_password:
+                update_session_auth_hash(request, user)
+
+            role = "client"
+            if hasattr(user, 'profil_gerant'):
+                role = "gerant"
+            elif hasattr(user, 'profil_pro'):
+                role = "professionnel"
+
+            return JsonResponse({
+                "id": user.id,
+                "username": user.username,
+                "email": user.email,
+                "first_name": user.first_name,
+                "last_name": user.last_name,
+                "role": role
+            })
+        except Exception as e:
+            return JsonResponse({"error": str(e)}, status=400)

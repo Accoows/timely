@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useAuth } from './context/AuthContext';
 import Layout from './components/Layout';
 import HomePage from './pages/Home/HomePage';
 import LoginPage from './pages/Auth/LoginPage';
@@ -6,8 +7,10 @@ import RegisterPage from './pages/Auth/RegisterPage';
 import ForgotPasswordPage from './pages/Auth/ForgotPasswordPage';
 import RegisterEstablishmentPage from './pages/Establishment/RegisterEstablishmentPage';
 import NotFoundPage from './pages/NotFound/NotFoundPage';
+import ProfilePage from './pages/Profile/ProfilePage';
 
 export default function App() {
+  const { user } = useAuth();
   // Initialiser la page en fonction de l'URL actuelle du navigateur
   const [currentPage, setCurrentPage] = useState<string>(() => {
     const path = window.location.pathname;
@@ -16,6 +19,7 @@ export default function App() {
     if (path === '/register') return 'register';
     if (path === '/forgot-password') return 'forgot-password';
     if (path === '/register-establishment') return 'register-establishment';
+    if (path === '/profile') return 'profile';
     return '404';
   });
 
@@ -40,6 +44,8 @@ export default function App() {
         setCurrentPage('forgot-password');
       } else if (path === '/register-establishment') {
         setCurrentPage('register-establishment');
+      } else if (path === '/profile') {
+        setCurrentPage('profile');
       } else {
         setCurrentPage('404');
       }
@@ -61,6 +67,8 @@ export default function App() {
         return <ForgotPasswordPage onNavigate={handleNavigate} />;
       case 'register-establishment':
         return <RegisterEstablishmentPage onNavigate={handleNavigate} />;
+      case 'profile':
+        return <ProfilePage key={user?.id || 'profile'} onNavigate={handleNavigate} />;
       default:
         return <NotFoundPage onNavigateHome={() => handleNavigate('home')} />;
     }

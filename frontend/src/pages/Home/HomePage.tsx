@@ -154,7 +154,7 @@ export default function HomePage() {
         </div>
 
         {/* Sliding Tabs */}
-        <div className="flex justify-center mb-8">
+        <div className="flex justify-start sm:justify-center overflow-x-auto no-scrollbar pb-2 mb-6 w-full">
           <div className="tabs-slider-container" style={{
             '--active-tab-left': `${indicatorStyle.left}px`,
             '--active-tab-width': `${indicatorStyle.width}px`

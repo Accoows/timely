@@ -271,6 +271,24 @@ export const api = {
       } catch {
         console.warn('Déconnexion API impossible, simulation de déconnexion locale.');
       }
+    },
+    updateCurrentUser: async (profileData: { 
+      first_name?: string; 
+      last_name?: string; 
+      email?: string;
+      old_password?: string;
+      new_password?: string;
+    }): Promise<User> => {
+      try {
+        return await request<User>('/api/auth/user/', {
+          method: 'PUT',
+          body: JSON.stringify(profileData)
+        });
+      } catch (error) {
+        // En cas de repli sans serveur
+        console.warn('Mise à jour profil impossible, simulation de mise à jour locale.');
+        throw error;
+      }
     }
   }
 };

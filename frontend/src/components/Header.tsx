@@ -87,7 +87,7 @@ export default function Header({ onNavigate }: HeaderProps) {
                     <button
                       onClick={() => {
                         setDropdownOpen(false);
-                        alert('Fonctionnalité "Mon Profil" à venir !');
+                        onNavigate?.('profile');
                       }}
                       className="w-full text-left px-4 py-2.5 text-sm font-semibold text-neutral-700 hover:bg-neutral-50 hover:text-neutral-900 transition-colors border-none bg-transparent cursor-pointer"
                     >
@@ -116,7 +116,7 @@ export default function Header({ onNavigate }: HeaderProps) {
                 ) : (
                   <div className="p-3 flex flex-col gap-2">
                     <div className="px-1 pb-1.5 text-left">
-                      <p className="text-xs font-bold text-neutral-400 uppercase tracking-wider">Espace Client</p>
+                      <p className="text-xs font-black text-neutral-900 uppercase tracking-wider">Espace Client</p>
                       <p className="text-xs text-neutral-500 mt-0.5">Accédez à vos rendez-vous et réservations.</p>
                     </div>
                     <Button

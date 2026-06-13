@@ -18,13 +18,13 @@ class LocationListView(View):
             queryset = queryset.filter(etablissements__secteur_id=sector_id).distinct()
             
         data = []
-        for l in queryset:
+        for loc in queryset:
             data.append({
-                "id": l.id,
-                "adresse": l.adresse,
-                "ville": l.ville,
-                "code_postal": l.code_postal,
-                "region": l.region
+                "id": loc.id,
+                "adresse": loc.adresse,
+                "ville": loc.ville,
+                "code_postal": loc.code_postal,
+                "region": loc.region
             })
         return JsonResponse({"status": "success", "locations": data}, status=200)
 
