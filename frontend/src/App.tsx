@@ -8,6 +8,7 @@ import ForgotPasswordPage from './pages/Auth/ForgotPasswordPage';
 import RegisterEstablishmentPage from './pages/Establishment/RegisterEstablishmentPage';
 import NotFoundPage from './pages/NotFound/NotFoundPage';
 import ProfilePage from './pages/Profile/ProfilePage';
+import SearchPage from './pages/Search/SearchPage';
 
 export default function App() {
   const { user } = useAuth();
@@ -20,6 +21,7 @@ export default function App() {
     if (path === '/forgot-password') return 'forgot-password';
     if (path === '/register-establishment') return 'register-establishment';
     if (path === '/profile') return 'profile';
+    if (path === '/search') return 'search';
     return '404';
   });
 
@@ -46,6 +48,8 @@ export default function App() {
         setCurrentPage('register-establishment');
       } else if (path === '/profile') {
         setCurrentPage('profile');
+      } else if (path === '/search') {
+        setCurrentPage('search');
       } else {
         setCurrentPage('404');
       }
@@ -69,6 +73,8 @@ export default function App() {
         return <RegisterEstablishmentPage onNavigate={handleNavigate} />;
       case 'profile':
         return <ProfilePage key={user?.id || 'profile'} onNavigate={handleNavigate} />;
+      case 'search':
+        return <SearchPage />;
       default:
         return <NotFoundPage onNavigateHome={() => handleNavigate('home')} />;
     }

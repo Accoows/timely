@@ -42,6 +42,13 @@ export default function Header({ onNavigate }: HeaderProps) {
         </div>
         <nav className="navbar-nav items-center">
           <button 
+            onClick={() => onNavigate?.('search')} 
+            className="navbar-link bg-transparent border-none cursor-pointer p-0 focus:outline-none"
+          >
+            Rechercher
+          </button>
+
+          <button 
             onClick={() => onNavigate?.('register-establishment')} 
             className="navbar-link bg-transparent border-none cursor-pointer p-0 focus:outline-none"
           >

@@ -1,4 +1,4 @@
-import type { Etablissement, Booking, User, Secteur, UserRole } from '../types';
+import type { Etablissement, Booking, User, Secteur, UserRole, Lieu } from '../types';
 
 export class ApiError extends Error {
   status: number;
@@ -136,12 +136,22 @@ export const api = {
           : MOCK_ESTABLISHMENTS.filter(e => e.category === category);
       }
     },
-    explore: async (filters: { query?: string; location?: string; sector?: string | number } = {}): Promise<Etablissement[]> => {
+    explore: async (filters: { 
+      query?: string; 
+      location?: string; 
+      sector?: string | number;
+      sort?: string;
+      min_rating?: number | null;
+      sub_category?: string | null;
+    } = {}): Promise<Etablissement[]> => {
       try {
         const params = new URLSearchParams();
         if (filters.query) params.append('query', filters.query);
         if (filters.location) params.append('location', filters.location);
         if (filters.sector) params.append('sector', String(filters.sector));
+        if (filters.sort && filters.sort !== 'default') params.append('sort', filters.sort);
+        if (filters.min_rating) params.append('min_rating', String(filters.min_rating));
+        if (filters.sub_category) params.append('sub_category', filters.sub_category);
         
         const queryString = params.toString();
         const url = `/api/establishments/explore/${queryString ? `?${queryString}` : ''}`;
@@ -158,6 +168,22 @@ export const api = {
         }
         if (filters.location) {
           results = results.filter(e => (e.address || '').toLowerCase().includes(filters.location!.toLowerCase()));
+        }
+        if (filters.min_rating) {
+          results = results.filter(e => {
+            const r = parseFloat(e.rating || '0');
+            return !isNaN(r) && r >= filters.min_rating!;
+          });
+        }
+        if (filters.sub_category) {
+          results = results.filter(e => (e.badge || e.category || '').toLowerCase() === filters.sub_category!.toLowerCase());
+        }
+        if (filters.sort === 'rating') {
+          results = [...results].sort((a, b) => {
+            const rA = parseFloat(a.rating || '0');
+            const rB = parseFloat(b.rating || '0');
+            return rB - rA;
+          });
         }
         return results;
       }
@@ -176,6 +202,28 @@ export const api = {
           { id: 2, nom: 'Beauté & Soins' },
           { id: 3, nom: 'Massage & Bien-être' },
           { id: 4, nom: 'Barbier' }
+        ];
+      }
+    }
+  },
+
+  locations: {
+    list: async (filters: { sector_id?: string | number } = {}): Promise<Lieu[]> => {
+      try {
+        const params = new URLSearchParams();
+        if (filters.sector_id) params.append('sector_id', String(filters.sector_id));
+        const queryString = params.toString();
+        const url = `/api/establishments/locations/${queryString ? `?${queryString}` : ''}`;
+        const response = await request<{ status: string; locations: Lieu[] }>(url);
+        return response.locations;
+      } catch (error) {
+        console.warn('API locations indisponible, chargement des faux lieux.', error);
+        return [
+          { id: 1, adresse: '8 Rue des Dames', ville: 'Lyon', code_postal: '69006', region: 'Auvergne-Rhône-Alpes' },
+          { id: 2, adresse: '12 Rue de la Paix', ville: 'Paris', code_postal: '75002', region: 'Île-de-France' },
+          { id: 3, adresse: '21 Boulevard Saint-Germain', ville: 'Paris', code_postal: '75005', region: 'Île-de-France' },
+          { id: 4, adresse: '101 Rue Saint-Ferréol', ville: 'Marseille', code_postal: '13006', region: "Provence-Alpes-Côte d'Azur" },
+          { id: 5, adresse: 'Promenade des Anglais', ville: 'Nice', code_postal: '06000', region: "Provence-Alpes-Côte d'Azur" }
         ];
       }
     }

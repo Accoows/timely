@@ -3,6 +3,7 @@ import { api } from '../../services/api';
 import type { Etablissement } from '../../types';
 import CategoryCard from '../../components/CategoryCard';
 import EstablishmentCard from '../../components/EstablishmentCard';
+import SearchBar from '../../components/SearchBar';
 
 const CATEGORIES = [
   { id: 'all', label: 'Tous', filterVal: '' },
@@ -57,15 +58,11 @@ export default function HomePage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeCategory]);
 
-  const handleSearch = () => {
+  const handleSearch = (query: string, location: string) => {
+    setSearchQuery(query);
+    setSearchLocation(location);
     const categoryObj = CATEGORIES.find(cat => cat.id === activeCategory);
-    fetchEstablishments(categoryObj?.filterVal, searchQuery, searchLocation);
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      handleSearch();
-    }
+    fetchEstablishments(categoryObj?.filterVal, query, location);
   };
 
   return (
@@ -81,42 +78,11 @@ export default function HomePage() {
           </p>
 
           {/* Search Bar */}
-          <div className="search-bar">
-            <div className="search-input-group search-input-group-border flex-[1.4]">
-              <svg xmlns="http://www.w3.org/2000/svg" className="search-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-              <input 
-                type="text" 
-                placeholder="Prestation, établissement..." 
-                className="search-input" 
-                value={searchQuery}
-                onChange={e => setSearchQuery(e.target.value)}
-                onKeyDown={handleKeyDown}
-              />
-            </div>
-            <div className="search-input-group flex-1">
-              <svg xmlns="http://www.w3.org/2000/svg" className="search-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.243-4.243a8 8 0 1111.314 0z" />
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-              </svg>
-              <input 
-                type="text" 
-                placeholder="Ville, code postal..." 
-                className="search-input" 
-                value={searchLocation}
-                onChange={e => setSearchLocation(e.target.value)}
-                onKeyDown={handleKeyDown}
-              />
-            </div>
-            <button 
-              type="button" 
-              onClick={handleSearch} 
-              className="search-btn"
-            >
-              Rechercher
-            </button>
-          </div>
+          <SearchBar
+            initialQuery={searchQuery}
+            initialLocation={searchLocation}
+            onSearch={handleSearch}
+          />
         </div>
 
         <div className="hero-image-wrapper">
