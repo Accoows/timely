@@ -36,6 +36,7 @@ echo "
 ===================================================================
  Interface Web (React Frontend)     : http://localhost:5173
  API REST & Admin (Django Backend) : http://localhost:8000
+ Base de données (Adminer)          : http://localhost:8080
 ===================================================================
 "
 exec python manage.py runserver 0.0.0.0:8000
