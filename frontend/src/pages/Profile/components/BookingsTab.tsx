@@ -1,4 +1,3 @@
-import React from 'react';
 import type { BookingSeed } from '../seedData';
 import EmptyState from '../../../components/EmptyState';
 

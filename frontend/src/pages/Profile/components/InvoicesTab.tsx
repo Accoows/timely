@@ -1,4 +1,3 @@
-import React from 'react';
 import type { InvoiceSeed } from '../seedData';
 import EmptyState from '../../../components/EmptyState';
 
