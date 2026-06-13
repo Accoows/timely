@@ -33,6 +33,10 @@ else:
     print(f'Le superutilisateur \"{username}\" existait deja, mot de passe synchronise.')
 "
 
+# 2.7. Remplissage de la base de données (seeding)
+echo "[Django] Remplissage de la base de données avec le seed..."
+python manage.py seed_establishments
+
 # 3. Start Gunicorn WSGI server
 echo "[Django] Démarrage du serveur Gunicorn en production..."
 exec gunicorn timely_app.wsgi:application --bind 0.0.0.0:8000 --workers 3

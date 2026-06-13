@@ -29,6 +29,10 @@ else:
     print(f'Le superutilisateur \"{username}\" existait deja, mot de passe synchronise.')
 "
 
+# 1.7. Remplissage de la base de données (seeding)
+echo "[Django] Remplissage de la base de données avec le seed..."
+python manage.py seed_establishments
+
 # 2. Lancer le serveur Django au premier plan
 echo "
 ===================================================================
