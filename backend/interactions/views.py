@@ -6,7 +6,6 @@ from django.views.decorators.csrf import csrf_exempt
 from django.db import IntegrityError
 from .models import Favoris, Avis
 from establishments.models import Etablissement
-from authentication.models import Client
 
 class FavoritesView(View):
     def get(self, request):
