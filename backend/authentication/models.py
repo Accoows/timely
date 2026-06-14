@@ -25,6 +25,7 @@ class Professionnel(models.Model):
     etablissement = models.ForeignKey('establishments.Etablissement', on_delete=models.CASCADE, related_name='collaborateurs')
     poste = models.CharField(max_length=100, default="Coiffeur / Esthéticienne")
     description = models.TextField(blank=True, null=True)
+    date_embauche = models.DateField(blank=True, null=True)
 
     def __str__(self):
         return f"Pro : {self.utilisateur.first_name} ({self.poste})"
