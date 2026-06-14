@@ -137,7 +137,7 @@ Créez votre compte pour vous connecter au back-office Django :
 docker compose -f docker-compose.prod.yml exec backend python manage.py createsuperuser
 ```
 Saisissez les informations de votre compte d'accès. Par défaut pour vos tests de production, vous pouvez utiliser :
-- **Nom d'utilisateur** : `root`
+- **Nom d'utilisateur** : `admin`
 - **Mot de passe** : `AZEqsd123!`
 
 ---

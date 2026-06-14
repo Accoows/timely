@@ -1,26 +1,25 @@
 import { useState, useEffect, useRef } from 'react';
-
-interface Establishment {
-  id: number;
-  name: string;
-  category: string;
-  address: string;
-  rating: string;
-  image: string;
-  badge: string;
-}
+import { api } from '../../services/api';
+import type { Etablissement } from '../../types';
+import CategoryCard from '../../components/CategoryCard';
+import EstablishmentCard from '../../components/EstablishmentCard';
+import SearchBar from '../../components/SearchBar';
 
 const CATEGORIES = [
-  { id: 'all', label: 'Tous' },
-  { id: 'beauty', label: 'Beauté' },
-  { id: 'restaurant', label: 'Restauration' },
-  { id: 'hotel', label: 'Hôtels' }
+  { id: 'all', label: 'Tous', filterVal: '' },
+  { id: 'beauty', label: 'Beauté', filterVal: 'beauty' },
+  { id: 'restaurant', label: 'Restauration', filterVal: 'restaurant' },
+  { id: 'hotel', label: 'Hôtels', filterVal: 'hotel' },
+  { id: 'travel', label: 'Voyages', filterVal: 'travel' }
 ];
 
 export default function HomePage() {
   const [activeCategory, setActiveCategory] = useState('all');
-  const [establishments, setEstablishments] = useState<Establishment[]>([]);
+  const [establishments, setEstablishments] = useState<Etablissement[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchLocation, setSearchLocation] = useState('');
 
   // Tab indicator calculations
   const [indicatorStyle, setIndicatorStyle] = useState({ left: 4, width: 68 });
@@ -37,62 +36,34 @@ export default function HomePage() {
     }
   }, [activeCategory]);
 
-  useEffect(() => {
-    fetch(`/api/popular-filter/?category=${activeCategory}`)
-      .then(res => {
-        if (!res.ok) throw new Error('API server not responding');
-        return res.json();
-      })
-      .then((data: Establishment[]) => {
-        const formatted = data.map(est => ({
-          ...est,
-          image: est.image.startsWith('http') 
-            ? est.image 
-            : `/static/${est.image}`
-        }));
-        setEstablishments(formatted);
+  const fetchEstablishments = (sectorNom?: string, queryVal?: string, locationVal?: string) => {
+    Promise.resolve().then(() => setLoading(true));
+    api.establishments.explore({
+      sector: sectorNom || undefined,
+      query: queryVal || undefined,
+      location: locationVal || undefined
+    })
+      .then(data => {
+        setEstablishments(data);
         setLoading(false);
       })
-      .catch(err => {
-        console.warn('Backend offline, using fallback mock data.', err);
-        const mockData: Establishment[] = [
-          {
-            id: 1,
-            name: 'Le Bistrot Gourmet',
-            category: 'restaurant',
-            address: '8 Rue des Dames, Lyon',
-            rating: '4.9',
-            image: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=600&q=80',
-            badge: 'Restaurant'
-          },
-          {
-            id: 2,
-            name: "Hôtel & Spa L'Horizon",
-            category: 'hotel',
-            address: 'Promenade des Anglais, Nice',
-            rating: '4.7',
-            image: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=600&q=80',
-            badge: 'Hôtel'
-          },
-          {
-            id: 3,
-            name: "L'Atelier Coiffure & Barbe",
-            category: 'beauty',
-            address: '21 Boulevard Saint-Germain, Paris',
-            rating: '4.9',
-            image: 'https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=600&q=80',
-            badge: 'Beauté'
-          }
-        ];
-        
-        const filtered = activeCategory === 'all' 
-          ? mockData 
-          : mockData.filter(est => est.category === activeCategory);
-          
-        setEstablishments(filtered);
+      .catch(() => {
         setLoading(false);
       });
+  };
+
+  useEffect(() => {
+    const categoryObj = CATEGORIES.find(cat => cat.id === activeCategory);
+    fetchEstablishments(categoryObj?.filterVal, searchQuery, searchLocation);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeCategory]);
+
+  const handleSearch = (query: string, location: string) => {
+    setSearchQuery(query);
+    setSearchLocation(location);
+    const categoryObj = CATEGORIES.find(cat => cat.id === activeCategory);
+    fetchEstablishments(categoryObj?.filterVal, query, location);
+  };
 
   return (
     <>
@@ -107,24 +78,11 @@ export default function HomePage() {
           </p>
 
           {/* Search Bar */}
-          <div className="search-bar">
-            <div className="search-input-group search-input-group-border">
-              <svg xmlns="http://www.w3.org/2000/svg" className="search-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-              <input type="text" placeholder="Service, établissement, prestation..." className="search-input" />
-            </div>
-            <div className="search-input-group">
-              <svg xmlns="http://www.w3.org/2000/svg" className="search-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.243-4.243a8 8 0 1111.314 0z" />
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-              </svg>
-              <input type="text" placeholder="Ville, code postal..." className="search-input" />
-            </div>
-            <button className="search-btn">
-              Rechercher
-            </button>
-          </div>
+          <SearchBar
+            initialQuery={searchQuery}
+            initialLocation={searchLocation}
+            onSearch={handleSearch}
+          />
         </div>
 
         <div className="hero-image-wrapper">
@@ -143,36 +101,10 @@ export default function HomePage() {
           <h2 className="categories-title">Découvrez nos secteurs d'activité</h2>
           
           <div className="categories-grid">
-            <a href="#" className="category-card group">
-              <div className="category-image-wrapper">
-                <img src="https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=600&q=80" alt="Beauté" className="category-image" />
-              </div>
-              <span className="category-name">Beauté & Soins</span>
-            </a>
-            <a href="#" className="category-card group">
-              <div className="category-image-wrapper">
-                <img src="https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=600&q=80" alt="Restauration" className="category-image" />
-              </div>
-              <span className="category-name">Tables de Restaurant</span>
-            </a>
-            <a href="#" className="category-card group">
-              <div className="category-image-wrapper">
-                <img src="https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=600&q=80" alt="Hôtellerie" className="category-image" />
-              </div>
-              <span className="category-name">Hôtels & Hébergements</span>
-            </a>
-            <a href="#" className="category-card group">
-              <div className="category-image-wrapper">
-                <img src="https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&w=600&q=80" alt="Voyages" className="category-image" />
-              </div>
-              <span className="category-name">Voyages & Transports</span>
-            </a>
-            <a href="#" className="category-card group col-span-2 lg:col-span-1">
-              <div className="category-image-wrapper">
-                <img src="https://images.unsplash.com/photo-1450133064473-71024230f91b?auto=format&fit=crop&w=600&q=80" alt="Administration" className="category-image" />
-              </div>
-              <span className="category-name">Démarches Administratives</span>
-            </a>
+            <CategoryCard name="Beauté & Soins" image="https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=600&q=80" />
+            <CategoryCard name="Tables de Restaurant" image="https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=600&q=80" />
+            <CategoryCard name="Hôtels & Hébergements" image="https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=600&q=80" />
+            <CategoryCard name="Voyages & Transports" image="https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&w=600&q=80" />
           </div>
         </div>
       </section>
@@ -188,7 +120,7 @@ export default function HomePage() {
         </div>
 
         {/* Sliding Tabs */}
-        <div className="flex justify-center mb-8">
+        <div className="flex justify-start sm:justify-center overflow-x-auto no-scrollbar pb-2 mb-6 w-full">
           <div className="tabs-slider-container" style={{
             '--active-tab-left': `${indicatorStyle.left}px`,
             '--active-tab-width': `${indicatorStyle.width}px`
@@ -219,24 +151,14 @@ export default function HomePage() {
             </div>
           ) : (
             establishments.map(est => (
-              <div key={est.id} className="popular-card group">
-                <div className="popular-card-image-wrapper">
-                  <img src={est.image} alt={est.name} className="popular-card-image" />
-                  <span className="popular-card-badge">{est.badge}</span>
-                </div>
-                <div className="popular-card-info">
-                  <div>
-                    <h3 className="popular-card-name">{est.name}</h3>
-                    <p className="popular-card-address">{est.address}</p>
-                  </div>
-                  <div className="popular-card-rating">
-                    <span className="popular-card-rating-text">{est.rating}</span>
-                    <svg xmlns="http://www.w3.org/2000/svg" className="popular-card-rating-icon" viewBox="0 0 20 20" fill="currentColor">
-                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                    </svg>
-                  </div>
-                </div>
-              </div>
+              <EstablishmentCard
+                key={est.id}
+                name={est.name || ''}
+                image={est.image || ''}
+                badge={est.badge || ''}
+                address={est.address || ''}
+                rating={est.rating || '4.8'}
+              />
             ))
           )}
         </div>
@@ -259,7 +181,7 @@ export default function HomePage() {
               </div>
               <h3 className="font-bold text-neutral-800 mb-2">Centralisation des services</h3>
               <p className="text-neutral-500 text-xs leading-relaxed">
-                Un espace unique pour planifier vos rendez-vous dans différents secteurs (beauté, restauration, hébergement et démarches).
+                Un espace unique pour planifier vos rendez-vous dans différents secteurs (beauté, restauration et hébergement).
               </p>
             </div>
 

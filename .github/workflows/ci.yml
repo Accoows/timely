@@ -3,13 +3,13 @@ name: Continuous Integration (CI)
 on:
   push:
     branches:
-      - '**' # Déclenche la CI sur n'importe quelle branche poussée
+      - "**" # Déclenche la CI sur n'importe quelle branche poussée
   pull_request:
     branches:
-      - '**' # Déclenche la CI sur n'importe quelle PR
+      - "**" # Déclenche la CI sur n'importe quelle PR
 
 jobs:
-  # 1. Vérification et compilation du Frontend
+  # Vérification et compilation du Frontend
   frontend-check:
     name: Frontend (React & TypeScript)
     runs-on: ubuntu-latest
@@ -22,7 +22,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: 'npm'
+          cache: "npm"
           cache-dependency-path: frontend/package-lock.json
 
       - name: Install Dependencies
@@ -35,7 +35,7 @@ jobs:
           cd frontend
           npm run build
 
-  # 2. Vérification et tests du Backend Django
+  # Vérification et tests du Backend Django
   backend-check:
     name: Backend (Django & PostgreSQL)
     runs-on: ubuntu-latest
@@ -63,8 +63,8 @@ jobs:
       - name: Setup Python (3.11)
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
-          cache: 'pip'
+          python-version: "3.11"
+          cache: "pip"
           cache-dependency-path: backend/requirements.txt
 
       - name: Install Dependencies
@@ -74,8 +74,8 @@ jobs:
 
       - name: Django Configuration Check
         env:
-          DEBUG: 'False'
-          SECRET_KEY: 'ci-secret-key-for-django-check-and-tests-runs'
+          DEBUG: "False"
+          SECRET_KEY: "ci-secret-key-for-django-check-and-tests-runs"
           POSTGRES_DB: timely_db
           POSTGRES_USER: timely_user
           POSTGRES_PASSWORD: AZEqsd123!
@@ -86,8 +86,8 @@ jobs:
 
       - name: Run Django Tests
         env:
-          DEBUG: 'False'
-          SECRET_KEY: 'ci-secret-key-for-django-check-and-tests-runs'
+          DEBUG: "False"
+          SECRET_KEY: "ci-secret-key-for-django-check-and-tests-runs"
           POSTGRES_DB: timely_db
           POSTGRES_USER: timely_user
           POSTGRES_PASSWORD: AZEqsd123!

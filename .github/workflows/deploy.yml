@@ -7,7 +7,7 @@ on:
 jobs:
   deploy:
     name: Deploy Application
-    runs-on: self-hosted # Exécute le déploiement directement sur votre VM Debian
+    runs-on: self-hosted # Exécute le déploiement directement la VM Debian
 
     steps:
       - name: Checkout Code
@@ -18,11 +18,11 @@ jobs:
           echo "Démarrage du déploiement..."
           # Aller dans le dossier du projet sur la VM (remplacez ~/timely par votre chemin exact si nécessaire)
           cd ~/timely
-          
+
           # Tirer le dernier code de la branche prod
           git pull origin prod
-          
+
           # Recompiler et relancer la stack
           docker compose -f docker-compose.prod.yml up --build -d
-          
+
           echo "Déploiement terminé avec succès !"
