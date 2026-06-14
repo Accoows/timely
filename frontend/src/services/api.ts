@@ -1,4 +1,5 @@
 import type { Etablissement, Booking, User, Secteur, UserRole, Lieu } from '../types';
+import * as mockData from './mockData';
 
 export class ApiError extends Error {
   status: number;
@@ -45,52 +46,6 @@ async function request<T>(url: string, options?: RequestInit): Promise<T> {
   return response.json() as Promise<T>;
 }
 
-// MOCKS / DONNÉES TEMPORAIRES (si le backend est éteint)
-const MOCK_ESTABLISHMENTS: Etablissement[] = [
-  {
-    id: 1,
-    name: 'Le Bistrot Gourmet',
-    category: 'restaurant',
-    address: '8 Rue des Dames, Lyon',
-    rating: '4.9',
-    image: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=600&q=80',
-    badge: 'Restaurant'
-  },
-  {
-    id: 2,
-    name: "Hôtel & Spa L'Horizon",
-    category: 'hotel',
-    address: 'Promenade des Anglais, Nice',
-    rating: '4.7',
-    image: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=600&q=80',
-    badge: 'Hôtel'
-  },
-  {
-    id: 3,
-    name: "L'Atelier Coiffure & Barbe",
-    category: 'beauty',
-    address: '21 Boulevard Saint-Germain, Paris',
-    rating: '4.9',
-    image: 'https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=600&q=80',
-    badge: 'Beauté'
-  }
-];
-
-const MOCK_BOOKINGS: Booking[] = [
-  {
-    id: 1,
-    establishment_name: 'Le Bistrot Gourmet',
-    booking_date: '12/06/2026 à 20:00',
-    status: 'success'
-  },
-  {
-    id: 2,
-    establishment_name: "L'Atelier Coiffure & Barbe",
-    booking_date: '15/06/2026 à 14:30',
-    status: 'pending'
-  }
-];
-
 const getEstablishmentImage = (sectorName?: string) => {
   if (sectorName === 'Coiffure') return 'https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=600&q=80';
   if (sectorName === 'Barbier') return 'https://images.unsplash.com/photo-1503951914875-452162b0f3f1?auto=format&fit=crop&w=600&q=80';
@@ -115,6 +70,39 @@ function mapBackendEtablissement(est: Etablissement): Etablissement {
   };
 }
 
+interface BackendBooking {
+  id: number;
+  date_heure: string;
+  duree: number;
+  status: string;
+  establishment_name: string;
+  prestation: {
+    id: number;
+    nom: string;
+    cout: string;
+    description: string;
+  };
+  professionnel: {
+    id: number;
+    nom: string;
+    prenom: string;
+    poste: string;
+  };
+}
+
+function mapBackendBooking(b: BackendBooking): Booking {
+  const dateObj = new Date(b.date_heure);
+  const formattedDate = !isNaN(dateObj.getTime())
+    ? `${String(dateObj.getDate()).padStart(2, '0')}/${String(dateObj.getMonth() + 1).padStart(2, '0')}/${dateObj.getFullYear()} à ${String(dateObj.getHours()).padStart(2, '0')}:${String(dateObj.getMinutes()).padStart(2, '0')}`
+    : b.date_heure;
+  return {
+    id: b.id,
+    establishment_name: b.establishment_name,
+    booking_date: formattedDate,
+    status: b.status === 'confirme' ? 'success' : b.status === 'pending' ? 'pending' : 'cancelled'
+  };
+}
+
 // SERVICES MÉTIERS EXPORTÉS
 export const api = {
   establishments: {
@@ -130,10 +118,11 @@ export const api = {
           };
         });
       } catch (error) {
+        if (!mockData.ENABLE_MOCKS) throw error;
         console.warn('API populaire indisponible, chargement des fausses données.', error);
         return category === 'all' 
-          ? MOCK_ESTABLISHMENTS 
-          : MOCK_ESTABLISHMENTS.filter(e => e.category === category);
+          ? mockData.MOCK_ESTABLISHMENTS 
+          : mockData.MOCK_ESTABLISHMENTS.filter(e => e.category === category);
       }
     },
     explore: async (filters: { 
@@ -158,8 +147,9 @@ export const api = {
         const response = await request<{ status: string; establishments: Etablissement[] }>(url);
         return response.establishments.map(mapBackendEtablissement);
       } catch (error) {
+        if (!mockData.ENABLE_MOCKS) throw error;
         console.warn('API explore indisponible, repli sur explore local.', error);
-        let results = MOCK_ESTABLISHMENTS;
+        let results = mockData.MOCK_ESTABLISHMENTS;
         if (filters.sector) {
           results = results.filter(e => e.category === filters.sector || e.badge === filters.sector);
         }
@@ -196,13 +186,9 @@ export const api = {
         const response = await request<{ status: string; sectors: Secteur[] }>('/api/establishments/sectors/');
         return response.sectors;
       } catch (error) {
+        if (!mockData.ENABLE_MOCKS) throw error;
         console.warn('API sectors indisponible, chargement des faux secteurs.', error);
-        return [
-          { id: 1, nom: 'Coiffure' },
-          { id: 2, nom: 'Beauté & Soins' },
-          { id: 3, nom: 'Massage & Bien-être' },
-          { id: 4, nom: 'Barbier' }
-        ];
+        return mockData.MOCK_SECTORS;
       }
     }
   },
@@ -217,14 +203,9 @@ export const api = {
         const response = await request<{ status: string; locations: Lieu[] }>(url);
         return response.locations;
       } catch (error) {
+        if (!mockData.ENABLE_MOCKS) throw error;
         console.warn('API locations indisponible, chargement des faux lieux.', error);
-        return [
-          { id: 1, adresse: '8 Rue des Dames', ville: 'Lyon', code_postal: '69006', region: 'Auvergne-Rhône-Alpes' },
-          { id: 2, adresse: '12 Rue de la Paix', ville: 'Paris', code_postal: '75002', region: 'Île-de-France' },
-          { id: 3, adresse: '21 Boulevard Saint-Germain', ville: 'Paris', code_postal: '75005', region: 'Île-de-France' },
-          { id: 4, adresse: '101 Rue Saint-Ferréol', ville: 'Marseille', code_postal: '13006', region: "Provence-Alpes-Côte d'Azur" },
-          { id: 5, adresse: 'Promenade des Anglais', ville: 'Nice', code_postal: '06000', region: "Provence-Alpes-Côte d'Azur" }
-        ];
+        return mockData.MOCK_LOCATIONS;
       }
     }
   },
@@ -232,10 +213,12 @@ export const api = {
   bookings: {
     list: async (): Promise<Booking[]> => {
       try {
-        return await request<Booking[]>('/api/bookings/');
+        const rawBookings = await request<BackendBooking[]>('/api/bookings/');
+        return rawBookings.map(mapBackendBooking);
       } catch (error) {
+        if (!mockData.ENABLE_MOCKS) throw error;
         console.warn('API réservations indisponible, chargement des fausses données.', error);
-        return MOCK_BOOKINGS;
+        return mockData.MOCK_BOOKINGS;
       }
     },
     create: async (bookingData: Omit<Booking, 'id'>): Promise<Booking> => {
@@ -245,6 +228,7 @@ export const api = {
           body: JSON.stringify(bookingData)
         });
       } catch (error) {
+        if (!mockData.ENABLE_MOCKS) throw error;
         console.warn('Création API impossible, simulation locale.', error);
         const newBooking: Booking = {
           id: Math.floor(Math.random() * 1000),
@@ -252,6 +236,31 @@ export const api = {
         };
         return newBooking;
       }
+    }
+  },
+
+  favorites: {
+    list: async (): Promise<Etablissement[]> => {
+      try {
+        const response = await request<{ status: string; favorites: Etablissement[] }>('/api/interactions/favorites/');
+        return response.favorites.map(mapBackendEtablissement);
+      } catch (error) {
+        if (!mockData.ENABLE_MOCKS) throw error;
+        console.warn('API favoris indisponible, retour vide.', error);
+        return [];
+      }
+    },
+    add: async (establishmentId: number): Promise<void> => {
+      await request('/api/interactions/favorites/', {
+        method: 'POST',
+        body: JSON.stringify({ etablissement_id: establishmentId })
+      });
+    },
+    remove: async (establishmentId: number): Promise<void> => {
+      await request('/api/interactions/favorites/', {
+        method: 'DELETE',
+        body: JSON.stringify({ etablissement_id: establishmentId })
+      });
     }
   },
 
@@ -286,25 +295,13 @@ export const api = {
           throw error;
         }
 
+        if (!mockData.ENABLE_MOCKS) throw error;
+
         // Mock de connexion si le serveur est coupé
         if (email === 'admin') {
-          return {
-            id: 1,
-            username: 'admin',
-            email: 'admin@timely.fr',
-            first_name: 'Sarah',
-            last_name: 'Gérant',
-            role: 'gerant'
-          };
+          return mockData.MOCK_ADMIN_USER;
         }
-        return {
-          id: 2,
-          username: email || 'client_test',
-          email: `${email || 'client'}@example.com`,
-          first_name: 'Utilisateur',
-          last_name: 'Test',
-          role: 'client'
-        };
+        return mockData.getMockClientUser(email);
       }
     },
     register: async (email: string, password_raw: string, firstname: string, lastname: string): Promise<{ status: string; message: string }> => {

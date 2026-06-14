@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
+import { api } from '../../services/api';
 import Button from '../../components/Button';
 import ProfileTab from './components/ProfileTab';
 import BookingsTab from './components/BookingsTab';
@@ -25,7 +26,7 @@ export default function ProfilePage({ onNavigate }: ProfilePageProps) {
   const [activeTab, setActiveTab] = useState<'profile' | 'bookings' | 'favorites' | 'invoices'>('profile');
   
   const [error, setError] = useState('');
-  const [bookings] = useState<BookingSeed[]>(PROFILE_SEED_ENABLED ? BOOKINGS_SEED : []);
+  const [bookings, setBookings] = useState<BookingSeed[]>(PROFILE_SEED_ENABLED ? BOOKINGS_SEED : []);
   const [favorites, setFavorites] = useState<FavoriteSeed[]>(PROFILE_SEED_ENABLED ? FAVORITES_SEED : []);
   const [invoices] = useState<InvoiceSeed[]>(PROFILE_SEED_ENABLED ? INVOICES_SEED : []);
 
@@ -35,6 +36,31 @@ export default function ProfilePage({ onNavigate }: ProfilePageProps) {
       onNavigate('login');
     }
   }, [user, onNavigate]);
+
+  // Load real API bookings and favorites
+  useEffect(() => {
+    if (!user) return;
+
+    if (activeTab === 'bookings') {
+      api.bookings.list()
+        .then(data => {
+          setBookings(data as BookingSeed[]);
+        })
+        .catch(err => {
+          console.error("Error fetching bookings:", err);
+          setError("Impossible de charger vos rendez-vous.");
+        });
+    } else if (activeTab === 'favorites') {
+      api.favorites.list()
+        .then(data => {
+          setFavorites(data as FavoriteSeed[]);
+        })
+        .catch(err => {
+          console.error("Error fetching favorites:", err);
+          setError("Impossible de charger vos favoris.");
+        });
+    }
+  }, [user, activeTab]);
 
   if (!user) return null;
 
@@ -47,8 +73,14 @@ export default function ProfilePage({ onNavigate }: ProfilePageProps) {
     }
   };
 
-  const handleRemoveFavorite = (id: number) => {
-    setFavorites(prev => prev.filter(f => f.id !== id));
+  const handleRemoveFavorite = async (id: number) => {
+    try {
+      await api.favorites.remove(id);
+      setFavorites(prev => prev.filter(f => f.id !== id));
+    } catch (err) {
+      console.error("Error removing favorite:", err);
+      setError("Impossible de retirer cet établissement de vos favoris.");
+    }
   };
 
   const menuItems: { id: 'profile' | 'bookings' | 'favorites' | 'invoices'; label: string; icon: React.ReactNode }[] = [
