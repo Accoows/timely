@@ -1,7 +1,9 @@
 from django.views import View
 from django.http import JsonResponse
 from django.db.models import Q
+import json
 from .models import Etablissement, Secteur, Lieu
+from authentication.models import Gerant
 
 class SectorListView(View):
     def get(self, request):
@@ -114,5 +116,90 @@ class EstablishmentDetailView(View):
 class ServiceListView(View):
     def get(self, request, id):
         return JsonResponse({"message": f"Service list placeholder for establishment id {id}"}, status=200)
+
+
+class RegisterEstablishmentView(View):
+    def post(self, request):
+        if not request.user.is_authenticated:
+            return JsonResponse({"error": "Non authentifié"}, status=401)
+            
+        try:
+            data = json.loads(request.body)
+            nom = data.get('nom')
+            siret = data.get('siret')
+            adresse = data.get('adresse')
+            telephone = data.get('telephone')
+            mail = data.get('mail')
+            description = data.get('description', '')
+            category = data.get('category')  # 'beauty', 'restaurant', 'hotel', 'travel'
+            
+            if not nom or not siret or not adresse or not category:
+                return JsonResponse({"error": "Champs nom, siret, adresse et category requis"}, status=400)
+                
+            # Mappage de la catégorie en Secteur
+            secteur_mapping = {
+                'beauty': 'Beauté & Soins',
+                'restaurant': 'Restauration',
+                'hotel': 'Hébergement',
+                'travel': 'Voyages & Transports'
+            }
+            secteur_nom = secteur_mapping.get(category)
+            if not secteur_nom:
+                return JsonResponse({"error": "Catégorie inconnue"}, status=400)
+                
+            # Récupérer ou créer le secteur
+            secteur, _ = Secteur.objects.get_or_create(nom=secteur_nom)
+            ville = "Paris"
+            code_postal = ""
+            adresse_propre = adresse
+            
+            if ',' in adresse:
+                parts = [p.strip() for p in adresse.split(',')]
+                adresse_propre = parts[0]
+                rest = parts[1] if len(parts) > 1 else ""
+                # Extraire le code postal (5 chiffres consécutifs) et la ville
+                import re
+                cp_match = re.search(r'\b\d{5}\b', rest)
+                if cp_match:
+                    code_postal = cp_match.group(0)
+                    ville = rest.replace(code_postal, '').strip()
+                else:
+                    ville = rest.strip()
+            
+            lieu = Lieu.objects.create(
+                adresse=adresse_propre,
+                ville=ville or "Paris",
+                code_postal=code_postal
+            )
+            
+            # Récupérer ou créer le profil Gérant pour l'utilisateur connecté
+            gerant, _ = Gerant.objects.get_or_create(utilisateur=request.user)
+            
+            # Créer l'établissement en statut actif pour les tests
+            etablissement = Etablissement.objects.create(
+                nom=nom,
+                secteur=secteur,
+                lieu=lieu,
+                gerant=gerant,
+                description=description,
+                telephone=telephone,
+                mail=mail,
+                status="actif"
+            )
+            
+            return JsonResponse({
+                "status": "success",
+                "message": "Établissement enregistré avec succès et profil gérant activé !",
+                "establishment": {
+                    "id": etablissement.id,
+                    "nom": etablissement.nom,
+                    "siret": siret,
+                    "status": etablissement.status
+                }
+            }, status=201)
+            
+        except Exception as e:
+            return JsonResponse({"error": str(e)}, status=400)
+
 
 

@@ -11,6 +11,9 @@ urlpatterns = [
     # URL finale : /api/establishments/locations/
     path('locations/', views.LocationListView.as_view(), name='location_list'),
     
+    # URL finale : /api/establishments/register/
+    path('register/', views.RegisterEstablishmentView.as_view(), name='establishment_register'),
+    
     # URL finale : /api/establishments/<id>/ (ex: /api/establishments/4/)
     path('<int:id>/', views.EstablishmentDetailView.as_view(), name='establishment_detail'),
     
