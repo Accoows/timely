@@ -26,6 +26,13 @@ class Etablissement(models.Model):
     mail = models.EmailField(blank=True, null=True)
     status = models.CharField(max_length=50, default="actif")
     site_web = models.URLField(blank=True, null=True)
+    note_globale = models.DecimalField(max_digits=2, decimal_places=1, default=4.7)
+    note_accueil = models.DecimalField(max_digits=2, decimal_places=1, default=4.7)
+    note_proprete = models.DecimalField(max_digits=2, decimal_places=1, default=4.7)
+    note_cadre = models.DecimalField(max_digits=2, decimal_places=1, default=4.7)
+    note_prestation = models.DecimalField(max_digits=2, decimal_places=1, default=4.7)
+    nombre_avis = models.PositiveIntegerField(default=0)
+    horaires = models.JSONField(blank=True, null=True)
 
     def __str__(self):
         return self.nom

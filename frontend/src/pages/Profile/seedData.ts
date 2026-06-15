@@ -1,4 +1,4 @@
-export const PROFILE_SEED_ENABLED = true; // Changez à false pour masquer le seed et tester les états vides !
+export const PROFILE_SEED_ENABLED = false; // Changez à false pour masquer le seed et tester les états vides !
 
 export interface FavoriteSeed {
   id: number;

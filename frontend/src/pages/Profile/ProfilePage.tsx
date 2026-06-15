@@ -5,7 +5,9 @@ import Button from '../../components/Button';
 import ProfileTab from './components/ProfileTab';
 import BookingsTab from './components/BookingsTab';
 import FavoritesTab from './components/FavoritesTab';
+import MessagesTab from './components/MessagesTab';
 import InvoicesTab from './components/InvoicesTab';
+import ReviewsTab from './components/ReviewsTab';
 import Alert from '../../components/Alert';
 import {
   PROFILE_SEED_ENABLED,
@@ -23,7 +25,7 @@ interface ProfilePageProps {
 
 export default function ProfilePage({ onNavigate }: ProfilePageProps) {
   const { user, updateUser, logout } = useAuth();
-  const [activeTab, setActiveTab] = useState<'profile' | 'bookings' | 'favorites' | 'invoices'>('profile');
+  const [activeTab, setActiveTab] = useState<'profile' | 'bookings' | 'favorites' | 'messages' | 'invoices' | 'reviews'>('profile');
   
   const [error, setError] = useState('');
   const [bookings, setBookings] = useState<BookingSeed[]>(PROFILE_SEED_ENABLED ? BOOKINGS_SEED : []);
@@ -83,7 +85,7 @@ export default function ProfilePage({ onNavigate }: ProfilePageProps) {
     }
   };
 
-  const menuItems: { id: 'profile' | 'bookings' | 'favorites' | 'invoices'; label: string; icon: React.ReactNode }[] = [
+  const menuItems: { id: 'profile' | 'bookings' | 'favorites' | 'messages' | 'invoices' | 'reviews'; label: string; icon: React.ReactNode }[] = [
     { id: 'profile', label: 'Mon compte', icon: (
       <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
@@ -99,9 +101,19 @@ export default function ProfilePage({ onNavigate }: ProfilePageProps) {
         <path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z" />
       </svg>
     )},
+    { id: 'messages', label: 'Mes messages', icon: (
+      <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M20.25 8.511c.007-.018.01-.037.01-.057V5.25A2.25 2.25 0 0 0 18 3H6A2.25 2.25 0 0 0 3.75 5.25v11.25A2.25 2.25 0 0 0 6 18.75h3.03l4.58 3.61a.75.75 0 0 0 1.22-.58v-3.03h3.19a2.25 2.25 0 0 0 2.24-2.09l.02-8.12a.748.748 0 0 0-.02-.12Z" />
+      </svg>
+    )},
     { id: 'invoices', label: 'Mes factures', icon: (
       <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
+      </svg>
+    )},
+    { id: 'reviews', label: 'Mes avis', icon: (
+      <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M8.625 12a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H8.25m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H12m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 0 1-2.555-.337A5.972 5.972 0 0 1 5.41 20.97a.75.75 0 0 1-1.074-.765 5.99 5.99 0 0 1 1.523-3.078C4.504 15.742 3 13.999 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25Z" />
       </svg>
     )}
   ];
@@ -169,7 +181,9 @@ export default function ProfilePage({ onNavigate }: ProfilePageProps) {
           {activeTab === 'profile' && <ProfileTab user={user} updateUser={updateUser} />}
           {activeTab === 'bookings' && <BookingsTab bookings={bookings} onNavigate={onNavigate} />}
           {activeTab === 'favorites' && <FavoritesTab favorites={favorites} onRemoveFavorite={handleRemoveFavorite} onNavigate={onNavigate} />}
+          {activeTab === 'messages' && <MessagesTab onNavigate={onNavigate} />}
           {activeTab === 'invoices' && <InvoicesTab invoices={invoices} onNavigate={onNavigate} />}
+          {activeTab === 'reviews' && <ReviewsTab onNavigate={onNavigate} />}
         </main>
       </div>
     </div>

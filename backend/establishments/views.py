@@ -79,7 +79,9 @@ class ExploreListView(View):
                 "secteur": {
                     "id": etablissement.secteur.id,
                     "nom": etablissement.secteur.nom
-                } if etablissement.secteur else None
+                } if etablissement.secteur else None,
+                "note_globale": float(etablissement.note_globale),
+                "photos": [p.url_photo for p in etablissement.photos.all()]
             })
 
         return JsonResponse({"status": "success", "establishments": data}, status=200)
@@ -88,9 +90,42 @@ class EstablishmentDetailView(View):
     def get(self, request, id):
         try:
             etablissement = Etablissement.objects.get(id=id)
+            
+            prestations = []
+            for prest in etablissement.prestations.all():
+                prestations.append({
+                    "id": prest.id,
+                    "nom": prest.nom,
+                    "cout": float(prest.cout),
+                    "description": prest.description or ""
+                })
+
+            collaborateurs = []
+            for col in etablissement.collaborateurs.all():
+                collaborateurs.append({
+                    "id": col.id,
+                    "nom": col.utilisateur.last_name,
+                    "prenom": col.utilisateur.first_name,
+                    "poste": col.poste,
+                    "description": col.description or ""
+                })
+
+            photos = [p.url_photo for p in etablissement.photos.all()]
+
             data = {
                 "id": etablissement.id,
                 "nom": etablissement.nom,
+                "description": etablissement.description or "",
+                "telephone": etablissement.telephone or "",
+                "mail": etablissement.mail or "",
+                "site_web": etablissement.site_web or "",
+                "note_globale": float(etablissement.note_globale),
+                "note_accueil": float(etablissement.note_accueil),
+                "note_proprete": float(etablissement.note_proprete),
+                "note_cadre": float(etablissement.note_cadre),
+                "note_prestation": float(etablissement.note_prestation),
+                "nombre_avis": etablissement.nombre_avis,
+                "horaires": etablissement.horaires,
                 "lieu": {
                     "id": etablissement.lieu.id,
                     "adresse": etablissement.lieu.adresse,
@@ -107,7 +142,10 @@ class EstablishmentDetailView(View):
                     "prenom": etablissement.gerant.utilisateur.first_name,
                     "nom": etablissement.gerant.utilisateur.last_name,
                     "email": etablissement.gerant.utilisateur.email
-                } if etablissement.gerant else None
+                } if etablissement.gerant else None,
+                "prestations": prestations,
+                "collaborateurs": collaborateurs,
+                "photos": photos
             }
             return JsonResponse({"status": "success", "establishment": data}, status=200)
         except Etablissement.DoesNotExist:

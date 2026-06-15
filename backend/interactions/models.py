@@ -20,6 +20,7 @@ class Avis(models.Model):
     client = models.ForeignKey(Client, on_delete=models.CASCADE, related_name='avis')
     etablissement = models.ForeignKey(Etablissement, on_delete=models.CASCADE, related_name='avis_recus')
     message = models.TextField()
+    note = models.IntegerField(default=5, choices=[(i, str(i)) for i in range(1, 6)])
     date_envoie = models.DateTimeField(auto_now_add=True)
 
     class Meta:

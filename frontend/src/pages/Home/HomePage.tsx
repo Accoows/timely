@@ -13,7 +13,11 @@ const CATEGORIES = [
   { id: 'travel', label: 'Voyages', filterVal: 'travel' }
 ];
 
-export default function HomePage() {
+interface HomePageProps {
+  onNavigate: (page: string) => void;
+}
+
+export default function HomePage({ onNavigate }: HomePageProps) {
   const [activeCategory, setActiveCategory] = useState('all');
   const [establishments, setEstablishments] = useState<Etablissement[]>([]);
   const [loading, setLoading] = useState(true);
@@ -158,6 +162,7 @@ export default function HomePage() {
                 badge={est.badge || ''}
                 address={est.address || ''}
                 rating={est.rating || '4.8'}
+                onClick={() => onNavigate(`establishment/${est.id}`)}
               />
             ))
           )}

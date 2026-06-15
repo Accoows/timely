@@ -103,6 +103,23 @@ class LeaveReviewView(View):
     def get(self, request):
         etablissement_id = request.GET.get('etablissement_id')
         if not etablissement_id:
+            if request.user.is_authenticated:
+                client = getattr(request.user, 'profil_client', None)
+                if client:
+                    reviews = Avis.objects.filter(client=client).select_related('etablissement')
+                    data = []
+                    for r in reviews:
+                        data.append({
+                            "id": r.id,
+                            "etablissement": {
+                                "id": r.etablissement.id,
+                                "nom": r.etablissement.nom
+                            },
+                            "message": r.message,
+                            "note": r.note,
+                            "date_envoie": r.date_envoie.isoformat()
+                        })
+                    return JsonResponse({"status": "success", "reviews": data}, status=200)
             return JsonResponse({"error": "Paramètre etablissement_id manquant"}, status=400)
             
         reviews = Avis.objects.filter(etablissement_id=etablissement_id).select_related('client', 'client__utilisateur')
@@ -117,6 +134,7 @@ class LeaveReviewView(View):
                     "email": r.client.utilisateur.email
                 },
                 "message": r.message,
+                "note": r.note,
                 "date_envoie": r.date_envoie.isoformat()
             })
         return JsonResponse({"status": "success", "reviews": data}, status=200)
@@ -133,6 +151,7 @@ class LeaveReviewView(View):
             data = json.loads(request.body)
             etablissement_id = data.get('etablissement_id')
             message = data.get('message')
+            note = data.get('note', 5)
             
             if not etablissement_id or not message:
                 return JsonResponse({"error": "Champs etablissement_id et message requis"}, status=400)
@@ -145,7 +164,8 @@ class LeaveReviewView(View):
             avis = Avis.objects.create(
                 client=client,
                 etablissement=etablissement,
-                message=message
+                message=message,
+                note=int(note)
             )
             
             return JsonResponse({
@@ -154,6 +174,7 @@ class LeaveReviewView(View):
                 "review": {
                     "id": avis.id,
                     "message": avis.message,
+                    "note": avis.note,
                     "date_envoie": avis.date_envoie.isoformat()
                 }
             }, status=201)
@@ -184,6 +205,7 @@ class AdminReviewModerationView(View):
                     "email": r.client.utilisateur.email
                 },
                 "message": r.message,
+                "note": r.note,
                 "date_envoie": r.date_envoie.isoformat()
             })
         return JsonResponse({"status": "success", "reviews": data}, status=200)

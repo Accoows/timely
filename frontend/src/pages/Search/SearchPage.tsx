@@ -9,7 +9,11 @@ import EmptyState from '../../components/EmptyState';
 
 import { SECTOR_IMAGES, DEFAULT_IMAGE } from './seedData';
 
-export default function SearchPage() {
+interface SearchPageProps {
+  onNavigate: (page: string) => void;
+}
+
+export default function SearchPage({ onNavigate }: SearchPageProps) {
   const [sectors, setSectors] = useState<Secteur[]>([]);
   const [locations, setLocations] = useState<Lieu[]>([]);
   const [establishments, setEstablishments] = useState<Etablissement[]>([]);
@@ -456,7 +460,7 @@ export default function SearchPage() {
                             fullWidth
                             size="sm"
                             className="mt-auto"
-                            onClick={() => alert(`Prestation de ${est.name || est.nom} réservée avec succès !`)}
+                            onClick={() => onNavigate(`establishment/${est.id}`)}
                           >
                             Réserver un créneau
                           </Button>
@@ -654,7 +658,7 @@ export default function SearchPage() {
                                 fullWidth
                                 size="sm"
                                 className="mt-auto"
-                                onClick={() => alert(`Prestation de ${est.name || est.nom} réservée avec succès !`)}
+                                onClick={() => onNavigate(`establishment/${est.id}`)}
                               >
                                 Réserver un créneau
                               </Button>

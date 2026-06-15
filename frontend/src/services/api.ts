@@ -1,5 +1,4 @@
-import type { Etablissement, Booking, User, Secteur, UserRole, Lieu } from '../types';
-import * as mockData from './mockData';
+import type { Etablissement, Booking, BookingInput, User, Secteur, UserRole, Lieu, Discussion, Message, Review } from '../types';
 
 export class ApiError extends Error {
   status: number;
@@ -17,7 +16,7 @@ function getCookie(name: string): string | null {
   return null;
 }
 
-// Helper générique pour les requêtes HTTP
+// Generic HTTP request helper
 async function request<T>(url: string, options?: RequestInit): Promise<T> {
   const headers = new Headers(options?.headers);
   if (!headers.has('Content-Type')) {
@@ -38,7 +37,6 @@ async function request<T>(url: string, options?: RequestInit): Promise<T> {
     throw new ApiError(response.status, `Erreur API: ${response.status} ${response.statusText}`);
   }
 
-  // Si pas de contenu (ex: 204 No Content), renvoyer vide
   if (response.status === 204) {
     return {} as T;
   }
@@ -59,14 +57,15 @@ const getEstablishmentImage = (sectorName?: string) => {
 
 function mapBackendEtablissement(est: Etablissement): Etablissement {
   const sectorName = est.secteur?.nom || '';
+  const firstPhoto = est.photos && est.photos.length > 0 ? est.photos[0] : null;
   return {
     ...est,
     name: est.nom,
     category: sectorName,
     badge: sectorName,
     address: est.lieu ? `${est.lieu.adresse}, ${est.lieu.ville}` : '',
-    rating: (4.5 + (est.id % 5) / 10).toFixed(1),
-    image: getEstablishmentImage(sectorName)
+    rating: est.note_globale !== undefined ? est.note_globale.toFixed(1) : (4.5 + (est.id % 5) / 10).toFixed(1),
+    image: firstPhoto || getEstablishmentImage(sectorName)
   };
 }
 
@@ -103,27 +102,21 @@ function mapBackendBooking(b: BackendBooking): Booking {
   };
 }
 
-// SERVICES MÉTIERS EXPORTÉS
 export const api = {
   establishments: {
     getPopular: async (category: string = 'all'): Promise<Etablissement[]> => {
-      try {
-        const data = await request<Etablissement[]>(`/api/popular-filter/?category=${category}`);
-        // Corriger les chemins d'images relatifs en absolus/statiques si besoin
-        return data.map(est => {
-          const img = est.image || '';
-          return {
-            ...est,
-            image: img.startsWith('http') ? img : img ? `/static/${img}` : undefined
-          };
-        });
-      } catch (error) {
-        if (!mockData.ENABLE_MOCKS) throw error;
-        console.warn('API populaire indisponible, chargement des fausses données.', error);
-        return category === 'all' 
-          ? mockData.MOCK_ESTABLISHMENTS 
-          : mockData.MOCK_ESTABLISHMENTS.filter(e => e.category === category);
-      }
+      const data = await request<Etablissement[]>(`/api/popular-filter/?category=${category}`);
+      return data.map(est => {
+        const img = est.image || '';
+        return {
+          ...est,
+          image: img.startsWith('http') ? img : img ? `/static/${img}` : undefined
+        };
+      });
+    },
+    getById: async (id: number): Promise<Etablissement> => {
+      const response = await request<{ status: string; establishment: Etablissement }>(`/api/establishments/${id}/`);
+      return mapBackendEtablissement(response.establishment);
     },
     explore: async (filters: { 
       query?: string; 
@@ -133,122 +126,63 @@ export const api = {
       min_rating?: number | null;
       sub_category?: string | null;
     } = {}): Promise<Etablissement[]> => {
-      try {
-        const params = new URLSearchParams();
-        if (filters.query) params.append('query', filters.query);
-        if (filters.location) params.append('location', filters.location);
-        if (filters.sector) params.append('sector', String(filters.sector));
-        if (filters.sort && filters.sort !== 'default') params.append('sort', filters.sort);
-        if (filters.min_rating) params.append('min_rating', String(filters.min_rating));
-        if (filters.sub_category) params.append('sub_category', filters.sub_category);
-        
-        const queryString = params.toString();
-        const url = `/api/establishments/explore/${queryString ? `?${queryString}` : ''}`;
-        const response = await request<{ status: string; establishments: Etablissement[] }>(url);
-        return response.establishments.map(mapBackendEtablissement);
-      } catch (error) {
-        if (!mockData.ENABLE_MOCKS) throw error;
-        console.warn('API explore indisponible, repli sur explore local.', error);
-        let results = mockData.MOCK_ESTABLISHMENTS;
-        if (filters.sector) {
-          results = results.filter(e => e.category === filters.sector || e.badge === filters.sector);
-        }
-        if (filters.query) {
-          results = results.filter(e => (e.name || '').toLowerCase().includes(filters.query!.toLowerCase()));
-        }
-        if (filters.location) {
-          results = results.filter(e => (e.address || '').toLowerCase().includes(filters.location!.toLowerCase()));
-        }
-        if (filters.min_rating) {
-          results = results.filter(e => {
-            const r = parseFloat(e.rating || '0');
-            return !isNaN(r) && r >= filters.min_rating!;
-          });
-        }
-        if (filters.sub_category) {
-          results = results.filter(e => (e.badge || e.category || '').toLowerCase() === filters.sub_category!.toLowerCase());
-        }
-        if (filters.sort === 'rating') {
-          results = [...results].sort((a, b) => {
-            const rA = parseFloat(a.rating || '0');
-            const rB = parseFloat(b.rating || '0');
-            return rB - rA;
-          });
-        }
-        return results;
-      }
+      const params = new URLSearchParams();
+      if (filters.query) params.append('query', filters.query);
+      if (filters.location) params.append('location', filters.location);
+      if (filters.sector) params.append('sector', String(filters.sector));
+      if (filters.sort && filters.sort !== 'default') params.append('sort', filters.sort);
+      if (filters.min_rating) params.append('min_rating', String(filters.min_rating));
+      if (filters.sub_category) params.append('sub_category', filters.sub_category);
+      
+      const queryString = params.toString();
+      const url = `/api/establishments/explore/${queryString ? `?${queryString}` : ''}`;
+      const response = await request<{ status: string; establishments: Etablissement[] }>(url);
+      return response.establishments.map(mapBackendEtablissement);
     }
   },
 
   sectors: {
     list: async (): Promise<Secteur[]> => {
-      try {
-        const response = await request<{ status: string; sectors: Secteur[] }>('/api/establishments/sectors/');
-        return response.sectors;
-      } catch (error) {
-        if (!mockData.ENABLE_MOCKS) throw error;
-        console.warn('API sectors indisponible, chargement des faux secteurs.', error);
-        return mockData.MOCK_SECTORS;
-      }
+      const response = await request<{ status: string; sectors: Secteur[] }>('/api/establishments/sectors/');
+      return response.sectors;
     }
   },
 
   locations: {
     list: async (filters: { sector_id?: string | number } = {}): Promise<Lieu[]> => {
-      try {
-        const params = new URLSearchParams();
-        if (filters.sector_id) params.append('sector_id', String(filters.sector_id));
-        const queryString = params.toString();
-        const url = `/api/establishments/locations/${queryString ? `?${queryString}` : ''}`;
-        const response = await request<{ status: string; locations: Lieu[] }>(url);
-        return response.locations;
-      } catch (error) {
-        if (!mockData.ENABLE_MOCKS) throw error;
-        console.warn('API locations indisponible, chargement des faux lieux.', error);
-        return mockData.MOCK_LOCATIONS;
-      }
+      const params = new URLSearchParams();
+      if (filters.sector_id) params.append('sector_id', String(filters.sector_id));
+      const queryString = params.toString();
+      const url = `/api/establishments/locations/${queryString ? `?${queryString}` : ''}`;
+      const response = await request<{ status: string; locations: Lieu[] }>(url);
+      return response.locations;
     }
   },
 
   bookings: {
     list: async (): Promise<Booking[]> => {
-      try {
-        const rawBookings = await request<BackendBooking[]>('/api/bookings/');
-        return rawBookings.map(mapBackendBooking);
-      } catch (error) {
-        if (!mockData.ENABLE_MOCKS) throw error;
-        console.warn('API réservations indisponible, chargement des fausses données.', error);
-        return mockData.MOCK_BOOKINGS;
-      }
+      const rawBookings = await request<BackendBooking[]>('/api/bookings/');
+      return rawBookings.map(mapBackendBooking);
     },
-    create: async (bookingData: Omit<Booking, 'id'>): Promise<Booking> => {
-      try {
-        return await request<Booking>('/api/bookings/', {
-          method: 'POST',
-          body: JSON.stringify(bookingData)
-        });
-      } catch (error) {
-        if (!mockData.ENABLE_MOCKS) throw error;
-        console.warn('Création API impossible, simulation locale.', error);
-        const newBooking: Booking = {
-          id: Math.floor(Math.random() * 1000),
-          ...bookingData
-        };
-        return newBooking;
-      }
+    create: async (bookingData: BookingInput): Promise<Booking> => {
+      const response = await request<{ status: string; booking: BackendBooking }>('/api/bookings/', {
+        method: 'POST',
+        body: JSON.stringify(bookingData)
+      });
+      return mapBackendBooking(response.booking);
+    },
+    getAvailableSlots: async (professionnelId: number, date: string): Promise<{ time: string; available: boolean }[]> => {
+      const response = await request<{ status: string; slots: { time: string; available: boolean }[] }>(
+        `/api/bookings/available-slots/?professionnel_id=${professionnelId}&date=${date}`
+      );
+      return response.slots;
     }
   },
 
   favorites: {
     list: async (): Promise<Etablissement[]> => {
-      try {
-        const response = await request<{ status: string; favorites: Etablissement[] }>('/api/interactions/favorites/');
-        return response.favorites.map(mapBackendEtablissement);
-      } catch (error) {
-        if (!mockData.ENABLE_MOCKS) throw error;
-        console.warn('API favoris indisponible, retour vide.', error);
-        return [];
-      }
+      const response = await request<{ status: string; favorites: Etablissement[] }>('/api/interactions/favorites/');
+      return response.favorites.map(mapBackendEtablissement);
     },
     add: async (establishmentId: number): Promise<void> => {
       await request('/api/interactions/favorites/', {
@@ -264,45 +198,45 @@ export const api = {
     }
   },
 
+  reviews: {
+    listForClient: async (): Promise<Review[]> => {
+      const response = await request<{ status: string; reviews: Review[] }>('/api/interactions/review/');
+      return response.reviews;
+    },
+    listForEstablishment: async (establishmentId: number): Promise<Review[]> => {
+      const response = await request<{ status: string; reviews: Review[] }>(`/api/interactions/review/?etablissement_id=${establishmentId}`);
+      return response.reviews;
+    },
+    add: async (establishmentId: number, message: string, note: number = 5): Promise<Review> => {
+      const response = await request<{ status: string; message: string; review: Review }>('/api/interactions/review/', {
+        method: 'POST',
+        body: JSON.stringify({ etablissement_id: establishmentId, message, note })
+      });
+      return response.review;
+    }
+  },
+
   auth: {
     getCurrentUser: async (): Promise<User | null> => {
       try {
         return await request<User>('/api/auth/user/');
       } catch {
-        // En développement local sans backend connecté, on simule aucun utilisateur connecté par défaut
         return null;
       }
     },
     login: async (email: string, password_raw: string): Promise<User> => {
-      // Simulation ou requête réelle
-      try {
-        const response = await request<{ status: string; message: string; user: { id: number; firstname: string; lastname: string; role: UserRole } }>('/api/auth/login/', {
-          method: 'POST',
-          body: JSON.stringify({ email, password: password_raw })
-        });
-        return {
-          id: response.user.id,
-          username: email,
-          email: email,
-          first_name: response.user.firstname,
-          last_name: response.user.lastname,
-          role: response.user.role
-        };
-      } catch (error) {
-        // Si c'est une erreur HTTP explicite du backend (400 ou 401),
-        // on la propage pour que le formulaire de connexion affiche l'erreur.
-        if (error instanceof ApiError && (error.status === 400 || error.status === 401)) {
-          throw error;
-        }
-
-        if (!mockData.ENABLE_MOCKS) throw error;
-
-        // Mock de connexion si le serveur est coupé
-        if (email === 'admin') {
-          return mockData.MOCK_ADMIN_USER;
-        }
-        return mockData.getMockClientUser(email);
-      }
+      const response = await request<{ status: string; message: string; user: { id: number; firstname: string; lastname: string; role: UserRole } }>('/api/auth/login/', {
+        method: 'POST',
+        body: JSON.stringify({ email, password: password_raw })
+      });
+      return {
+        id: response.user.id,
+        username: email,
+        email: email,
+        first_name: response.user.firstname,
+        last_name: response.user.lastname,
+        role: response.user.role
+      };
     },
     register: async (email: string, password_raw: string, firstname: string, lastname: string): Promise<{ status: string; message: string }> => {
       return await request<{ status: string; message: string }>('/api/auth/register/', {
@@ -311,11 +245,7 @@ export const api = {
       });
     },
     logout: async (): Promise<void> => {
-      try {
-        await request<void>('/api/auth/logout/', { method: 'POST' });
-      } catch {
-        console.warn('Déconnexion API impossible, simulation de déconnexion locale.');
-      }
+      await request<void>('/api/auth/logout/', { method: 'POST' });
     },
     updateCurrentUser: async (profileData: { 
       first_name?: string; 
@@ -324,16 +254,30 @@ export const api = {
       old_password?: string;
       new_password?: string;
     }): Promise<User> => {
-      try {
-        return await request<User>('/api/auth/user/', {
-          method: 'PUT',
-          body: JSON.stringify(profileData)
-        });
-      } catch (error) {
-        // En cas de repli sans serveur
-        console.warn('Mise à jour profil impossible, simulation de mise à jour locale.');
-        throw error;
-      }
+      return await request<User>('/api/auth/user/', {
+        method: 'PUT',
+        body: JSON.stringify(profileData)
+      });
+    }
+  },
+  messaging: {
+    listDiscussions: async (): Promise<{ status: string; discussions: Discussion[] }> => {
+      return await request<{ status: string; discussions: Discussion[] }>('/api/messaging/discussions/');
+    },
+    startDiscussion: async (etablissementId: number, nomDiscussion: string = ''): Promise<{ status: string; message: string; discussion: Discussion }> => {
+      return await request<{ status: string; message: string; discussion: Discussion }>('/api/messaging/discussions/', {
+        method: 'POST',
+        body: JSON.stringify({ etablissement_id: etablissementId, nom_discussion: nomDiscussion })
+      });
+    },
+    listMessages: async (discId: number): Promise<{ status: string; messages: Message[] }> => {
+      return await request<{ status: string; messages: Message[] }>(`/api/messaging/discussions/${discId}/messages/`);
+    },
+    sendMessage: async (discId: number, content: string): Promise<{ status: string; message: string; data: { id: number; content: string; created_at: string; sender_id: number } }> => {
+      return await request<{ status: string; message: string; data: { id: number; content: string; created_at: string; sender_id: number } }>(`/api/messaging/discussions/${discId}/messages/`, {
+        method: 'POST',
+        body: JSON.stringify({ content })
+      });
     }
   }
 };
