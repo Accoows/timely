@@ -63,13 +63,13 @@ export default function LoginPage({ onNavigate }: LoginPageProps) {
             placeholder="••••••••"
           />
           <div className="flex justify-end -mt-3">
-            <button
-              type="button"
-              onClick={() => onNavigate('forgot-password')}
+            <a
+              href="/forgot-password"
+              onClick={(e) => { e.preventDefault(); onNavigate('forgot-password'); }}
               className="text-xs font-semibold text-neutral-500 hover:text-neutral-900 transition-colors bg-transparent border-none cursor-pointer focus:outline-none p-0"
             >
               Mot de passe oublié ?
-            </button>
+            </a>
           </div>
 
           <Button
@@ -86,12 +86,13 @@ export default function LoginPage({ onNavigate }: LoginPageProps) {
         <div className="text-center mt-6 pt-6 border-t border-neutral-100">
           <p className="text-sm text-neutral-500">
             Nouveau sur Timely ?{' '}
-            <button
-              onClick={() => onNavigate('register')}
+            <a
+              href="/register"
+              onClick={(e) => { e.preventDefault(); onNavigate('register'); }}
               className="text-neutral-900 font-bold hover:underline bg-transparent border-none cursor-pointer focus:outline-none p-0"
             >
               Créer un compte
-            </button>
+            </a>
           </p>
         </div>
       </div>

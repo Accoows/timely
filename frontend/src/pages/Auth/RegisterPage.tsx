@@ -116,12 +116,13 @@ export default function RegisterPage({ onNavigate }: RegisterPageProps) {
         <div className="text-center mt-6 pt-6 border-t border-neutral-100">
           <p className="text-sm text-neutral-500">
             Déjà inscrit ?{' '}
-            <button
-              onClick={() => onNavigate('login')}
+            <a
+              href="/login"
+              onClick={(e) => { e.preventDefault(); onNavigate('login'); }}
               className="text-neutral-900 font-bold hover:underline bg-transparent border-none cursor-pointer focus:outline-none p-0"
             >
               Se connecter
-            </button>
+            </a>
           </p>
         </div>
       </div>

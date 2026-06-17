@@ -11,9 +11,10 @@ import { SECTOR_IMAGES, DEFAULT_IMAGE } from './seedData';
 
 interface SearchPageProps {
   onNavigate: (page: string) => void;
+  initialCategory?: string;
 }
 
-export default function SearchPage({ onNavigate }: SearchPageProps) {
+export default function SearchPage({ onNavigate, initialCategory }: SearchPageProps) {
   const [sectors, setSectors] = useState<Secteur[]>([]);
   const [locations, setLocations] = useState<Lieu[]>([]);
   const [establishments, setEstablishments] = useState<Etablissement[]>([]);
@@ -48,6 +49,17 @@ export default function SearchPage({ onNavigate }: SearchPageProps) {
       try {
         const sectorList = await api.sectors.list();
         setSectors(sectorList);
+
+        // Preselect sector if provided via props
+        if (initialCategory) {
+          // Attempt exact match or lowercase match
+          const matchedSector = sectorList.find(s => 
+            s.nom === initialCategory || s.nom.toLowerCase() === initialCategory.toLowerCase()
+          );
+          if (matchedSector) {
+            setSelectedSector(matchedSector);
+          }
+        }
       } catch (err) {
         setError('Impossible de charger les secteurs d\'activité.');
         console.error(err);

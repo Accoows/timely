@@ -14,11 +14,21 @@ class LoginView(View):
             email = data.get('email')
             password = data.get('password')
             user = authenticate(username=email, password=password)
+            
+            # Fallback: if username auth fails, try finding the user by email
+            if user is None:
+                try:
+                    user_obj = User.objects.get(email=email)
+                    user = authenticate(username=user_obj.username, password=password)
+                except User.DoesNotExist:
+                    pass
 
             if user is not None:
                 login(request, user) 
                 role = "client"
-                if hasattr(user, 'profil_gerant'):
+                if user.is_superuser:
+                    role = "admin"
+                elif hasattr(user, 'profil_gerant'):
                     role = "gerant"
                 elif hasattr(user, 'profil_pro'):
                     role = "professionnel"
@@ -110,7 +120,9 @@ class UserView(View):
     def get(self, request):
         if request.user.is_authenticated:
             role = "client"
-            if hasattr(request.user, 'profil_gerant'):
+            if request.user.is_superuser:
+                role = "admin"
+            elif hasattr(request.user, 'profil_gerant'):
                 role = "gerant"
             elif hasattr(request.user, 'profil_pro'):
                 role = "professionnel"
@@ -164,7 +176,9 @@ class UserView(View):
                 update_session_auth_hash(request, user)
 
             role = "client"
-            if hasattr(user, 'profil_gerant'):
+            if user.is_superuser:
+                role = "admin"
+            elif hasattr(user, 'profil_gerant'):
                 role = "gerant"
             elif hasattr(user, 'profil_pro'):
                 role = "professionnel"

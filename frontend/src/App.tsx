@@ -11,6 +11,18 @@ import NotFoundPage from './pages/NotFound/NotFoundPage';
 import ProfilePage from './pages/Profile/ProfilePage';
 import SearchPage from './pages/Search/SearchPage';
 
+// Simple placeholder for the admin dashboard
+function AdminDashboard() {
+  return (
+    <div className="flex-1 p-8 bg-neutral-50 flex items-center justify-center">
+      <div className="text-center">
+        <h1 className="text-3xl font-black text-neutral-900 uppercase">Dashboard Administrateur</h1>
+        <p className="text-neutral-500 mt-2">Cet espace est réservé aux administrateurs de la plateforme Timely.</p>
+      </div>
+    </div>
+  );
+}
+
 export default function App() {
   const { user } = useAuth();
   const [selectedEstablishmentId, setSelectedEstablishmentId] = useState<number | null>(() => {
@@ -32,6 +44,7 @@ export default function App() {
     if (path === '/forgot-password') return 'forgot-password';
     if (path === '/register-establishment') return 'register-establishment';
     if (path === '/profile') return 'profile';
+    if (path === '/admin') return 'admin';
     if (path === '/search') return 'search';
     if (path.startsWith('/establishment/')) {
       const parts = path.split('/');
@@ -50,11 +63,22 @@ export default function App() {
       setCurrentPage('establishment-detail');
       window.history.pushState(null, '', `/${page}`);
     } else {
-      setCurrentPage(page);
-      const path = page === 'home' ? '/' : `/${page}`;
+      const pathOnly = page.split('?')[0];
+      setCurrentPage(pathOnly);
+      const path = pathOnly === 'home' ? '/' : `/${page}`;
       window.history.pushState(null, '', path);
     }
   };
+
+  // Remonter en haut de la page lors d'un changement de route
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    // setTimeout fallback for when the new DOM takes a split second to stretch the page
+    const timer = setTimeout(() => {
+      window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    }, 50);
+    return () => clearTimeout(timer);
+  }, [currentPage, selectedEstablishmentId]);
 
   // Écouter les boutons "Précédent" / "Suivant" du navigateur
   useEffect(() => {
@@ -72,6 +96,8 @@ export default function App() {
         setCurrentPage('register-establishment');
       } else if (path === '/profile') {
         setCurrentPage('profile');
+      } else if (path === '/admin') {
+        setCurrentPage('admin');
       } else if (path === '/search') {
         setCurrentPage('search');
       } else if (path.startsWith('/establishment/')) {
@@ -114,9 +140,14 @@ export default function App() {
           <NotFoundPage onNavigateHome={() => handleNavigate('home')} />
         );
       case 'profile':
-        return <ProfilePage key={user?.id || 'profile'} onNavigate={handleNavigate} />;
-      case 'search':
-        return <SearchPage onNavigate={handleNavigate} />;
+        return user ? <ProfilePage onNavigate={handleNavigate} /> : <LoginPage onNavigate={handleNavigate} />;
+      case 'admin':
+        return user && user.role === 'admin' ? <AdminDashboard /> : <NotFoundPage onNavigateHome={() => handleNavigate('home')} />;
+      case 'search': {
+        const params = new URLSearchParams(window.location.search);
+        const category = params.get('category') || undefined;
+        return <SearchPage onNavigate={handleNavigate} initialCategory={category} />;
+      }
       default:
         return <NotFoundPage onNavigateHome={() => handleNavigate('home')} />;
     }

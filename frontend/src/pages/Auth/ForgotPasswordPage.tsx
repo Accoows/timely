@@ -87,13 +87,13 @@ export default function ForgotPasswordPage({ onNavigate }: ForgotPasswordPagePro
             </Button>
 
             <div className="text-center pt-2">
-              <button
-                type="button"
-                onClick={() => onNavigate('login')}
-                className="text-neutral-500 font-semibold hover:text-neutral-900 text-sm bg-transparent border-none cursor-pointer focus:outline-none p-0"
+              <a
+                href="/login"
+                onClick={(e) => { e.preventDefault(); onNavigate('login'); }}
+                className="text-neutral-900 font-bold hover:underline bg-transparent border-none cursor-pointer focus:outline-none p-0"
               >
                 Retour à la connexion
-              </button>
+              </a>
             </div>
           </form>
         )}

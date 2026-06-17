@@ -178,7 +178,7 @@ export default function ProfilePage({ onNavigate }: ProfilePageProps) {
         <main className="w-full lg:w-3/4 bg-white border-2 border-neutral-900 p-6 sm:p-8 rounded-2xl shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]">
           {error && <Alert type="error" message={error} className="mb-6" />}
 
-          {activeTab === 'profile' && <ProfileTab user={user} updateUser={updateUser} />}
+          {activeTab === 'profile' && <ProfileTab user={user} updateUser={updateUser} onNavigate={onNavigate} />}
           {activeTab === 'bookings' && <BookingsTab bookings={bookings} onNavigate={onNavigate} />}
           {activeTab === 'favorites' && <FavoritesTab favorites={favorites} onRemoveFavorite={handleRemoveFavorite} onNavigate={onNavigate} />}
           {activeTab === 'messages' && <MessagesTab onNavigate={onNavigate} />}
