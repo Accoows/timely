@@ -132,3 +132,12 @@ export interface Review {
   note?: number;
   date_envoie: string;
 }
+
+export interface Invoice {
+  id: number;
+  reference: string;
+  establishment_name: string;
+  date: string;
+  amount: string;
+  status: 'success' | 'pending';
+}

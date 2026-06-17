@@ -1,8 +1,8 @@
-import type { InvoiceSeed } from '../seedData';
 import EmptyState from '../../../components/EmptyState';
+import type { Invoice } from '../../../types';
 
 interface InvoicesTabProps {
-  invoices: InvoiceSeed[];
+  invoices: Invoice[];
   onNavigate: (page: string) => void;
 }
 

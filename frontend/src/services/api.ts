@@ -1,4 +1,4 @@
-import type { Etablissement, Booking, BookingInput, User, Secteur, UserRole, Lieu, Discussion, Message, Review } from '../types';
+import type { Etablissement, Booking, BookingInput, User, Secteur, UserRole, Lieu, Discussion, Message, Review, Invoice } from '../types';
 
 export class ApiError extends Error {
   status: number;
@@ -138,6 +138,20 @@ export const api = {
       const url = `/api/establishments/explore/${queryString ? `?${queryString}` : ''}`;
       const response = await request<{ status: string; establishments: Etablissement[] }>(url);
       return response.establishments.map(mapBackendEtablissement);
+    },
+    register: async (data: {
+      nom: string;
+      siret: string;
+      adresse: string;
+      telephone: string;
+      mail: string;
+      description: string;
+      category: string;
+    }): Promise<{ status: string; message: string; establishment: { id: number; nom: string; status: string } }> => {
+      return await request<{ status: string; message: string; establishment: { id: number; nom: string; status: string } }>('/api/establishments/register/', {
+        method: 'POST',
+        body: JSON.stringify(data)
+      });
     }
   },
 
@@ -176,6 +190,16 @@ export const api = {
         `/api/bookings/available-slots/?professionnel_id=${professionnelId}&date=${date}`
       );
       return response.slots;
+    },
+    getInvoices: async (): Promise<Invoice[]> => {
+      // Pour l'instant on retourne n'importe quoi tant que le backend n'a qu'un placeholder
+      // Si le backend repond 200, on recupere le JSON, sinon vide
+      try {
+        const response = await request<{ invoices?: Invoice[] }>('/api/bookings/dashboard/invoices/');
+        return response.invoices || [];
+      } catch {
+        return [];
+      }
     }
   },
 
@@ -237,6 +261,12 @@ export const api = {
         last_name: response.user.lastname,
         role: response.user.role
       };
+    },
+    forgotPassword: async (email: string): Promise<{ status: string; message: string }> => {
+      return await request<{ status: string; message: string }>('/api/auth/forgot-password/', {
+        method: 'POST',
+        body: JSON.stringify({ email })
+      });
     },
     register: async (email: string, password_raw: string, firstname: string, lastname: string): Promise<{ status: string; message: string }> => {
       return await request<{ status: string; message: string }>('/api/auth/register/', {

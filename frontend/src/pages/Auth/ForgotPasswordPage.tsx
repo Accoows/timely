@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import InputField from '../../components/InputField';
 import Button from '../../components/Button';
+import { api } from '../../services/api';
 
 interface ForgotPasswordPageProps {
   onNavigate: (page: string) => void;
@@ -11,15 +12,23 @@ export default function ForgotPasswordPage({ onNavigate }: ForgotPasswordPagePro
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
+  const [error, setError] = useState('');
 
-    // Simulation d'envoi d'e-mail de récupération
-    setTimeout(() => {
-      setLoading(false);
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email) return;
+    setLoading(true);
+    setError('');
+
+    try {
+      await api.auth.forgotPassword(email);
       setSubmitted(true);
-    }, 1000);
+    } catch (err) {
+      console.error(err);
+      setError(err instanceof Error ? err.message : 'Une erreur est survenue.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -53,6 +62,12 @@ export default function ForgotPasswordPage({ onNavigate }: ForgotPasswordPagePro
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-6">
+            {error && (
+              <div className="bg-red-50 text-red-600 p-4 rounded-xl border-2 border-red-200 text-sm font-semibold">
+                {error}
+              </div>
+            )}
+            
             <InputField
               label="Adresse e-mail"
               type="email"

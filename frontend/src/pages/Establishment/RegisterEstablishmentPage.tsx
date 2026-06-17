@@ -1,6 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import InputField from '../../components/InputField';
 import Button from '../../components/Button';
+import { useAuth } from '../../context/AuthContext';
+import { api } from '../../services/api';
 
 interface RegisterEstablishmentPageProps {
   onNavigate: (page: string) => void;
@@ -9,6 +11,14 @@ interface RegisterEstablishmentPageProps {
 type CategoryType = 'beauty' | 'restaurant' | 'hotel' | 'travel';
 
 export default function RegisterEstablishmentPage({ onNavigate }: RegisterEstablishmentPageProps) {
+  const { user } = useAuth();
+
+  useEffect(() => {
+    if (!user) {
+      onNavigate('login');
+    }
+  }, [user, onNavigate]);
+
   const [name, setName] = useState('');
   const [address, setAddress] = useState('');
   const [phone, setPhone] = useState('');
@@ -19,17 +29,31 @@ export default function RegisterEstablishmentPage({ onNavigate }: RegisterEstabl
   
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [error, setError] = useState('');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!category) return;
     setLoading(true);
+    setError('');
 
-    // Simulation d'envoi du formulaire d'établissement
-    setTimeout(() => {
-      setLoading(false);
+    try {
+      await api.establishments.register({
+        nom: name,
+        adresse: address,
+        telephone: phone,
+        mail: email,
+        siret,
+        description,
+        category
+      });
       setSubmitted(true);
-    }, 1500);
+    } catch (err) {
+      console.error(err);
+      setError(err instanceof Error ? err.message : "Une erreur est survenue lors de l'inscription.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const categories = [
@@ -112,6 +136,11 @@ export default function RegisterEstablishmentPage({ onNavigate }: RegisterEstabl
 
 
             <form onSubmit={handleSubmit} className="space-y-8">
+              {error && (
+                <div className="bg-red-50 text-red-600 p-4 rounded-xl border-2 border-red-200 text-sm font-semibold">
+                  {error}
+                </div>
+              )}
               {/* Category Chooser */}
               <div>
                 <label className="block text-xs font-bold text-neutral-700 uppercase tracking-wider mb-4">

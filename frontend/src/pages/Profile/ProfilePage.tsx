@@ -9,15 +9,7 @@ import MessagesTab from './components/MessagesTab';
 import InvoicesTab from './components/InvoicesTab';
 import ReviewsTab from './components/ReviewsTab';
 import Alert from '../../components/Alert';
-import {
-  PROFILE_SEED_ENABLED,
-  FAVORITES_SEED,
-  BOOKINGS_SEED,
-  INVOICES_SEED,
-  type FavoriteSeed,
-  type BookingSeed,
-  type InvoiceSeed
-} from './seedData';
+import type { Booking, Etablissement, Invoice } from '../../types';
 
 interface ProfilePageProps {
   onNavigate: (page: string) => void;
@@ -28,9 +20,9 @@ export default function ProfilePage({ onNavigate }: ProfilePageProps) {
   const [activeTab, setActiveTab] = useState<'profile' | 'bookings' | 'favorites' | 'messages' | 'invoices' | 'reviews'>('profile');
   
   const [error, setError] = useState('');
-  const [bookings, setBookings] = useState<BookingSeed[]>(PROFILE_SEED_ENABLED ? BOOKINGS_SEED : []);
-  const [favorites, setFavorites] = useState<FavoriteSeed[]>(PROFILE_SEED_ENABLED ? FAVORITES_SEED : []);
-  const [invoices] = useState<InvoiceSeed[]>(PROFILE_SEED_ENABLED ? INVOICES_SEED : []);
+  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [favorites, setFavorites] = useState<Etablissement[]>([]);
+  const [invoices, setInvoices] = useState<Invoice[]>([]);
 
   // Redirect if not logged in
   useEffect(() => {
@@ -46,7 +38,7 @@ export default function ProfilePage({ onNavigate }: ProfilePageProps) {
     if (activeTab === 'bookings') {
       api.bookings.list()
         .then(data => {
-          setBookings(data as BookingSeed[]);
+          setBookings(data);
         })
         .catch(err => {
           console.error("Error fetching bookings:", err);
@@ -55,11 +47,19 @@ export default function ProfilePage({ onNavigate }: ProfilePageProps) {
     } else if (activeTab === 'favorites') {
       api.favorites.list()
         .then(data => {
-          setFavorites(data as FavoriteSeed[]);
+          setFavorites(data);
         })
         .catch(err => {
           console.error("Error fetching favorites:", err);
           setError("Impossible de charger vos favoris.");
+        });
+    } else if (activeTab === 'invoices') {
+      api.bookings.getInvoices()
+        .then(data => {
+          setInvoices(data);
+        })
+        .catch(err => {
+          console.error("Error fetching invoices:", err);
         });
     }
   }, [user, activeTab]);

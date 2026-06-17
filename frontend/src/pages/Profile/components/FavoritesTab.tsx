@@ -1,8 +1,8 @@
-import type { FavoriteSeed } from '../seedData';
+import type { Etablissement } from '../../../types';
 import EmptyState from '../../../components/EmptyState';
 
 interface FavoritesTabProps {
-  favorites: FavoriteSeed[];
+  favorites: Etablissement[];
   onRemoveFavorite: (id: number) => void;
   onNavigate: (page: string) => void;
 }
