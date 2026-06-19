@@ -277,7 +277,7 @@ class DashboardCalendarView(View):
             queryset = Reservation.objects.filter(professionnel__etablissement__gerant=user.profil_gerant)
         elif hasattr(user, 'profil_pro'):
             queryset = Reservation.objects.filter(professionnel__etablissement=user.profil_pro.etablissement)
-        elif user.is_staff:
+        elif user.is_staff or user.is_superuser:
             queryset = Reservation.objects.all()
         else:
             return JsonResponse({"error": "Accès interdit"}, status=403)

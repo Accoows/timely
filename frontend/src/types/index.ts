@@ -37,12 +37,21 @@ export interface Collaborateur {
   description?: string;
 }
 
+export interface EtablissementGerant {
+  id: number;
+  prenom: string;
+  nom: string;
+  email: string;
+}
+
 export interface Etablissement {
   id: number;
   nom?: string;
   secteur?: Secteur | null;
   lieu?: Lieu | null;
+  gerant?: EtablissementGerant | null;
   description?: string;
+  status?: string;
   telephone?: string;
   mail?: string;
   site_web?: string;
@@ -140,4 +149,46 @@ export interface Invoice {
   date: string;
   amount: string;
   status: 'success' | 'pending';
+}
+
+export interface AdminUser {
+  id: number;
+  username: string;
+  email: string;
+  first_name: string;
+  last_name: string;
+  is_active: boolean;
+  is_superuser: boolean;
+  is_staff: boolean;
+  date_joined: string | null;
+  role: UserRole;
+  pro_details?: {
+    etablissement_id: number;
+    etablissement_nom: string;
+    poste: string;
+    description: string;
+  } | null;
+  client_details?: {
+    telephone: string;
+    date_inscription: string | null;
+  } | null;
+}
+
+export interface CalendarEvent {
+  id: number;
+  title: string;
+  start: string;
+  end: string;
+  status: string;
+  prestation: string;
+  professionnel: {
+    id: number;
+    nom_complet: string;
+  };
+  client: {
+    id: number;
+    nom_complet: string;
+    email: string;
+    telephone?: string | null;
+  };
 }

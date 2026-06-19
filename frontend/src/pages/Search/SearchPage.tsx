@@ -12,9 +12,11 @@ import { SECTOR_IMAGES, DEFAULT_IMAGE } from './seedData';
 interface SearchPageProps {
   onNavigate: (page: string) => void;
   initialCategory?: string;
+  initialQuery?: string;
+  initialLocation?: string;
 }
 
-export default function SearchPage({ onNavigate, initialCategory }: SearchPageProps) {
+export default function SearchPage({ onNavigate, initialCategory, initialQuery, initialLocation }: SearchPageProps) {
   const [sectors, setSectors] = useState<Secteur[]>([]);
   const [locations, setLocations] = useState<Lieu[]>([]);
   const [establishments, setEstablishments] = useState<Etablissement[]>([]);
@@ -23,9 +25,9 @@ export default function SearchPage({ onNavigate, initialCategory }: SearchPagePr
   const [selectedLocation, setSelectedLocation] = useState<Lieu | null>(null);
 
   // Direct Search Bar state
-  const [barQuery, setBarQuery] = useState('');
-  const [barLocation, setBarLocation] = useState('');
-  const [isDirectSearch, setIsDirectSearch] = useState(false);
+  const [barQuery, setBarQuery] = useState(initialQuery || '');
+  const [barLocation, setBarLocation] = useState(initialLocation || '');
+  const [isDirectSearch, setIsDirectSearch] = useState(!!(initialQuery || initialLocation));
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');

@@ -1,4 +1,4 @@
-import type { Etablissement, Booking, BookingInput, User, Secteur, UserRole, Lieu, Discussion, Message, Review, Invoice } from '../types';
+import type { Etablissement, Booking, BookingInput, User, Secteur, UserRole, Lieu, Discussion, Message, Review, Invoice, AdminUser, CalendarEvent, Prestation } from '../types';
 
 export class ApiError extends Error {
   status: number;
@@ -152,6 +152,17 @@ export const api = {
         method: 'POST',
         body: JSON.stringify(data)
       });
+    },
+    update: async (id: number, data: Partial<Etablissement> & { photos?: string[], secteur_id?: number, gerant_id?: number }): Promise<{ status: string; message: string }> => {
+      return await request<{ status: string; message: string }>(`/api/establishments/${id}/`, {
+        method: 'PUT',
+        body: JSON.stringify(data)
+      });
+    },
+    delete: async (id: number): Promise<{ status: string; message: string }> => {
+      return await request<{ status: string; message: string }>(`/api/establishments/${id}/`, {
+        method: 'DELETE'
+      });
     }
   },
 
@@ -170,6 +181,32 @@ export const api = {
       const url = `/api/establishments/locations/${queryString ? `?${queryString}` : ''}`;
       const response = await request<{ status: string; locations: Lieu[] }>(url);
       return response.locations;
+    }
+  },
+
+  prestations: {
+    list: async (establishmentId: number): Promise<Prestation[]> => {
+      const response = await request<{ status: string; services: Prestation[] }>(`/api/establishments/${establishmentId}/services/`);
+      return response.services;
+    },
+    create: async (establishmentId: number, data: { nom: string; cout: number; description?: string }): Promise<Prestation> => {
+      const response = await request<{ status: string; message: string; service: Prestation }>(`/api/establishments/${establishmentId}/services/`, {
+        method: 'POST',
+        body: JSON.stringify(data)
+      });
+      return response.service;
+    },
+    update: async (serviceId: number, data: { nom?: string; cout?: number; description?: string }): Promise<Prestation> => {
+      const response = await request<{ status: string; message: string; service: Prestation }>(`/api/establishments/services/${serviceId}/`, {
+        method: 'PUT',
+        body: JSON.stringify(data)
+      });
+      return response.service;
+    },
+    delete: async (serviceId: number): Promise<{ status: string; message: string }> => {
+      return await request<{ status: string; message: string }>(`/api/establishments/services/${serviceId}/`, {
+        method: 'DELETE'
+      });
     }
   },
 
@@ -200,6 +237,11 @@ export const api = {
       } catch {
         return [];
       }
+    },
+    cancel: async (bookingId: number): Promise<{ status: string; message: string }> => {
+      return await request<{ status: string; message: string }>(`/api/bookings/${bookingId}/`, {
+        method: 'DELETE'
+      });
     }
   },
 
@@ -308,6 +350,52 @@ export const api = {
         method: 'POST',
         body: JSON.stringify({ content })
       });
+    }
+  },
+  admin: {
+    users: {
+      list: async (): Promise<AdminUser[]> => {
+        const response = await request<{ status: string; users: AdminUser[] }>('/api/auth/admin/users/');
+        return response.users;
+      },
+      update: async (userId: number, data: {
+        first_name?: string;
+        last_name?: string;
+        email?: string;
+        is_active?: boolean;
+        role?: string;
+        etablissement_id?: number;
+        poste?: string;
+        description?: string;
+      }): Promise<{ status: string; message: string }> => {
+        return await request<{ status: string; message: string }>(`/api/auth/admin/users/${userId}/`, {
+          method: 'PUT',
+          body: JSON.stringify(data)
+        });
+      },
+      delete: async (userId: number): Promise<{ status: string; message: string }> => {
+        return await request<{ status: string; message: string }>(`/api/auth/admin/users/${userId}/`, {
+          method: 'DELETE'
+        });
+      }
+    },
+    reviews: {
+      list: async (): Promise<Review[]> => {
+        const response = await request<{ status: string; reviews: Review[] }>('/api/interactions/admin/moderation/');
+        return response.reviews;
+      },
+      delete: async (reviewId: number): Promise<{ status: string; message: string }> => {
+        return await request<{ status: string; message: string }>(`/api/interactions/admin/moderation/`, {
+          method: 'DELETE',
+          body: JSON.stringify({ review_id: reviewId })
+        });
+      }
+    },
+    calendar: {
+      list: async (): Promise<CalendarEvent[]> => {
+        const response = await request<{ status: string; events: CalendarEvent[] }>('/api/bookings/dashboard/calendar/');
+        return response.events;
+      }
     }
   }
 };

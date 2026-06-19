@@ -2,7 +2,7 @@ from django.views import View
 from django.http import JsonResponse
 from django.db.models import Q
 import json
-from .models import Etablissement, Secteur, Lieu
+from .models import Etablissement, Secteur, Lieu, Photo, Prestation
 from authentication.models import Gerant
 
 class SectorListView(View):
@@ -151,9 +151,183 @@ class EstablishmentDetailView(View):
         except Etablissement.DoesNotExist:
             return JsonResponse({"status": "error", "message": "Établissement non trouvé"}, status=404)
 
+    def put(self, request, id):
+        if not request.user.is_authenticated:
+            return JsonResponse({"error": "Non authentifié"}, status=401)
+            
+        try:
+            etablissement = Etablissement.objects.get(id=id)
+        except Etablissement.DoesNotExist:
+            return JsonResponse({"error": "Établissement non trouvé"}, status=404)
+            
+        # Permission check: admin or owner (gérant)
+        is_admin = request.user.is_superuser or request.user.is_staff
+        is_owner = hasattr(request.user, 'profil_gerant') and etablissement.gerant == request.user.profil_gerant
+        
+        if not (is_admin or is_owner):
+            return JsonResponse({"error": "Accès interdit à cet établissement"}, status=403)
+            
+        try:
+            data = json.loads(request.body)
+            nom = data.get('nom')
+            description = data.get('description')
+            telephone = data.get('telephone')
+            mail = data.get('mail')
+            site_web = data.get('site_web')
+            status = data.get('status')
+            secteur_id = data.get('secteur_id')
+            gerant_id = data.get('gerant_id')
+            lieu_data = data.get('lieu')
+            horaires = data.get('horaires')
+            photos = data.get('photos')
+            
+            if nom is not None:
+                etablissement.nom = nom
+            if description is not None:
+                etablissement.description = description
+            if telephone is not None:
+                etablissement.telephone = telephone
+            if mail is not None:
+                etablissement.mail = mail
+            if site_web is not None:
+                etablissement.site_web = site_web
+            if status is not None:
+                etablissement.status = status
+                
+            if secteur_id is not None:
+                try:
+                    etablissement.secteur_id = int(secteur_id)
+                except (ValueError, TypeError):
+                    pass
+                    
+            if is_admin and gerant_id is not None:
+                try:
+                    etablissement.gerant_id = int(gerant_id)
+                except (ValueError, TypeError):
+                    pass
+                    
+            if lieu_data is not None:
+                adresse = lieu_data.get('adresse')
+                ville = lieu_data.get('ville')
+                code_postal = lieu_data.get('code_postal')
+                region = lieu_data.get('region')
+                
+                if etablissement.lieu:
+                    lieu = etablissement.lieu
+                else:
+                    lieu = Lieu()
+                    
+                if adresse is not None:
+                    lieu.adresse = adresse
+                if ville is not None:
+                    lieu.ville = ville
+                if code_postal is not None:
+                    lieu.code_postal = code_postal
+                if region is not None:
+                    lieu.region = region
+                lieu.save()
+                etablissement.lieu = lieu
+                
+            if horaires is not None:
+                etablissement.horaires = horaires
+                
+            etablissement.save()
+            
+            # Photos update
+            if photos is not None:
+                etablissement.photos.all().delete()
+                for p_url in photos:
+                    if p_url:
+                        Photo.objects.create(etablissement=etablissement, url_photo=p_url)
+                        
+            return JsonResponse({"status": "success", "message": "Établissement mis à jour avec succès"}, status=200)
+        except Exception as e:
+            return JsonResponse({"error": str(e)}, status=400)
+
+    def delete(self, request, id):
+        if not request.user.is_authenticated:
+            return JsonResponse({"error": "Non authentifié"}, status=401)
+            
+        try:
+            etablissement = Etablissement.objects.get(id=id)
+        except Etablissement.DoesNotExist:
+            return JsonResponse({"error": "Établissement non trouvé"}, status=404)
+            
+        # Permission check: admin or owner (gérant)
+        is_admin = request.user.is_superuser or request.user.is_staff
+        is_owner = hasattr(request.user, 'profil_gerant') and etablissement.gerant == request.user.profil_gerant
+        
+        if not (is_admin or is_owner):
+            return JsonResponse({"error": "Accès interdit à cet établissement"}, status=403)
+            
+        try:
+            etablissement.delete()
+            return JsonResponse({"status": "success", "message": "Établissement supprimé avec succès"}, status=200)
+        except Exception as e:
+            return JsonResponse({"error": str(e)}, status=400)
+
+
 class ServiceListView(View):
     def get(self, request, id):
-        return JsonResponse({"message": f"Service list placeholder for establishment id {id}"}, status=200)
+        try:
+            etablissement = Etablissement.objects.get(id=id)
+        except Etablissement.DoesNotExist:
+            return JsonResponse({"error": "Établissement non trouvé"}, status=404)
+            
+        prestations = etablissement.prestations.all()
+        data = []
+        for p in prestations:
+            data.append({
+                "id": p.id,
+                "nom": p.nom,
+                "cout": float(p.cout),
+                "description": p.description or ""
+            })
+        return JsonResponse({"status": "success", "services": data}, status=200)
+
+    def post(self, request, id):
+        if not request.user.is_authenticated:
+            return JsonResponse({"error": "Non authentifié"}, status=401)
+            
+        try:
+            etablissement = Etablissement.objects.get(id=id)
+        except Etablissement.DoesNotExist:
+            return JsonResponse({"error": "Établissement non trouvé"}, status=404)
+            
+        # Permission check: admin or owner (gérant)
+        is_admin = request.user.is_superuser or request.user.is_staff
+        is_owner = hasattr(request.user, 'profil_gerant') and etablissement.gerant == request.user.profil_gerant
+        
+        if not (is_admin or is_owner):
+            return JsonResponse({"error": "Accès interdit à cet établissement"}, status=403)
+            
+        try:
+            data = json.loads(request.body)
+            nom = data.get('nom')
+            cout = data.get('cout')
+            description = data.get('description', '')
+            
+            if not nom or cout is None:
+                return JsonResponse({"error": "Champs nom et cout requis"}, status=400)
+                
+            prestation = Prestation.objects.create(
+                nom=nom,
+                cout=float(cout),
+                description=description,
+                etablissement=etablissement
+            )
+            return JsonResponse({
+                "status": "success",
+                "message": "Prestation créée avec succès",
+                "service": {
+                    "id": prestation.id,
+                    "nom": prestation.nom,
+                    "cout": float(prestation.cout),
+                    "description": prestation.description
+                }
+            }, status=201)
+        except Exception as e:
+            return JsonResponse({"error": str(e)}, status=400)
 
 
 class RegisterEstablishmentView(View):
@@ -236,6 +410,73 @@ class RegisterEstablishmentView(View):
                 }
             }, status=201)
             
+        except Exception as e:
+            return JsonResponse({"error": str(e)}, status=400)
+
+
+class ServiceDetailView(View):
+    def put(self, request, service_id):
+        if not request.user.is_authenticated:
+            return JsonResponse({"error": "Non authentifié"}, status=401)
+            
+        try:
+            prestation = Prestation.objects.get(id=service_id)
+        except Prestation.DoesNotExist:
+            return JsonResponse({"error": "Prestation non trouvée"}, status=404)
+            
+        etablissement = prestation.etablissement
+        is_admin = request.user.is_superuser or request.user.is_staff
+        is_owner = hasattr(request.user, 'profil_gerant') and etablissement.gerant == request.user.profil_gerant
+        
+        if not (is_admin or is_owner):
+            return JsonResponse({"error": "Accès interdit à cette prestation"}, status=403)
+            
+        try:
+            data = json.loads(request.body)
+            nom = data.get('nom')
+            cout = data.get('cout')
+            description = data.get('description')
+            
+            if nom is not None:
+                prestation.nom = nom
+            if cout is not None:
+                prestation.cout = float(cout)
+            if description is not None:
+                prestation.description = description
+                
+            prestation.save()
+            return JsonResponse({
+                "status": "success",
+                "message": "Prestation mise à jour avec succès",
+                "service": {
+                    "id": prestation.id,
+                    "nom": prestation.nom,
+                    "cout": float(prestation.cout),
+                    "description": prestation.description
+                }
+            }, status=200)
+        except Exception as e:
+            return JsonResponse({"error": str(e)}, status=400)
+
+    def delete(self, request, service_id):
+        if not request.user.is_authenticated:
+            return JsonResponse({"error": "Non authentifié"}, status=401)
+            
+        try:
+            prestation = Prestation.objects.get(id=service_id)
+        except Prestation.DoesNotExist:
+            return JsonResponse({"error": "Prestation non trouvée"}, status=404)
+            
+        etablissement = prestation.etablissement
+        is_admin = request.user.is_superuser or request.user.is_staff
+        is_owner = hasattr(request.user, 'profil_gerant') and etablissement.gerant == request.user.profil_gerant
+        
+        if not (is_admin or is_owner):
+            return JsonResponse({"error": "Accès interdit à cette prestation"}, status=403)
+            
+        try:
+            prestation.delete()
+            return JsonResponse({"status": "success", "message": "Prestation supprimée avec succès"}, status=200)
         except Exception as e:
             return JsonResponse({"error": str(e)}, status=400)
 

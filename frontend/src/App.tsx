@@ -10,18 +10,9 @@ import EstablishmentDetailPage from './pages/Establishment/EstablishmentDetailPa
 import NotFoundPage from './pages/NotFound/NotFoundPage';
 import ProfilePage from './pages/Profile/ProfilePage';
 import SearchPage from './pages/Search/SearchPage';
+import AdminDashboard from './pages/Admin/AdminDashboard';
 
-// Simple placeholder for the admin dashboard
-function AdminDashboard() {
-  return (
-    <div className="flex-1 p-8 bg-neutral-50 flex items-center justify-center">
-      <div className="text-center">
-        <h1 className="text-3xl font-black text-neutral-900 uppercase">Dashboard Administrateur</h1>
-        <p className="text-neutral-500 mt-2">Cet espace est réservé aux administrateurs de la plateforme Timely.</p>
-      </div>
-    </div>
-  );
-}
+
 
 export default function App() {
   const { user } = useAuth();
@@ -142,11 +133,13 @@ export default function App() {
       case 'profile':
         return user ? <ProfilePage onNavigate={handleNavigate} /> : <LoginPage onNavigate={handleNavigate} />;
       case 'admin':
-        return user && user.role === 'admin' ? <AdminDashboard /> : <NotFoundPage onNavigateHome={() => handleNavigate('home')} />;
+        return user && user.role === 'admin' ? <AdminDashboard onNavigate={handleNavigate} /> : <NotFoundPage onNavigateHome={() => handleNavigate('home')} />;
       case 'search': {
         const params = new URLSearchParams(window.location.search);
         const category = params.get('category') || undefined;
-        return <SearchPage onNavigate={handleNavigate} initialCategory={category} />;
+        const query = params.get('query') || undefined;
+        const location = params.get('location') || undefined;
+        return <SearchPage onNavigate={handleNavigate} initialCategory={category} initialQuery={query} initialLocation={location} />;
       }
       default:
         return <NotFoundPage onNavigateHome={() => handleNavigate('home')} />;

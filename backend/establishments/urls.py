@@ -19,4 +19,7 @@ urlpatterns = [
     
     # URL finale : /api/establishments/<id>/services/ (gestion des prestations de l'établissement)
     path('<int:id>/services/', views.ServiceListView.as_view(), name='establishment_services'),
+    
+    # URL finale : /api/establishments/services/<id>/
+    path('services/<int:service_id>/', views.ServiceDetailView.as_view(), name='service_detail'),
 ]

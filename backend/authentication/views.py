@@ -5,7 +5,7 @@ from django.contrib.auth import authenticate, login, logout, update_session_auth
 from django.contrib.auth.models import User
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.utils.decorators import method_decorator
-from .models import Professionnel, Gerant
+from .models import Professionnel, Gerant, Client
 
 class LoginView(View):
     def post(self, request):
@@ -191,5 +191,141 @@ class UserView(View):
                 "last_name": user.last_name,
                 "role": role
             })
+        except Exception as e:
+            return JsonResponse({"error": str(e)}, status=400)
+
+
+class AdminUserManagementView(View):
+    def get(self, request):
+        if not request.user.is_authenticated or not (request.user.is_staff or request.user.is_superuser):
+            return JsonResponse({"error": "Accès interdit"}, status=403)
+            
+        users = User.objects.all().order_by('date_joined')
+        data = []
+        for u in users:
+            role = "client"
+            if u.is_superuser:
+                role = "admin"
+            elif hasattr(u, 'profil_gerant'):
+                role = "gerant"
+            elif hasattr(u, 'profil_pro'):
+                role = "professionnel"
+                
+            pro_details = None
+            if role == "professionnel" and hasattr(u, 'profil_pro'):
+                pro = u.profil_pro
+                pro_details = {
+                    "etablissement_id": pro.etablissement.id,
+                    "etablissement_nom": pro.etablissement.nom,
+                    "poste": pro.poste,
+                    "description": pro.description or ""
+                }
+                
+            client_details = None
+            if hasattr(u, 'profil_client'):
+                client_details = {
+                    "telephone": u.profil_client.telephone or "",
+                    "date_inscription": u.profil_client.date_inscription.isoformat() if u.profil_client.date_inscription else None
+                }
+
+            data.append({
+                "id": u.id,
+                "username": u.username,
+                "email": u.email,
+                "first_name": u.first_name,
+                "last_name": u.last_name,
+                "is_active": u.is_active,
+                "is_superuser": u.is_superuser,
+                "is_staff": u.is_staff,
+                "date_joined": u.date_joined.isoformat() if u.date_joined else None,
+                "role": role,
+                "pro_details": pro_details,
+                "client_details": client_details
+            })
+            
+        return JsonResponse({"status": "success", "users": data}, status=200)
+
+
+class AdminUserDetailView(View):
+    def put(self, request, user_id):
+        if not request.user.is_authenticated or not (request.user.is_staff or request.user.is_superuser):
+            return JsonResponse({"error": "Accès interdit"}, status=403)
+            
+        try:
+            user = User.objects.get(id=user_id)
+        except User.DoesNotExist:
+            return JsonResponse({"error": "Utilisateur non trouvé"}, status=404)
+            
+        try:
+            data = json.loads(request.body)
+            first_name = data.get('first_name')
+            last_name = data.get('last_name')
+            email = data.get('email')
+            is_active = data.get('is_active')
+            role = data.get('role')
+            
+            if first_name is not None:
+                user.first_name = first_name
+            if last_name is not None:
+                user.last_name = last_name
+            if email is not None:
+                if email != user.email and User.objects.filter(email=email).exists():
+                    return JsonResponse({"error": "Cet email est déjà utilisé"}, status=400)
+                user.email = email
+                user.username = email
+            if is_active is not None:
+                user.is_active = bool(is_active)
+                
+            if role is not None:
+                if role == 'admin':
+                    user.is_superuser = True
+                    user.is_staff = True
+                else:
+                    user.is_superuser = False
+                    # We can keep user.is_staff as False unless they are a pro or manager, but standard django is False
+                    user.is_staff = False
+                    
+                if role == 'client':
+                    Client.objects.get_or_create(utilisateur=user)
+                elif role == 'gerant':
+                    Gerant.objects.get_or_create(utilisateur=user)
+                elif role == 'professionnel':
+                    etablissement_id = data.get('etablissement_id')
+                    poste = data.get('poste', 'Coiffeur / Esthéticienne')
+                    description = data.get('description', '')
+                    
+                    if not etablissement_id:
+                        return JsonResponse({"error": "etablissement_id est requis pour le rôle professionnel"}, status=400)
+                        
+                    from establishments.models import Etablissement
+                    try:
+                        etablissement = Etablissement.objects.get(id=etablissement_id)
+                    except Etablissement.DoesNotExist:
+                        return JsonResponse({"error": "Établissement non trouvé"}, status=404)
+                        
+                    pro_profile, created = Professionnel.objects.get_or_create(utilisateur=user, defaults={'etablissement': etablissement})
+                    if not created:
+                        pro_profile.etablissement = etablissement
+                    pro_profile.poste = poste
+                    pro_profile.description = description
+                    pro_profile.save()
+                    
+            user.save()
+            return JsonResponse({"status": "success", "message": "Utilisateur mis à jour avec succès"}, status=200)
+        except Exception as e:
+            return JsonResponse({"error": str(e)}, status=400)
+
+    def delete(self, request, user_id):
+        if not request.user.is_authenticated or not (request.user.is_staff or request.user.is_superuser):
+            return JsonResponse({"error": "Accès interdit"}, status=403)
+            
+        try:
+            user = User.objects.get(id=user_id)
+            if user == request.user:
+                return JsonResponse({"error": "Vous ne pouvez pas supprimer votre propre compte admin"}, status=400)
+            user.delete()
+            return JsonResponse({"status": "success", "message": "Utilisateur supprimé avec succès"}, status=200)
+        except User.DoesNotExist:
+            return JsonResponse({"error": "Utilisateur non trouvé"}, status=404)
         except Exception as e:
             return JsonResponse({"error": str(e)}, status=400)

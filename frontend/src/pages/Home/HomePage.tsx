@@ -64,10 +64,11 @@ export default function HomePage({ onNavigate }: HomePageProps) {
   }, [activeCategory]);
 
   const handleSearch = (query: string, location: string) => {
-    setSearchQuery(query);
-    setSearchLocation(location);
-    const categoryObj = CATEGORIES.find(cat => cat.id === activeCategory);
-    fetchEstablishments(categoryObj?.filterVal, query, location);
+    let url = 'search?';
+    const params = [];
+    if (query) params.push(`query=${encodeURIComponent(query)}`);
+    if (location) params.push(`location=${encodeURIComponent(location)}`);
+    onNavigate(url + params.join('&'));
   };
 
   const handleCategoryClick = (categoryName: string) => {
@@ -91,6 +92,7 @@ export default function HomePage({ onNavigate }: HomePageProps) {
             initialQuery={searchQuery}
             initialLocation={searchLocation}
             onSearch={handleSearch}
+            invertInputs={true}
           />
         </div>
 

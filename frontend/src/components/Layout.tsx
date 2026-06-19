@@ -14,7 +14,7 @@ export default function Layout({ children, onNavigate }: LayoutProps) {
       <main className="flex-1 flex flex-col">
         {children}
       </main>
-      <Footer />
+      <Footer onNavigate={onNavigate} />
     </div>
   );
 }
