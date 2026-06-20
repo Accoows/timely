@@ -173,6 +173,9 @@ export interface AdminUser {
     poste: string;
     description: string;
   } | null;
+  gerant_details?: {
+    establishments: { id: number; nom: string }[];
+  } | null;
   client_details?: {
     telephone: string;
     date_inscription: string | null;

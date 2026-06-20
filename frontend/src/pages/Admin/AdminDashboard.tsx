@@ -413,6 +413,16 @@ export default function AdminDashboard({ onNavigate }: AdminDashboardProps) {
                               <td className="py-4 px-6">
                                 <div className="font-extrabold text-neutral-900 text-sm">{u.first_name} {u.last_name}</div>
                                 <div className="text-xs text-neutral-500">{u.email}</div>
+                                {u.role === 'professionnel' && u.pro_details && (
+                                  <div className="text-xs text-blue-600 mt-1 font-bold">
+                                    Établissement : {u.pro_details.etablissement_nom}
+                                  </div>
+                                )}
+                                {u.role === 'gerant' && u.gerant_details?.establishments && u.gerant_details.establishments.length > 0 && (
+                                  <div className="text-xs text-purple-600 mt-1 font-bold">
+                                    Établissements : {u.gerant_details.establishments.map(e => e.nom).join(', ')}
+                                  </div>
+                                )}
                               </td>
                               <td className="py-4 px-6 text-sm text-neutral-700 font-semibold">
                                 {u.date_joined ? new Date(u.date_joined).toLocaleDateString('fr-FR') : 'Date inconnue'}

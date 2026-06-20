@@ -55,6 +55,19 @@ class LoginView(View):
                     }
                 })
             else:
+                # Check if the account exists, is inactive (blocked), and the password is correct
+                try:
+                    target_user = User.objects.get(email=email)
+                except User.DoesNotExist:
+                    try:
+                        target_user = User.objects.get(username=email)
+                    except User.DoesNotExist:
+                        target_user = None
+
+                if target_user and not target_user.is_active:
+                    if target_user.check_password(password):
+                        return JsonResponse({"status": "error", "message": "Votre compte a été bloqué par un administrateur."}, status=403)
+
                 return JsonResponse({"status": "error", "message": "Email ou mot de passe incorrect"}, status=401)
                 
         except Exception as e:
@@ -254,6 +267,15 @@ class AdminUserManagementView(View):
                     "description": pro.description or ""
                 }
                 
+            gerant_details = None
+            if role == "gerant" and hasattr(u, 'profil_gerant'):
+                ger = u.profil_gerant
+                gerant_details = {
+                    "establishments": [
+                        {"id": e.id, "nom": e.nom} for e in ger.etablissements.all()
+                    ]
+                }
+                
             client_details = None
             if hasattr(u, 'profil_client'):
                 client_details = {
@@ -273,6 +295,7 @@ class AdminUserManagementView(View):
                 "date_joined": u.date_joined.isoformat() if u.date_joined else None,
                 "role": role,
                 "pro_details": pro_details,
+                "gerant_details": gerant_details,
                 "client_details": client_details
             })
             

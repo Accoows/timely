@@ -37,8 +37,12 @@ async function request<T>(url: string, options?: RequestInit): Promise<T> {
     let errMsg = `Erreur API: ${response.status} ${response.statusText}`;
     try {
       const errorJson = await response.json();
-      if (errorJson && errorJson.error) {
-        errMsg = errorJson.error;
+      if (errorJson) {
+        if (errorJson.error) {
+          errMsg = errorJson.error;
+        } else if (errorJson.message) {
+          errMsg = errorJson.message;
+        }
       }
     } catch {
       // Ignore if response is not valid JSON
