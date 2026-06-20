@@ -127,9 +127,9 @@ export const api = {
       const response = await request<{ status: string; establishment: Etablissement }>(`/api/establishments/${id}/`);
       return mapBackendEtablissement(response.establishment);
     },
-    explore: async (filters: { 
-      query?: string; 
-      location?: string; 
+    explore: async (filters: {
+      query?: string;
+      location?: string;
       sector?: string | number;
       sort?: string;
       min_rating?: number | null;
@@ -142,7 +142,7 @@ export const api = {
       if (filters.sort && filters.sort !== 'default') params.append('sort', filters.sort);
       if (filters.min_rating) params.append('min_rating', String(filters.min_rating));
       if (filters.sub_category) params.append('sub_category', filters.sub_category);
-      
+
       const queryString = params.toString();
       const url = `/api/establishments/explore/${queryString ? `?${queryString}` : ''}`;
       const response = await request<{ status: string; establishments: Etablissement[] }>(url);
@@ -352,9 +352,9 @@ export const api = {
     logout: async (): Promise<void> => {
       await request<void>('/api/auth/logout/', { method: 'POST' });
     },
-    updateCurrentUser: async (profileData: { 
-      first_name?: string; 
-      last_name?: string; 
+    updateCurrentUser: async (profileData: {
+      first_name?: string;
+      last_name?: string;
       email?: string;
       old_password?: string;
       new_password?: string;
