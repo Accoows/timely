@@ -136,14 +136,16 @@ export default function EstablishmentTab({ user, updateUser, onNavigate }: Estab
       if (user.establishments) {
         const updatedEstabs = user.establishments.filter(e => e.id !== resolvedId);
         const nextId = updatedEstabs[0]?.id || null;
+        const newRole = updatedEstabs.length > 0 ? user.role : 'client';
         updateUser({
           ...user,
+          role: newRole,
           establishment_id: nextId,
           establishments: updatedEstabs
         });
         setSelectedId(nextId);
       } else {
-        updateUser({ ...user, establishment_id: null, establishments: [] });
+        updateUser({ ...user, role: 'client', establishment_id: null, establishments: [] });
         setSelectedId(null);
       }
       alert("Votre établissement a été supprimé.");

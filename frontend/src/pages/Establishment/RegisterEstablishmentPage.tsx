@@ -58,6 +58,7 @@ export default function RegisterEstablishmentPage({ onNavigate }: RegisterEstabl
           : [newEstab];
         updateUser({
           ...user,
+          role: 'gerant',
           establishment_id: res.establishment.id,
           establishments: updatedEstabs
         });

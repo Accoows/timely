@@ -33,7 +33,6 @@ export default function SearchPage({ onNavigate, initialCategory, initialQuery, 
   const [error, setError] = useState('');
 
   // Filter and Sort states
-  const [sortBy, setSortBy] = useState<'default' | 'rating'>('default');
   const [minRating, setMinRating] = useState<number | null>(null);
   const [selectedSubCategory, setSelectedSubCategory] = useState<string | null>(null);
 
@@ -117,7 +116,6 @@ export default function SearchPage({ onNavigate, initialCategory, initialQuery, 
       setError('');
       try {
         const params = {
-          sort: sortBy,
           min_rating: minRating,
           sub_category: selectedSubCategory,
           query: isDirectSearch && barQuery ? barQuery : undefined,
@@ -156,7 +154,6 @@ export default function SearchPage({ onNavigate, initialCategory, initialQuery, 
     isDirectSearch,
     barQuery,
     barLocation,
-    sortBy,
     minRating,
     selectedSubCategory
   ]);
@@ -176,7 +173,6 @@ export default function SearchPage({ onNavigate, initialCategory, initialQuery, 
     setSelectedSector(null);
     setSelectedLocation(null);
     setLocations([]);
-    setSortBy('default');
     setMinRating(null);
     setSelectedSubCategory(null);
   };
@@ -190,7 +186,6 @@ export default function SearchPage({ onNavigate, initialCategory, initialQuery, 
     setLocations([]);
     setEstablishments([]);
     setError('');
-    setSortBy('default');
     setMinRating(null);
     setSelectedSubCategory(null);
   };
@@ -204,37 +199,8 @@ export default function SearchPage({ onNavigate, initialCategory, initialQuery, 
 
     return (
       <div className="mb-8 p-4 bg-white border-2 border-neutral-900 rounded-2xl shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] flex flex-col md:flex-row gap-6 items-start md:items-center justify-between animate-fadeIn">
-        {/* Left: Sorting & Rating filters */}
+        {/* Left: Rating filters */}
         <div className="flex flex-wrap items-center gap-6">
-          {/* Sort */}
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-black uppercase text-neutral-500 tracking-wider">Trier par :</span>
-            <div className="flex border-2 border-neutral-900 rounded-lg overflow-hidden">
-              <button
-                type="button"
-                onClick={() => setSortBy('default')}
-                className={`px-3 py-1 text-xs font-black uppercase transition-colors ${
-                  sortBy === 'default'
-                    ? 'bg-neutral-900 text-white'
-                    : 'bg-white text-neutral-800 hover:bg-neutral-50'
-                }`}
-              >
-                Recommandé
-              </button>
-              <button
-                type="button"
-                onClick={() => setSortBy('rating')}
-                className={`px-3 py-1 text-xs font-black uppercase transition-colors border-l-2 border-neutral-900 ${
-                  sortBy === 'rating'
-                    ? 'bg-neutral-900 text-white'
-                    : 'bg-white text-neutral-800 hover:bg-neutral-50'
-                }`}
-              >
-                Note
-              </button>
-            </div>
-          </div>
-
           {/* Rating */}
           <div className="flex items-center gap-2">
             <span className="text-xs font-black uppercase text-neutral-500 tracking-wider">Note min :</span>
@@ -319,7 +285,6 @@ export default function SearchPage({ onNavigate, initialCategory, initialQuery, 
     setLocations([]);
     setEstablishments([]);
     setError('');
-    setSortBy('default');
     setMinRating(null);
     setSelectedSubCategory(null);
   };
@@ -448,7 +413,6 @@ export default function SearchPage({ onNavigate, initialCategory, initialQuery, 
                       }
                       actionLabel="Réinitialiser les filtres"
                       onAction={() => {
-                        setSortBy('default');
                         setMinRating(null);
                         setSelectedSubCategory(null);
                       }}
@@ -577,9 +541,10 @@ export default function SearchPage({ onNavigate, initialCategory, initialQuery, 
                               <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" />
                             </svg>
                           </div>
-                          <h3 className="text-xl font-black text-neutral-900 uppercase tracking-tight mb-3">
+                          <h3 className="text-xl font-black text-neutral-900 uppercase tracking-tight mb-1">
                             {loc.ville}
                           </h3>
+                          <p className="text-xs font-semibold text-neutral-500 mb-3">{loc.region || 'France'}</p>
                           <span className="text-[10px] font-black uppercase tracking-wider bg-neutral-900 text-white px-2.5 py-1 rounded border border-neutral-900">
                             {loc.code_postal || 'Adresse'}
                           </span>
@@ -645,7 +610,6 @@ export default function SearchPage({ onNavigate, initialCategory, initialQuery, 
                           }
                           actionLabel="Réinitialiser les filtres"
                           onAction={() => {
-                            setSortBy('default');
                             setMinRating(null);
                             setSelectedSubCategory(null);
                           }}

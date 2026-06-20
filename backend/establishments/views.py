@@ -3,7 +3,7 @@ from django.http import JsonResponse
 from django.db.models import Q
 import json
 from .models import Etablissement, Secteur, Lieu, Photo, Prestation
-from authentication.models import Gerant
+from authentication.models import Gerant, Client
 
 class SectorListView(View):
     def get(self, request):
@@ -35,6 +35,7 @@ class ExploreListView(View):
         query = request.GET.get('query') or request.GET.get('q')
         location = request.GET.get('location') or request.GET.get('lieu')
         sector_id = request.GET.get('sector') or request.GET.get('secteur')
+        min_rating = request.GET.get('min_rating')
 
         queryset = Etablissement.objects.all()
 
@@ -78,6 +79,13 @@ class ExploreListView(View):
                     Q(lieu__adresse__icontains=location) |
                     Q(lieu__code_postal__icontains=location)
                 )
+        if min_rating:
+            try:
+                queryset = queryset.filter(note_globale__gte=float(min_rating))
+            except (ValueError, TypeError):
+                pass
+
+        queryset = queryset.order_by('-note_globale', 'nom')
 
         data = []
         for etablissement in queryset:
@@ -276,7 +284,14 @@ class EstablishmentDetailView(View):
             return JsonResponse({"error": "Accès interdit à cet établissement"}, status=403)
             
         try:
+            gerant = etablissement.gerant
             etablissement.delete()
+            
+            # Reconvert gerant to client if they have no establishments left
+            if gerant and not gerant.etablissements.exists():
+                Client.objects.get_or_create(utilisateur=gerant.utilisateur)
+                gerant.delete()
+                
             return JsonResponse({"status": "success", "message": "Établissement supprimé avec succès"}, status=200)
         except Exception as e:
             return JsonResponse({"error": str(e)}, status=400)

@@ -73,7 +73,7 @@ function mapBackendEtablissement(est: Etablissement): Etablissement {
     category: sectorName,
     badge: sectorName,
     address: est.lieu ? `${est.lieu.adresse}, ${est.lieu.ville}` : '',
-    rating: est.note_globale !== undefined ? est.note_globale.toFixed(1) : (4.5 + (est.id % 5) / 10).toFixed(1),
+    rating: est.note_globale !== undefined ? est.note_globale.toFixed(1) : '0.0',
     image: firstPhoto || getEstablishmentImage(sectorName)
   };
 }

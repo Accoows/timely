@@ -101,16 +101,6 @@ export default function Header({ onNavigate }: HeaderProps) {
                       Mon Profil
                     </button>
 
-                    <button
-                      onClick={() => {
-                        setDropdownOpen(false);
-                        alert('Fonctionnalité "Mes Réservations" à venir !');
-                      }}
-                      className="w-full text-left px-4 py-2.5 text-sm font-semibold text-neutral-700 hover:bg-neutral-50 hover:text-neutral-900 transition-colors border-none bg-transparent cursor-pointer"
-                    >
-                      Mes Réservations
-                    </button>
-
                     <div className="border-t-2 border-neutral-900 my-1"></div>
 
                     <button

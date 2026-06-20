@@ -320,8 +320,14 @@ class AdminUserDetailView(View):
                     
                 if role == 'client':
                     Client.objects.get_or_create(utilisateur=user)
+                    if hasattr(user, 'profil_gerant'):
+                        user.profil_gerant.delete()
+                    if hasattr(user, 'profil_pro'):
+                        user.profil_pro.delete()
                 elif role == 'gerant':
                     Gerant.objects.get_or_create(utilisateur=user)
+                    if hasattr(user, 'profil_pro'):
+                        user.profil_pro.delete()
                 elif role == 'professionnel':
                     etablissement_id = data.get('etablissement_id')
                     poste = data.get('poste', 'Coiffeur / Esthéticienne')
@@ -342,6 +348,9 @@ class AdminUserDetailView(View):
                     pro_profile.poste = poste
                     pro_profile.description = description
                     pro_profile.save()
+                    
+                    if hasattr(user, 'profil_gerant'):
+                        user.profil_gerant.delete()
                     
             user.save()
             return JsonResponse({"status": "success", "message": "Utilisateur mis à jour avec succès"}, status=200)

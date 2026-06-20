@@ -15,6 +15,17 @@ class Lieu(models.Model):
     def __str__(self):
         return f"{self.adresse}, {self.ville}"
 
+def default_horaires():
+    return {
+        "Lundi": "Fermé",
+        "Mardi": "Fermé",
+        "Mercredi": "Fermé",
+        "Jeudi": "Fermé",
+        "Vendredi": "Fermé",
+        "Samedi": "Fermé",
+        "Dimanche": "Fermé"
+    }
+
 class Etablissement(models.Model):
     nom = models.CharField(max_length=255)
     secteur = models.ForeignKey(Secteur, on_delete=models.SET_NULL, null=True, blank=True, related_name='etablissements')
@@ -26,13 +37,13 @@ class Etablissement(models.Model):
     mail = models.EmailField(blank=True, null=True)
     status = models.CharField(max_length=50, default="actif")
     site_web = models.URLField(blank=True, null=True)
-    note_globale = models.DecimalField(max_digits=2, decimal_places=1, default=4.7)
-    note_accueil = models.DecimalField(max_digits=2, decimal_places=1, default=4.7)
-    note_proprete = models.DecimalField(max_digits=2, decimal_places=1, default=4.7)
-    note_cadre = models.DecimalField(max_digits=2, decimal_places=1, default=4.7)
-    note_prestation = models.DecimalField(max_digits=2, decimal_places=1, default=4.7)
+    note_globale = models.DecimalField(max_digits=2, decimal_places=1, default=0.0)
+    note_accueil = models.DecimalField(max_digits=2, decimal_places=1, default=0.0)
+    note_proprete = models.DecimalField(max_digits=2, decimal_places=1, default=0.0)
+    note_cadre = models.DecimalField(max_digits=2, decimal_places=1, default=0.0)
+    note_prestation = models.DecimalField(max_digits=2, decimal_places=1, default=0.0)
     nombre_avis = models.PositiveIntegerField(default=0)
-    horaires = models.JSONField(blank=True, null=True)
+    horaires = models.JSONField(blank=True, null=True, default=default_horaires)
 
     def __str__(self):
         return self.nom

@@ -65,6 +65,15 @@ export default function ProfilePage({ onNavigate }: ProfilePageProps) {
     }
   }, [user, activeTab]);
 
+  // Redirect from establishment tab if user is no longer a gerant
+  useEffect(() => {
+    if (activeTab === 'establishment' && user?.role !== 'gerant') {
+      Promise.resolve().then(() => {
+        setActiveTab('profile');
+      });
+    }
+  }, [user?.role, activeTab]);
+
   if (!user) return null;
 
   const handleLogout = async () => {
@@ -86,7 +95,7 @@ export default function ProfilePage({ onNavigate }: ProfilePageProps) {
     }
   };
 
-  const menuItems: { id: 'profile' | 'bookings' | 'favorites' | 'messages' | 'invoices' | 'reviews'; label: string; icon: React.ReactNode }[] = [
+  const menuItems: { id: 'profile' | 'bookings' | 'favorites' | 'messages' | 'invoices' | 'reviews' | 'establishment'; label: string; icon: React.ReactNode }[] = [
     { id: 'profile', label: 'Mon compte', icon: (
       <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
