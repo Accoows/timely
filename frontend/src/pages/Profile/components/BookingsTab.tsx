@@ -87,9 +87,16 @@ export default function BookingsTab({ bookings, onNavigate, onRefreshBookings }:
               </div>
               <div className="flex flex-col sm:items-end gap-2">
                 {booking.status === 'cancelled' ? (
-                  <span className="inline-block px-3 py-1 text-xs font-black uppercase tracking-wider border-2 border-neutral-900 rounded-md bg-rose-100 text-rose-900">
-                    Annulé
-                  </span>
+                  <div className="flex flex-col sm:items-end gap-1.5">
+                    <span className="inline-block px-3 py-1 text-xs font-black uppercase tracking-wider border-2 border-neutral-900 rounded-md bg-rose-100 text-rose-900">
+                      Annulé
+                    </span>
+                    {booking.payment_status === 'refunded' && (
+                      <span className="inline-block px-3 py-1 text-xs font-black uppercase tracking-wider border-2 border-neutral-900 rounded-md bg-blue-100 text-blue-900">
+                        Remboursé
+                      </span>
+                    )}
+                  </div>
                 ) : (
                   <div className="flex flex-col sm:items-end gap-2">
                     {booking.status === 'pending' ? (

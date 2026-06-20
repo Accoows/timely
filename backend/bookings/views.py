@@ -7,7 +7,7 @@ from django.utils.dateparse import parse_datetime
 from django.shortcuts import redirect
 import stripe
 from django.conf import settings
-from .models import Reservation
+from .models import Reservation, Facture
 from authentication.models import Client, Professionnel
 from establishments.models import Prestation
 
@@ -217,6 +217,8 @@ class BookingListView(View):
                     }
                 )
                 payment_url = checkout_session.url
+                reservation.stripe_session_id = checkout_session.id
+                reservation.save()
 
             return JsonResponse({
                 "status": "success",
@@ -287,8 +289,40 @@ class BookingDetailView(View):
                 # Log the error but don't prevent deletion
                 print(f"Erreur d'envoi du message d'annulation : {e}")
 
+        # Check if the booking is paid and has a stripe session ID to issue a refund
+        refunded = False
+        is_paid = reservation.payment_status == "paid"
+        
+        if reservation.payment_method == "stripe" and is_paid and reservation.stripe_session_id:
+            try:
+                session = stripe.checkout.Session.retrieve(reservation.stripe_session_id)
+                payment_intent_id = getattr(session, 'payment_intent', None) or session.get('payment_intent')
+                if payment_intent_id:
+                    stripe.Refund.create(
+                        payment_intent=payment_intent_id
+                    )
+                    refunded = True
+            except Exception as e:
+                print(f"Stripe Refund failed: {e}")
+                
+        if is_paid:
+            ref_year = reservation.created_at.year
+            ref_str = f"FAC-{ref_year}-{reservation.id:04d}"
+            Facture.objects.create(
+                client=reservation.client,
+                etablissement=reservation.professionnel.etablissement,
+                establishment_name=reservation.professionnel.etablissement.nom,
+                prestation_nom=reservation.prestation.nom,
+                cout=reservation.prestation.cout,
+                date_reservation=reservation.date_heure,
+                payment_status="refunded" if refunded else "paid",
+                reference=ref_str
+            )
+            
         reservation.delete()
-        return JsonResponse({"status": "success", "message": "Réservation supprimée avec succès"}, status=200)
+        
+        msg = "Réservation annulée avec succès et remboursée." if refunded else "Réservation annulée avec succès."
+        return JsonResponse({"status": "success", "message": msg}, status=200)
 
     def put(self, request, booking_id):
         if not request.user.is_authenticated:
@@ -521,6 +555,8 @@ class CheckoutView(View):
                     'booking_id': str(reservation.id)
                 }
             )
+            reservation.stripe_session_id = checkout_session.id
+            reservation.save()
             return JsonResponse({"status": "success", "payment_url": checkout_session.url}, status=200)
         except Exception as e:
             return JsonResponse({"error": str(e)}, status=400)
@@ -596,6 +632,18 @@ class InvoiceListView(View):
                     "amount": f"{r.prestation.cout} €",
                     "status": "success" if r.payment_status == "paid" else "pending"
                 })
+            
+            factures = Facture.objects.filter(client=user.profil_client).order_by('-created_at')
+            for f in factures:
+                invoices.append({
+                    "id": f.id,
+                    "reference": f.reference,
+                    "establishment_name": f.establishment_name,
+                    "date": f.date_reservation.strftime('%d/%m/%Y'),
+                    "amount": f"{f.cout} €",
+                    "status": "refunded" if f.payment_status == "refunded" else "success" if f.payment_status == "paid" else "pending"
+                })
+                
         elif hasattr(user, 'profil_gerant'):
             reservations = Reservation.objects.filter(
                 professionnel__etablissement__gerant=user.profil_gerant
@@ -610,6 +658,18 @@ class InvoiceListView(View):
                     "amount": f"{r.prestation.cout} €",
                     "status": "success" if r.payment_status == "paid" else "pending"
                 })
+            
+            factures = Facture.objects.filter(etablissement__gerant=user.profil_gerant).order_by('-created_at')
+            for f in factures:
+                invoices.append({
+                    "id": f.id,
+                    "reference": f.reference,
+                    "establishment_name": f.establishment_name,
+                    "date": f.date_reservation.strftime('%d/%m/%Y'),
+                    "amount": f"{f.cout} €",
+                    "status": "refunded" if f.payment_status == "refunded" else "success" if f.payment_status == "paid" else "pending"
+                })
+                
         elif hasattr(user, 'profil_pro'):
             reservations = Reservation.objects.filter(
                 professionnel=user.profil_pro
@@ -624,6 +684,18 @@ class InvoiceListView(View):
                     "amount": f"{r.prestation.cout} €",
                     "status": "success" if r.payment_status == "paid" else "pending"
                 })
-                
+            
+            factures = Facture.objects.filter(etablissement=user.profil_pro.etablissement).order_by('-created_at')
+            for f in factures:
+                invoices.append({
+                    "id": f.id,
+                    "reference": f.reference,
+                    "establishment_name": f.establishment_name,
+                    "date": f.date_reservation.strftime('%d/%m/%Y'),
+                    "amount": f"{f.cout} €",
+                    "status": "refunded" if f.payment_status == "refunded" else "success" if f.payment_status == "paid" else "pending"
+                })
+        
+        invoices.sort(key=lambda x: x['reference'], reverse=True)
         return JsonResponse({"invoices": invoices}, status=200)
 

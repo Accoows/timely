@@ -49,9 +49,11 @@ export default function InvoicesTab({ invoices, onNavigate }: InvoicesTabProps) 
                   <td className="p-4 font-black text-neutral-900">{invoice.amount}</td>
                   <td className="p-4">
                     <span className={`px-2 py-0.5 text-[10px] font-black uppercase border-2 border-neutral-900 rounded ${
-                      invoice.status === 'success' ? 'bg-emerald-100 text-emerald-900' : 'bg-amber-100 text-amber-900'
+                      invoice.status === 'success' ? 'bg-emerald-100 text-emerald-900' :
+                      invoice.status === 'refunded' ? 'bg-blue-100 text-blue-900' : 'bg-amber-100 text-amber-900'
                     }`}>
-                      {invoice.status === 'success' ? 'Payé' : 'En attente'}
+                      {invoice.status === 'success' ? 'Payé' :
+                       invoice.status === 'refunded' ? 'Remboursé' : 'En attente'}
                     </span>
                   </td>
                   <td className="p-4 text-right">

@@ -85,7 +85,7 @@ export interface Booking {
   booking_date: string;
   status: 'pending' | 'success' | 'cancelled' | 'confirme';
   payment_method?: 'on_site' | 'stripe';
-  payment_status?: 'pending' | 'paid' | 'unpaid';
+  payment_status?: 'pending' | 'paid' | 'unpaid' | 'refunded';
   raw_date_heure?: string;
   professionnel?: {
     id: number;
@@ -169,7 +169,7 @@ export interface Invoice {
   establishment_name: string;
   date: string;
   amount: string;
-  status: 'success' | 'pending';
+  status: 'success' | 'pending' | 'refunded';
 }
 
 export interface AdminUser {

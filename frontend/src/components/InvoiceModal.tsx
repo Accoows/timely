@@ -55,9 +55,11 @@ export default function InvoiceModal({ invoice, onClose }: InvoiceModalProps) {
               </div>
               <div className="text-right">
                 <span className={`px-3 py-1 text-xs font-black uppercase border-2 border-neutral-900 rounded-md ${
-                  invoice.status === 'success' ? 'bg-emerald-100 text-emerald-900' : 'bg-amber-100 text-amber-900'
+                  invoice.status === 'success' ? 'bg-emerald-100 text-emerald-900' :
+                  invoice.status === 'refunded' ? 'bg-blue-100 text-blue-900' : 'bg-amber-100 text-amber-900'
                 }`}>
-                  {invoice.status === 'success' ? 'Payé' : 'En attente'}
+                  {invoice.status === 'success' ? 'Payé' :
+                   invoice.status === 'refunded' ? 'Remboursé' : 'En attente'}
                 </span>
               </div>
             </div>
