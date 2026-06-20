@@ -194,7 +194,6 @@ class EstablishmentDetailView(View):
             telephone = data.get('telephone')
             mail = data.get('mail')
             site_web = data.get('site_web')
-            status = data.get('status')
             secteur_id = data.get('secteur_id')
             gerant_id = data.get('gerant_id')
             lieu_data = data.get('lieu')
@@ -211,8 +210,6 @@ class EstablishmentDetailView(View):
                 etablissement.mail = mail
             if site_web is not None:
                 etablissement.site_web = site_web
-            if status is not None:
-                etablissement.status = status
                 
             if secteur_id is not None:
                 try:
@@ -398,7 +395,7 @@ class RegisterEstablishmentView(View):
             # Récupérer ou créer le profil Gérant pour l'utilisateur connecté
             gerant, _ = Gerant.objects.get_or_create(utilisateur=request.user)
             
-            # Créer l'établissement en statut actif pour les tests
+            # Créer l'établissement
             etablissement = Etablissement.objects.create(
                 nom=nom,
                 secteur=secteur,
@@ -406,8 +403,7 @@ class RegisterEstablishmentView(View):
                 gerant=gerant,
                 description=description,
                 telephone=telephone,
-                mail=mail,
-                status="actif"
+                mail=mail
             )
             
             return JsonResponse({
@@ -416,8 +412,7 @@ class RegisterEstablishmentView(View):
                 "establishment": {
                     "id": etablissement.id,
                     "nom": etablissement.nom,
-                    "siret": siret,
-                    "status": etablissement.status
+                    "siret": siret
                 }
             }, status=201)
             

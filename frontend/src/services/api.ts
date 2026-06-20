@@ -158,8 +158,8 @@ export const api = {
       mail: string;
       description: string;
       category: string;
-    }): Promise<{ status: string; message: string; establishment: { id: number; nom: string; status: string } }> => {
-      return await request<{ status: string; message: string; establishment: { id: number; nom: string; status: string } }>('/api/establishments/register/', {
+    }): Promise<{ status: string; message: string; establishment: { id: number; nom: string } }> => {
+      return await request<{ status: string; message: string; establishment: { id: number; nom: string } }>('/api/establishments/register/', {
         method: 'POST',
         body: JSON.stringify(data)
       });

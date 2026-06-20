@@ -57,7 +57,6 @@ export interface Etablissement {
   lieu?: Lieu | null;
   gerant?: EtablissementGerant | null;
   description?: string;
-  status?: string;
   telephone?: string;
   mail?: string;
   site_web?: string;

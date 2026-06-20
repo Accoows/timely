@@ -497,9 +497,6 @@ export default function AdminDashboard({ onNavigate }: AdminDashboardProps) {
                             <div>
                               <div className="flex justify-between items-start">
                                 <h4 className="font-extrabold text-neutral-900 text-base">{etab.nom}</h4>
-                                <span className={`text-xs font-black px-2.5 py-1 rounded-xl border-2 border-neutral-900 shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] ${etab.status === 'actif' ? 'bg-emerald-100 text-emerald-900' : 'bg-neutral-100 text-neutral-700'}`}>
-                                  {etab.status === 'actif' ? 'Actif' : 'Inactif'}
-                                </span>
                               </div>
                               <p className="text-xs text-neutral-500 mt-2 line-clamp-2">{etab.description || 'Aucune description fournie.'}</p>
                               
@@ -835,28 +832,14 @@ export default function AdminDashboard({ onNavigate }: AdminDashboardProps) {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="form-control">
-                    <label className="label text-xs font-bold text-neutral-500 uppercase">Site Web</label>
-                    <input
-                      type="url"
-                      value={editingEstablishment.site_web || ''}
-                      onChange={(e) => setEditingEstablishment({ ...editingEstablishment, site_web: e.target.value })}
-                      className="input w-full bg-white border-2 border-neutral-900 rounded-xl focus:outline-none text-sm text-neutral-900 font-bold shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] transition-all"
-                    />
-                  </div>
-
-                  <div className="form-control">
-                    <label className="label text-xs font-bold text-neutral-500 uppercase">Statut</label>
-                    <select
-                      value={editingEstablishment.status || 'actif'}
-                      onChange={(e) => setEditingEstablishment({ ...editingEstablishment, status: e.target.value })}
-                      className="select w-full bg-white border-2 border-neutral-900 rounded-xl focus:outline-none text-sm text-neutral-900 font-bold shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] transition-all"
-                    >
-                      <option value="actif">Actif</option>
-                      <option value="inactif">Inactif</option>
-                    </select>
-                  </div>
+                <div className="form-control">
+                  <label className="label text-xs font-bold text-neutral-500 uppercase">Site Web</label>
+                  <input
+                    type="url"
+                    value={editingEstablishment.site_web || ''}
+                    onChange={(e) => setEditingEstablishment({ ...editingEstablishment, site_web: e.target.value })}
+                    className="input w-full bg-white border-2 border-neutral-900 rounded-xl focus:outline-none text-sm text-neutral-900 font-bold shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] transition-all"
+                  />
                 </div>
 
                 <h4 className="font-bold text-xs text-neutral-500 uppercase tracking-wider border-b border-neutral-250 pb-1 mt-6">Adresse / Lieu</h4>

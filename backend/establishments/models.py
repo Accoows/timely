@@ -34,7 +34,6 @@ class Etablissement(models.Model):
     description = models.TextField(blank=True, null=True)
     telephone = models.CharField(max_length=20, blank=True, null=True)
     mail = models.EmailField(blank=True, null=True)
-    status = models.CharField(max_length=50, default="actif")
     site_web = models.URLField(blank=True, null=True)
     note_globale = models.DecimalField(max_digits=2, decimal_places=1, default=0.0)
     note_accueil = models.DecimalField(max_digits=2, decimal_places=1, default=0.0)
