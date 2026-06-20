@@ -374,12 +374,14 @@ class RegisterEstablishmentView(View):
             if not nom or not siret or not adresse or not ville or not code_postal or not category:
                 return JsonResponse({"error": "Champs nom, siret, adresse, ville, code_postal et category requis"}, status=400)
                 
-            # Mappage de la catégorie en Secteur
             secteur_mapping = {
                 'beauty': 'Beauté & Soins',
                 'restaurant': 'Restauration',
                 'hotel': 'Hébergement',
-                'travel': 'Voyages & Transports'
+                'travel': 'Voyages & Transports',
+                'hair': 'Coiffure',
+                'barber': 'Barbier',
+                'massage': 'Massage & Bien-être'
             }
             secteur_nom = secteur_mapping.get(category)
             if not secteur_nom:

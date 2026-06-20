@@ -38,6 +38,7 @@ class FavoritesView(View):
                 "badge": est.secteur.nom if est.secteur else "",
                 "address": f"{est.lieu.adresse}, {est.lieu.ville}" if est.lieu else "",
                 "rating": "4.8",
+                "note_globale": float(est.note_globale),
                 "date_ajout": f.date_ajout.isoformat()
             })
         return JsonResponse({"status": "success", "favorites": data}, status=200)
