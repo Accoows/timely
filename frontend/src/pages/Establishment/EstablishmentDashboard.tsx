@@ -46,8 +46,10 @@ export default function EstablishmentDashboard({ onNavigate }: EstablishmentDash
   // Fetch core establishment details
   useEffect(() => {
     if (!establishmentId) {
-      setError("Aucun établissement n'est associé à votre compte.");
-      setLoading(false);
+      Promise.resolve().then(() => {
+        setError("Aucun établissement n'est associé à votre compte.");
+        setLoading(false);
+      });
       return;
     }
 
@@ -88,7 +90,9 @@ export default function EstablishmentDashboard({ onNavigate }: EstablishmentDash
   };
 
   useEffect(() => {
-    fetchTabData();
+    Promise.resolve().then(() => {
+      fetchTabData();
+    });
   }, [activeTab, establishmentId]);
 
   // Scroll to bottom of chat messages
@@ -99,7 +103,9 @@ export default function EstablishmentDashboard({ onNavigate }: EstablishmentDash
   // Load chat messages when a discussion is selected
   useEffect(() => {
     if (!selectedDiscussion) {
-      setMessages([]);
+      Promise.resolve().then(() => {
+        setMessages([]);
+      });
       return;
     }
 

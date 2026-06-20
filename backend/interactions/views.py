@@ -1,9 +1,6 @@
 import json
 from django.views import View
 from django.http import JsonResponse
-from django.utils.decorators import method_decorator
-from django.views.decorators.csrf import csrf_exempt
-from django.db import IntegrityError
 from django.utils import timezone
 from .models import Favoris, Avis
 from establishments.models import Etablissement

@@ -57,7 +57,6 @@ export default function HomePage({ onNavigate }: HomePageProps) {
   useEffect(() => {
     const categoryObj = CATEGORIES.find(cat => cat.id === activeCategory);
     fetchEstablishments(categoryObj?.filterVal, '', '');
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeCategory]);
 
   const handleSearch = (query: string, location: string) => {

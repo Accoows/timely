@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { api } from '../../services/api';
 import type { AdminUser, Etablissement, Secteur, Review, CalendarEvent, Prestation } from '../../types';
 import Alert from '../../components/Alert';
@@ -45,7 +45,7 @@ export default function AdminDashboard({ onNavigate }: AdminDashboardProps) {
   const [editingPrestationId, setEditingPrestationId] = useState<number | null>(null);
 
   // Load Data
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
@@ -75,7 +75,7 @@ export default function AdminDashboard({ onNavigate }: AdminDashboardProps) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [activeTab]);
 
   useEffect(() => {
     let active = true;
@@ -89,7 +89,7 @@ export default function AdminDashboard({ onNavigate }: AdminDashboardProps) {
     return () => {
       active = false;
     };
-  }, [activeTab]);
+  }, [fetchData]);
 
   // --- USER ACTIONS ---
   const handleToggleUserStatus = async (user: AdminUser) => {

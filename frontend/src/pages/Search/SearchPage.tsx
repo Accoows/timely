@@ -69,7 +69,7 @@ export default function SearchPage({ onNavigate, initialCategory, initialQuery, 
       }
     }
     loadSectors();
-  }, []);
+  }, [initialCategory]);
 
   // Step 2: Load locations when a sector is selected (and direct search is not active)
   useEffect(() => {
