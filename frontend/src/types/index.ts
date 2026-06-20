@@ -86,6 +86,19 @@ export interface Booking {
   status: 'pending' | 'success' | 'cancelled' | 'confirme';
   payment_method?: 'on_site' | 'stripe';
   payment_status?: 'pending' | 'paid' | 'unpaid';
+  raw_date_heure?: string;
+  professionnel?: {
+    id: number;
+    nom: string;
+    prenom: string;
+    poste: string;
+  };
+  prestation?: {
+    id: number;
+    nom: string;
+    cout: number;
+    description?: string;
+  };
 }
 
 export interface BookingInput {
