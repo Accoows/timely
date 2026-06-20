@@ -25,8 +25,7 @@ class LocationListView(View):
                 "id": loc.id,
                 "adresse": loc.adresse,
                 "ville": loc.ville,
-                "code_postal": loc.code_postal,
-                "region": loc.region
+                "code_postal": loc.code_postal
             })
         return JsonResponse({"status": "success", "locations": data}, status=200)
 
@@ -96,8 +95,7 @@ class ExploreListView(View):
                     "id": etablissement.lieu.id,
                     "adresse": etablissement.lieu.adresse,
                     "ville": etablissement.lieu.ville,
-                    "code_postal": etablissement.lieu.code_postal,
-                    "region": etablissement.lieu.region
+                    "code_postal": etablissement.lieu.code_postal
                 } if etablissement.lieu else None,
                 "secteur": {
                     "id": etablissement.secteur.id,
@@ -153,8 +151,7 @@ class EstablishmentDetailView(View):
                     "id": etablissement.lieu.id,
                     "adresse": etablissement.lieu.adresse,
                     "ville": etablissement.lieu.ville,
-                    "code_postal": etablissement.lieu.code_postal,
-                    "region": etablissement.lieu.region
+                    "code_postal": etablissement.lieu.code_postal
                 } if etablissement.lieu else None,
                 "secteur": {
                     "id": etablissement.secteur.id,
@@ -233,7 +230,6 @@ class EstablishmentDetailView(View):
                 adresse = lieu_data.get('adresse')
                 ville = lieu_data.get('ville')
                 code_postal = lieu_data.get('code_postal')
-                region = lieu_data.get('region')
                 
                 if etablissement.lieu:
                     lieu = etablissement.lieu
@@ -246,8 +242,6 @@ class EstablishmentDetailView(View):
                     lieu.ville = ville
                 if code_postal is not None:
                     lieu.code_postal = code_postal
-                if region is not None:
-                    lieu.region = region
                 lieu.save()
                 etablissement.lieu = lieu
                 

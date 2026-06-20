@@ -33,8 +33,7 @@ class FavoritesView(View):
                     "id": est.lieu.id,
                     "adresse": est.lieu.adresse,
                     "ville": est.lieu.ville,
-                    "code_postal": est.lieu.code_postal,
-                    "region": est.lieu.region
+                    "code_postal": est.lieu.code_postal
                 } if est.lieu else None,
                 # Propriétés mappées pour l'affichage de l'interface
                 "name": est.nom,

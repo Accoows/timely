@@ -10,7 +10,6 @@ class Lieu(models.Model):
     adresse = models.CharField(max_length=255)
     ville = models.CharField(max_length=100)
     code_postal = models.CharField(max_length=10, blank=True, null=True)
-    region = models.CharField(max_length=100, blank=True, null=True)
 
     def __str__(self):
         return f"{self.adresse}, {self.ville}"

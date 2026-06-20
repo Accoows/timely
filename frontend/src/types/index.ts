@@ -26,7 +26,6 @@ export interface Lieu {
   adresse: string;
   ville: string;
   code_postal?: string | null;
-  region?: string | null;
 }
 
 export interface Prestation {

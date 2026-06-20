@@ -587,8 +587,7 @@ class Command(BaseCommand):
                 adresse=data["adresse"],
                 ville=data["ville"],
                 defaults={
-                    "code_postal": data["code_postal"],
-                    "region": data["region"]
+                    "code_postal": data["code_postal"]
                 }
             )
             if lieu_created:
