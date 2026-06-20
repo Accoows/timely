@@ -197,6 +197,36 @@ class LeaveReviewView(View):
         except Exception as e:
             return JsonResponse({"error": str(e)}, status=400)
 
+    def delete(self, request):
+        if not request.user.is_authenticated:
+            return JsonResponse({"error": "Non authentifié"}, status=401)
+            
+        review_id = request.GET.get('review_id')
+        if not review_id:
+            try:
+                data = json.loads(request.body)
+                review_id = data.get('review_id')
+            except Exception:
+                pass
+                
+        if not review_id:
+            return JsonResponse({"error": "Paramètre review_id manquant"}, status=400)
+            
+        try:
+            avis = Avis.objects.get(id=review_id)
+        except Avis.DoesNotExist:
+            return JsonResponse({"error": "Avis non trouvé"}, status=404)
+            
+        # Check permissions: is the user an admin, or the gérant of the establishment of the review?
+        is_admin = request.user.is_superuser or request.user.is_staff
+        is_owner = hasattr(request.user, 'profil_gerant') and avis.etablissement.gerant == request.user.profil_gerant
+        
+        if not (is_admin or is_owner):
+            return JsonResponse({"error": "Accès interdit : vous devez être le gérant de cet établissement pour supprimer cet avis."}, status=403)
+            
+        avis.delete()
+        return JsonResponse({"status": "success", "message": "Avis supprimé avec succès"}, status=200)
+
 
 class AdminReviewModerationView(View):
     def get(self, request):

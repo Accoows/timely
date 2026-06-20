@@ -290,6 +290,12 @@ export const api = {
         body: JSON.stringify({ etablissement_id: establishmentId, message, note })
       });
       return response.review;
+    },
+    delete: async (reviewId: number): Promise<{ status: string; message: string }> => {
+      return await request<{ status: string; message: string }>('/api/interactions/review/', {
+        method: 'DELETE',
+        body: JSON.stringify({ review_id: reviewId })
+      });
     }
   },
 

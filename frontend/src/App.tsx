@@ -11,6 +11,7 @@ import NotFoundPage from './pages/NotFound/NotFoundPage';
 import ProfilePage from './pages/Profile/ProfilePage';
 import SearchPage from './pages/Search/SearchPage';
 import AdminDashboard from './pages/Admin/AdminDashboard';
+import EstablishmentDashboard from './pages/Establishment/EstablishmentDashboard';
 
 
 
@@ -36,6 +37,7 @@ export default function App() {
     if (path === '/register-establishment') return 'register-establishment';
     if (path === '/profile') return 'profile';
     if (path === '/admin') return 'admin';
+    if (path === '/establishment-dashboard') return 'establishment-dashboard';
     if (path === '/search') {
       const search = window.location.search;
       return search ? `search${search}` : 'search';
@@ -92,6 +94,8 @@ export default function App() {
         setCurrentPage('profile');
       } else if (path === '/admin') {
         setCurrentPage('admin');
+      } else if (path === '/establishment-dashboard') {
+        setCurrentPage('establishment-dashboard');
       } else if (path === '/search') {
         const search = window.location.search;
         setCurrentPage(search ? `search${search}` : 'search');
@@ -128,9 +132,9 @@ export default function App() {
         return <RegisterEstablishmentPage onNavigate={handleNavigate} />;
       case 'establishment-detail':
         return selectedEstablishmentId ? (
-          <EstablishmentDetailPage 
-            establishmentId={selectedEstablishmentId} 
-            onNavigate={handleNavigate} 
+          <EstablishmentDetailPage
+            establishmentId={selectedEstablishmentId}
+            onNavigate={handleNavigate}
           />
         ) : (
           <NotFoundPage onNavigateHome={() => handleNavigate('home')} />
@@ -139,29 +143,35 @@ export default function App() {
         return user ? <ProfilePage onNavigate={handleNavigate} /> : <LoginPage onNavigate={handleNavigate} />;
       case 'admin':
         return user && user.role === 'admin' ? <AdminDashboard onNavigate={handleNavigate} /> : <NotFoundPage onNavigateHome={() => handleNavigate('home')} />;
-      case 'search': {
-        const params = new URLSearchParams(window.location.search);
-        const category = params.get('category') || undefined;
-        const query = params.get('query') || undefined;
-        const location = params.get('location') || undefined;
-        return (
-          <SearchPage 
-            key={currentPage}
-            onNavigate={handleNavigate} 
-            initialCategory={category} 
-            initialQuery={query} 
-            initialLocation={location} 
-          />
+      case 'establishment-dashboard':
+        return user && (user.role === 'gerant' || user.role === 'professionnel') ? (
+          <EstablishmentDashboard onNavigate={handleNavigate} />
+        ) : (
+          <NotFoundPage onNavigateHome={() => handleNavigate('home')} />
         );
-      }
+      case 'search': {
+    const params = new URLSearchParams(window.location.search);
+    const category = params.get('category') || undefined;
+    const query = params.get('query') || undefined;
+    const location = params.get('location') || undefined;
+    return (
+      <SearchPage
+        key={currentPage}
+        onNavigate={handleNavigate}
+        initialCategory={category}
+        initialQuery={query}
+        initialLocation={location}
+      />
+    );
+  }
       default:
-        return <NotFoundPage onNavigateHome={() => handleNavigate('home')} />;
-    }
+  return <NotFoundPage onNavigateHome={() => handleNavigate('home')} />;
+}
   };
 
-  return (
-    <Layout onNavigate={handleNavigate}>
-      {renderPage()}
-    </Layout>
-  );
+return (
+  <Layout onNavigate={handleNavigate}>
+    {renderPage()}
+  </Layout>
+);
 }

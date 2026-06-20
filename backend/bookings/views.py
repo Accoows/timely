@@ -194,6 +194,31 @@ class BookingDetailView(View):
         if not authorized:
             return JsonResponse({"error": "Accès interdit à cette réservation"}, status=403)
             
+        # Envoyer un message automatique au client si l'annulation est faite par l'établissement / le staff
+        if not (hasattr(user, 'profil_client') and reservation.client == user.profil_client):
+            try:
+                from messaging.models import Discussion, Message
+                discussion, created = Discussion.objects.get_or_create(
+                    client=reservation.client,
+                    etablissement=reservation.professionnel.etablissement
+                )
+                
+                dt_local = timezone.localtime(reservation.date_heure)
+                date_str = dt_local.strftime('%d/%m/%Y à %H:%M')
+                msg_content = (
+                    f"Bonjour, votre rendez-vous pour la prestation '{reservation.prestation.nom}' "
+                    f"prévu le {date_str} a été annulé par l'établissement."
+                )
+                
+                Message.objects.create(
+                    discussion=discussion,
+                    expediteur=user,
+                    content=msg_content
+                )
+            except Exception as e:
+                # Log the error but don't prevent deletion
+                print(f"Erreur d'envoi du message d'annulation : {e}")
+
         reservation.delete()
         return JsonResponse({"status": "success", "message": "Réservation supprimée avec succès"}, status=200)
 
