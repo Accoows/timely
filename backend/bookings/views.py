@@ -14,11 +14,16 @@ from establishments.models import Prestation
 stripe.api_key = getattr(settings, 'STRIPE_SECRET_KEY', '')
 
 def get_frontend_url(request):
+    public_url = getattr(settings, 'PUBLIC_URL', 'https://timely.stellarbit.cc')
     origin = request.headers.get('Origin') or request.META.get('HTTP_ORIGIN')
     if origin:
+        if "localhost" not in origin and "127.0.0.1" not in origin:
+            return public_url
         return origin
     referer = request.headers.get('Referer') or request.META.get('HTTP_REFERER')
     if referer:
+        if "localhost" not in referer and "127.0.0.1" not in referer:
+            return public_url
         from urllib.parse import urlparse
         parsed = urlparse(referer)
         return f"{parsed.scheme}://{parsed.netloc}"
@@ -26,13 +31,19 @@ def get_frontend_url(request):
 
 def get_backend_url(request):
     frontend_url = get_frontend_url(request)
-    if "timely.stellarbit.cc" in frontend_url:
-        return "https://timely.stellarbit.cc"
-    if "localhost" in frontend_url:
+    public_url = getattr(settings, 'PUBLIC_URL', 'https://timely.stellarbit.cc')
+    
+    if public_url in frontend_url:
+        return public_url
+        
+    host = request.get_host()
+    if "localhost" not in host and "127.0.0.1" not in host and "backend" not in host:
+        return public_url
+        
+    if "localhost" in frontend_url or "localhost" in host:
         return "http://localhost:8000"
         
     scheme = 'https' if request.headers.get('X-Forwarded-Proto') == 'https' or request.is_secure() else 'http'
-    host = request.get_host()
     if host.startswith("backend"):
         return "http://localhost:8000"
     return f"{scheme}://{host}"
