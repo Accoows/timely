@@ -1,16 +1,47 @@
+import { useState, useRef } from 'react';
 import type { Booking } from '../../../types';
 import EmptyState from '../../../components/EmptyState';
+import { api } from '../../../services/api';
 
 interface BookingsTabProps {
   bookings: Booking[];
   onNavigate: (page: string) => void;
+  onRefreshBookings?: () => void;
 }
 
-export default function BookingsTab({ bookings, onNavigate }: BookingsTabProps) {
+export default function BookingsTab({ bookings, onNavigate, onRefreshBookings }: BookingsTabProps) {
+  const [isCancelling, setIsCancelling] = useState(false);
+  const isCancellingRef = useRef(false);
+
+  const handleCancel = async (id: number) => {
+    if (isCancellingRef.current) return;
+    
+    isCancellingRef.current = true;
+    setIsCancelling(true);
+    
+    if (!confirm("Voulez-vous vraiment annuler ce rendez-vous ?")) {
+      isCancellingRef.current = false;
+      setIsCancelling(false);
+      return;
+    }
+    
+    try {
+      await api.bookings.cancel(id);
+      onRefreshBookings?.();
+      alert("Le rendez-vous a bien été annulé.");
+    } catch (err) {
+      console.error(err);
+      alert("Une erreur est survenue : " + (err instanceof Error ? err.message : String(err)));
+    } finally {
+      isCancellingRef.current = false;
+      setIsCancelling(false);
+    }
+  };
+
   return (
     <div>
       <h2 className="text-2xl font-black text-neutral-900 uppercase mb-6 pb-2 border-b-2 border-neutral-100">Mes Rendez-vous</h2>
-      
+
       {bookings.length === 0 ? (
         <EmptyState
           title="Aucun rendez-vous planifié"
@@ -26,25 +57,30 @@ export default function BookingsTab({ bookings, onNavigate }: BookingsTabProps) 
       ) : (
         <div className="space-y-4">
           {bookings.map(booking => (
-            <div 
-              key={booking.id} 
+            <div
+              key={booking.id}
               className="border-2 border-neutral-900 rounded-xl p-4 bg-white shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] flex flex-col sm:flex-row sm:items-center justify-between gap-4"
             >
               <div>
                 <h4 className="font-extrabold text-neutral-900 text-lg">{booking.establishment_name}</h4>
                 <p className="text-sm text-neutral-500 mt-1 flex items-center gap-1.5 font-semibold">
                   <svg className="w-4 h-4 text-neutral-900" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
                   </svg>
                   {booking.booking_date}
                 </p>
               </div>
-              <div>
-                <span className={`inline-block px-3 py-1 text-xs font-black uppercase tracking-wider border-2 border-neutral-900 rounded-md ${
-                  booking.status === 'success' ? 'bg-emerald-100 text-emerald-900' : 'bg-amber-100 text-amber-900'
-                }`}>
-                  {booking.status === 'success' ? 'Confirmé' : 'En attente'}
-                </span>
+              <div className="flex items-center gap-2">
+                <button
+                  disabled={isCancelling}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleCancel(booking.id);
+                  }}
+                  className="border-2 border-red-600 bg-white hover:bg-red-50 text-red-600 shadow-[2px_2px_0px_0px_rgba(220,38,38,1)] transition-all font-black rounded-xl px-3 py-1.5 text-xs cursor-pointer select-none focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Annuler
+                </button>
               </div>
             </div>
           ))}
