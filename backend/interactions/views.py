@@ -4,8 +4,10 @@ from django.http import JsonResponse
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from django.db import IntegrityError
+from django.utils import timezone
 from .models import Favoris, Avis
 from establishments.models import Etablissement
+from bookings.models import Reservation
 
 class FavoritesView(View):
     def get(self, request):
@@ -160,6 +162,19 @@ class LeaveReviewView(View):
                 etablissement = Etablissement.objects.get(id=etablissement_id)
             except Etablissement.DoesNotExist:
                 return JsonResponse({"error": "Établissement non trouvé"}, status=404)
+                
+            # Vérifier si le client a une réservation confirmée et passée dans cet établissement
+            has_visited = Reservation.objects.filter(
+                client=client,
+                professionnel__etablissement=etablissement,
+                status="confirme",
+                date_heure__lte=timezone.now()
+            ).exists()
+            
+            if not has_visited:
+                return JsonResponse({
+                    "error": "Vous devez avoir effectué et honoré une réservation dans cet établissement pour laisser un avis."
+                }, status=403)
                 
             avis = Avis.objects.create(
                 client=client,

@@ -34,7 +34,14 @@ async function request<T>(url: string, options?: RequestInit): Promise<T> {
   });
 
   if (!response.ok) {
-    throw new ApiError(response.status, `Erreur API: ${response.status} ${response.statusText}`);
+    let errMsg = `Erreur API: ${response.status} ${response.statusText}`;
+    try {
+      const errorJson = await response.json();
+      if (errorJson && errorJson.error) {
+        errMsg = errorJson.error;
+      }
+    } catch (_) {}
+    throw new ApiError(response.status, errMsg);
   }
 
   if (response.status === 204) {

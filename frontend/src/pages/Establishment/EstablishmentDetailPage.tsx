@@ -281,7 +281,8 @@ export default function EstablishmentDetailPage({ establishmentId, onNavigate }:
       loadReviews();
     } catch (err) {
       console.error("Erreur lors de la publication de l'avis :", err);
-      setReviewErrorMsg("Impossible de publier votre avis.");
+      const msg = err instanceof Error ? err.message : "Impossible de publier votre avis.";
+      setReviewErrorMsg(msg);
     } finally {
       setReviewSubmitLoading(false);
     }
