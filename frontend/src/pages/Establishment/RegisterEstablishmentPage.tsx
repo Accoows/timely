@@ -128,13 +128,13 @@ export default function RegisterEstablishmentPage({ onNavigate }: RegisterEstabl
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
-            <h2 className="text-3xl font-extrabold text-neutral-900 tracking-tight">Demande reçue !</h2>
+            <h2 className="text-3xl font-extrabold text-neutral-900 tracking-tight">Félicitations !</h2>
             <p className="text-neutral-600 text-base max-w-xl mx-auto leading-relaxed">
-              Merci d'avoir inscrit votre établissement <strong>{name}</strong> sur Timely. Nos équipes vont valider vos informations (notamment votre numéro SIRET <strong>{siret}</strong>) sous 24h ouvrées. Vous recevrez un e-mail de confirmation dès la mise en ligne.
+              Votre établissement <strong>{name}</strong> a été créé avec succès et est maintenant en ligne sur Timely. Vous pouvez dès à présent le gérer depuis votre tableau de bord.
             </p>
             <div className="pt-4 max-w-xs mx-auto">
-              <Button onClick={() => onNavigate('home')} fullWidth>
-                Retour à l'accueil
+              <Button onClick={() => onNavigate('profile')} fullWidth>
+                Accéder à mon tableau de bord
               </Button>
             </div>
           </div>

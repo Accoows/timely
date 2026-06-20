@@ -37,8 +37,12 @@ async function request<T>(url: string, options?: RequestInit): Promise<T> {
     let errMsg = `Erreur API: ${response.status} ${response.statusText}`;
     try {
       const errorJson = await response.json();
-      if (errorJson && errorJson.error) {
-        errMsg = errorJson.error;
+      if (errorJson) {
+        if (errorJson.error) {
+          errMsg = errorJson.error;
+        } else if (errorJson.message) {
+          errMsg = errorJson.message;
+        }
       }
     } catch {
       // Ignore if response is not valid JSON
@@ -158,8 +162,8 @@ export const api = {
       mail: string;
       description: string;
       category: string;
-    }): Promise<{ status: string; message: string; establishment: { id: number; nom: string; status: string } }> => {
-      return await request<{ status: string; message: string; establishment: { id: number; nom: string; status: string } }>('/api/establishments/register/', {
+    }): Promise<{ status: string; message: string; establishment: { id: number; nom: string } }> => {
+      return await request<{ status: string; message: string; establishment: { id: number; nom: string } }>('/api/establishments/register/', {
         method: 'POST',
         body: JSON.stringify(data)
       });

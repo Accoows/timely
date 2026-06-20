@@ -26,7 +26,6 @@ export interface Lieu {
   adresse: string;
   ville: string;
   code_postal?: string | null;
-  region?: string | null;
 }
 
 export interface Prestation {
@@ -58,7 +57,6 @@ export interface Etablissement {
   lieu?: Lieu | null;
   gerant?: EtablissementGerant | null;
   description?: string;
-  status?: string;
   telephone?: string;
   mail?: string;
   site_web?: string;
@@ -174,6 +172,9 @@ export interface AdminUser {
     etablissement_nom: string;
     poste: string;
     description: string;
+  } | null;
+  gerant_details?: {
+    establishments: { id: number; nom: string }[];
   } | null;
   client_details?: {
     telephone: string;

@@ -28,8 +28,7 @@ class LocationListView(View):
                 "id": loc.id,
                 "adresse": loc.adresse,
                 "ville": loc.ville,
-                "code_postal": loc.code_postal,
-                "region": loc.region
+                "code_postal": loc.code_postal
             })
         return JsonResponse({"status": "success", "locations": data}, status=200)
 
@@ -99,8 +98,7 @@ class ExploreListView(View):
                     "id": etablissement.lieu.id,
                     "adresse": etablissement.lieu.adresse,
                     "ville": etablissement.lieu.ville,
-                    "code_postal": etablissement.lieu.code_postal,
-                    "region": etablissement.lieu.region
+                    "code_postal": etablissement.lieu.code_postal
                 } if etablissement.lieu else None,
                 "secteur": {
                     "id": etablissement.secteur.id,
@@ -156,8 +154,7 @@ class EstablishmentDetailView(View):
                     "id": etablissement.lieu.id,
                     "adresse": etablissement.lieu.adresse,
                     "ville": etablissement.lieu.ville,
-                    "code_postal": etablissement.lieu.code_postal,
-                    "region": etablissement.lieu.region
+                    "code_postal": etablissement.lieu.code_postal
                 } if etablissement.lieu else None,
                 "secteur": {
                     "id": etablissement.secteur.id,
@@ -200,7 +197,6 @@ class EstablishmentDetailView(View):
             telephone = data.get('telephone')
             mail = data.get('mail')
             site_web = data.get('site_web')
-            status = data.get('status')
             secteur_id = data.get('secteur_id')
             gerant_id = data.get('gerant_id')
             lieu_data = data.get('lieu')
@@ -217,8 +213,6 @@ class EstablishmentDetailView(View):
                 etablissement.mail = mail
             if site_web is not None:
                 etablissement.site_web = site_web
-            if status is not None:
-                etablissement.status = status
                 
             if secteur_id is not None:
                 try:
@@ -236,7 +230,6 @@ class EstablishmentDetailView(View):
                 adresse = lieu_data.get('adresse')
                 ville = lieu_data.get('ville')
                 code_postal = lieu_data.get('code_postal')
-                region = lieu_data.get('region')
                 
                 if etablissement.lieu:
                     lieu = etablissement.lieu
@@ -249,8 +242,6 @@ class EstablishmentDetailView(View):
                     lieu.ville = ville
                 if code_postal is not None:
                     lieu.code_postal = code_postal
-                if region is not None:
-                    lieu.region = region
                 lieu.save()
                 etablissement.lieu = lieu
                 
@@ -407,7 +398,7 @@ class RegisterEstablishmentView(View):
             # Récupérer ou créer le profil Gérant pour l'utilisateur connecté
             gerant, _ = Gerant.objects.get_or_create(utilisateur=request.user)
             
-            # Créer l'établissement en statut actif pour les tests
+            # Créer l'établissement
             etablissement = Etablissement.objects.create(
                 nom=nom,
                 secteur=secteur,
@@ -415,8 +406,7 @@ class RegisterEstablishmentView(View):
                 gerant=gerant,
                 description=description,
                 telephone=telephone,
-                mail=mail,
-                status="actif"
+                mail=mail
             )
             
             return JsonResponse({
@@ -425,8 +415,7 @@ class RegisterEstablishmentView(View):
                 "establishment": {
                     "id": etablissement.id,
                     "nom": etablissement.nom,
-                    "siret": siret,
-                    "status": etablissement.status
+                    "siret": siret
                 }
             }, status=201)
             
