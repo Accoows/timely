@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { api } from '../../services/api';
 import type { AdminUser, Etablissement, Secteur, Review, CalendarEvent, Prestation } from '../../types';
+import Alert from '../../components/Alert';
 
 function getErrorMessage(err: unknown, defaultMsg: string): string {
   if (err instanceof Error) return err.message;
@@ -363,6 +364,7 @@ export default function AdminDashboard({ onNavigate }: AdminDashboardProps) {
 
         {/* Content Box */}
         <main className="flex-1 w-full bg-white border-2 border-neutral-900 p-6 sm:p-8 rounded-2xl shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] min-h-[500px]">
+          {error && <Alert type="error" message={error} className="mb-6" />}
           {loading && !editingEstablishment ? (
             <div className="flex items-center justify-center h-64">
               <span className="loading loading-spinner loading-lg text-neutral-950"></span>

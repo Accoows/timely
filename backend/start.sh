@@ -1,5 +1,27 @@
 #!/bin/sh
 
+# 0. Attendre que la base de données soit prête
+echo "[Django] Attente de la base de données..."
+python manage.py shell -c "
+import sys
+import time
+from django.db import connections
+from django.db.utils import OperationalError
+
+attempts = 0
+while attempts < 30:
+    try:
+        connections['default'].cursor()
+        print('Base de données prête !')
+        sys.exit(0)
+    except OperationalError:
+        attempts += 1
+        print(f'Attente de la base de données ({attempts}/30)...')
+        time.sleep(1)
+print('Erreur : La base de données n\'a pas répondu à temps.')
+sys.exit(1)
+"
+
 # 1. Appliquer les migrations de base de données
 echo "[Django] Application des migrations..."
 python manage.py migrate --noinput

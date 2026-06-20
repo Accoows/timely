@@ -22,9 +22,6 @@ export default function HomePage({ onNavigate }: HomePageProps) {
   const [establishments, setEstablishments] = useState<Etablissement[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const [searchQuery, setSearchQuery] = useState('');
-  const [searchLocation, setSearchLocation] = useState('');
-
   // Tab indicator calculations
   const [indicatorStyle, setIndicatorStyle] = useState({ left: 4, width: 68 });
   const tabsRef = useRef<(HTMLButtonElement | null)[]>([]);
@@ -59,12 +56,12 @@ export default function HomePage({ onNavigate }: HomePageProps) {
 
   useEffect(() => {
     const categoryObj = CATEGORIES.find(cat => cat.id === activeCategory);
-    fetchEstablishments(categoryObj?.filterVal, searchQuery, searchLocation);
+    fetchEstablishments(categoryObj?.filterVal, '', '');
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeCategory]);
 
   const handleSearch = (query: string, location: string) => {
-    let url = 'search?';
+    const url = 'search?';
     const params = [];
     if (query) params.push(`query=${encodeURIComponent(query)}`);
     if (location) params.push(`location=${encodeURIComponent(location)}`);
@@ -89,8 +86,8 @@ export default function HomePage({ onNavigate }: HomePageProps) {
 
           {/* Search Bar */}
           <SearchBar
-            initialQuery={searchQuery}
-            initialLocation={searchLocation}
+            initialQuery=""
+            initialLocation=""
             onSearch={handleSearch}
             invertInputs={true}
           />
