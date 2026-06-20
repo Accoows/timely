@@ -6,6 +6,8 @@ from django.contrib.auth.models import User
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.utils.decorators import method_decorator
 from .models import Professionnel, Gerant, Client
+from django.utils import timezone
+
 
 class LoginView(View):
     def post(self, request):
@@ -392,5 +394,73 @@ class AdminUserDetailView(View):
             return JsonResponse({"status": "success", "message": "Utilisateur supprimé avec succès"}, status=200)
         except User.DoesNotExist:
             return JsonResponse({"error": "Utilisateur non trouvé"}, status=404)
+        except Exception as e:
+            return JsonResponse({"error": str(e)}, status=400)
+
+
+class CreateProAccountView(View):
+    def post(self, request):
+        if not request.user.is_authenticated:
+            return JsonResponse({"error": "Non authentifié"}, status=401)
+            
+        if not hasattr(request.user, 'profil_gerant'):
+            return JsonResponse({"error": "Seul un gérant peut créer un compte professionnel"}, status=403)
+            
+        try:
+            data = json.loads(request.body)
+            email = data.get('email')
+            password = data.get('password')
+            firstname = data.get('firstname')
+            lastname = data.get('lastname')
+            
+            poste = data.get('poste', 'Coiffeur / Esthéticienne')
+            description = data.get('description', '')
+            date_embauche = data.get('date_embauche')
+            etablissement_id = data.get('etablissement_id')
+            
+            if not email or not password or not firstname or not lastname or not etablissement_id:
+                return JsonResponse({"error": "Les champs email, password, firstname, lastname et etablissement_id sont requis"}, status=400)
+                
+            if User.objects.filter(username=email).exists():
+                return JsonResponse({"error": "Cet email est déjà utilisé"}, status=400)
+                
+            # Verify the etablissement belongs to the gérant
+            from establishments.models import Etablissement
+            try:
+                etablissement = Etablissement.objects.get(id=etablissement_id)
+            except Etablissement.DoesNotExist:
+                return JsonResponse({"error": "Établissement non trouvé"}, status=404)
+                
+            if etablissement.gerant != request.user.profil_gerant:
+                return JsonResponse({"error": "Cet établissement ne vous appartient pas"}, status=403)
+                
+            # Create user
+            nouvel_user = User.objects.create_user(
+                username=email,
+                email=email,
+                password=password,
+                first_name=firstname,
+                last_name=lastname
+            )
+            
+            # Create pro profile
+            embauche_date = timezone.now().date()
+            if date_embauche:
+                try:
+                    from datetime import datetime
+                    embauche_date = datetime.strptime(date_embauche, '%Y-%m-%d').date()
+                except ValueError:
+                    pass
+                    
+            Professionnel.objects.create(
+                utilisateur=nouvel_user,
+                etablissement=etablissement,
+                poste=poste,
+                description=description,
+                date_embauche=embauche_date
+            )
+            
+            return JsonResponse({"status": "success", "message": "Compte professionnel créé avec succès !"}, status=201)
+            
         except Exception as e:
             return JsonResponse({"error": str(e)}, status=400)
