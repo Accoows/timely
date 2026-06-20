@@ -9,6 +9,7 @@ import MessagesTab from './components/MessagesTab';
 import InvoicesTab from './components/InvoicesTab';
 import ReviewsTab from './components/ReviewsTab';
 import Alert from '../../components/Alert';
+import EstablishmentTab from './components/EstablishmentTab';
 import type { Booking, Etablissement, Invoice } from '../../types';
 
 interface ProfilePageProps {
@@ -17,7 +18,7 @@ interface ProfilePageProps {
 
 export default function ProfilePage({ onNavigate }: ProfilePageProps) {
   const { user, updateUser, logout } = useAuth();
-  const [activeTab, setActiveTab] = useState<'profile' | 'bookings' | 'favorites' | 'messages' | 'invoices' | 'reviews'>('profile');
+  const [activeTab, setActiveTab] = useState<'profile' | 'bookings' | 'favorites' | 'messages' | 'invoices' | 'reviews' | 'establishment'>('profile');
   
   const [error, setError] = useState('');
   const [bookings, setBookings] = useState<Booking[]>([]);
@@ -64,6 +65,15 @@ export default function ProfilePage({ onNavigate }: ProfilePageProps) {
     }
   }, [user, activeTab]);
 
+  // Redirect from establishment tab if user is no longer a gerant
+  useEffect(() => {
+    if (activeTab === 'establishment' && user?.role !== 'gerant') {
+      Promise.resolve().then(() => {
+        setActiveTab('profile');
+      });
+    }
+  }, [user?.role, activeTab]);
+
   if (!user) return null;
 
   const handleLogout = async () => {
@@ -85,7 +95,7 @@ export default function ProfilePage({ onNavigate }: ProfilePageProps) {
     }
   };
 
-  const menuItems: { id: 'profile' | 'bookings' | 'favorites' | 'messages' | 'invoices' | 'reviews'; label: string; icon: React.ReactNode }[] = [
+  const menuItems: { id: 'profile' | 'bookings' | 'favorites' | 'messages' | 'invoices' | 'reviews' | 'establishment'; label: string; icon: React.ReactNode }[] = [
     { id: 'profile', label: 'Mon compte', icon: (
       <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
@@ -117,6 +127,18 @@ export default function ProfilePage({ onNavigate }: ProfilePageProps) {
       </svg>
     )}
   ];
+
+  if (user.role === 'gerant') {
+    menuItems.push({
+      id: 'establishment',
+      label: 'Mon Établissement',
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 21a9.004 9.004 0 0 0 8.716-6.747M12 21a9.004 9.004 0 0 1-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 0 1 7.843 4.582M12 3a8.997 8.997 0 0 0-7.843 4.582m15.686 0A11.953 11.953 0 0 1 12 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0 1 21 12c0 .778-.099 1.533-.284 2.253m0 0A11.952 11.952 0 0 1 12 15c-2.998 0-5.74-1.1-7.843-2.918m0 0A8.959 8.959 0 0 1 3 12c0-.778.099-1.533.284-2.253" />
+        </svg>
+      )
+    });
+  }
 
   return (
     <div className="flex-1 max-w-7xl w-full mx-auto py-12 px-4">
@@ -184,6 +206,7 @@ export default function ProfilePage({ onNavigate }: ProfilePageProps) {
           {activeTab === 'messages' && <MessagesTab onNavigate={onNavigate} />}
           {activeTab === 'invoices' && <InvoicesTab invoices={invoices} onNavigate={onNavigate} />}
           {activeTab === 'reviews' && <ReviewsTab onNavigate={onNavigate} />}
+          {activeTab === 'establishment' && <EstablishmentTab user={user} updateUser={updateUser} onNavigate={onNavigate} />}
         </main>
       </div>
     </div>

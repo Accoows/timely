@@ -3,7 +3,7 @@ from django.http import JsonResponse
 from django.db.models import Q
 import json
 from .models import Etablissement, Secteur, Lieu, Photo, Prestation
-from authentication.models import Gerant
+from authentication.models import Gerant, Client
 
 class SectorListView(View):
     def get(self, request):
@@ -79,7 +79,6 @@ class ExploreListView(View):
                     Q(lieu__adresse__icontains=location) |
                     Q(lieu__code_postal__icontains=location)
                 )
-
         if min_rating:
             try:
                 queryset = queryset.filter(note_globale__gte=float(min_rating))
@@ -285,7 +284,14 @@ class EstablishmentDetailView(View):
             return JsonResponse({"error": "Accès interdit à cet établissement"}, status=403)
             
         try:
+            gerant = etablissement.gerant
             etablissement.delete()
+            
+            # Reconvert gerant to client if they have no establishments left
+            if gerant and not gerant.etablissements.exists():
+                Client.objects.get_or_create(utilisateur=gerant.utilisateur)
+                gerant.delete()
+                
             return JsonResponse({"status": "success", "message": "Établissement supprimé avec succès"}, status=200)
         except Exception as e:
             return JsonResponse({"error": str(e)}, status=400)
@@ -364,13 +370,15 @@ class RegisterEstablishmentView(View):
             nom = data.get('nom')
             siret = data.get('siret')
             adresse = data.get('adresse')
+            ville = data.get('ville')
+            code_postal = data.get('code_postal')
             telephone = data.get('telephone')
             mail = data.get('mail')
             description = data.get('description', '')
             category = data.get('category')  # 'beauty', 'restaurant', 'hotel', 'travel'
             
-            if not nom or not siret or not adresse or not category:
-                return JsonResponse({"error": "Champs nom, siret, adresse et category requis"}, status=400)
+            if not nom or not siret or not adresse or not ville or not code_postal or not category:
+                return JsonResponse({"error": "Champs nom, siret, adresse, ville, code_postal et category requis"}, status=400)
                 
             # Mappage de la catégorie en Secteur
             secteur_mapping = {
@@ -385,26 +393,11 @@ class RegisterEstablishmentView(View):
                 
             # Récupérer ou créer le secteur
             secteur, _ = Secteur.objects.get_or_create(nom=secteur_nom)
-            ville = "Paris"
-            code_postal = ""
-            adresse_propre = adresse
             
-            if ',' in adresse:
-                parts = [p.strip() for p in adresse.split(',')]
-                adresse_propre = parts[0]
-                rest = parts[1] if len(parts) > 1 else ""
-                # Extraire le code postal (5 chiffres consécutifs) et la ville
-                import re
-                cp_match = re.search(r'\b\d{5}\b', rest)
-                if cp_match:
-                    code_postal = cp_match.group(0)
-                    ville = rest.replace(code_postal, '').strip()
-                else:
-                    ville = rest.strip()
-            
+            # Créer le lieu
             lieu = Lieu.objects.create(
-                adresse=adresse_propre,
-                ville=ville or "Paris",
+                adresse=adresse,
+                ville=ville,
                 code_postal=code_postal
             )
             

@@ -26,12 +26,21 @@ class LoginView(View):
             if user is not None:
                 login(request, user) 
                 role = "client"
+                establishment_id = None
+                establishments = []
                 if user.is_superuser:
                     role = "admin"
                 elif hasattr(user, 'profil_gerant'):
                     role = "gerant"
+                    etabs = user.profil_gerant.etablissements.all()
+                    establishments = [{"id": e.id, "nom": e.nom} for e in etabs]
+                    if etabs.exists():
+                        establishment_id = etabs.first().id
                 elif hasattr(user, 'profil_pro'):
                     role = "professionnel"
+                    if user.profil_pro.etablissement:
+                        establishment_id = user.profil_pro.etablissement.id
+                        establishments = [{"id": user.profil_pro.etablissement.id, "nom": user.profil_pro.etablissement.nom}]
 
                 return JsonResponse({
                     "status": "success",
@@ -40,7 +49,9 @@ class LoginView(View):
                         "id": user.id,
                         "firstname": user.first_name,
                         "lastname": user.last_name,
-                        "role": role
+                        "role": role,
+                        "establishment_id": establishment_id,
+                        "establishments": establishments
                     }
                 })
             else:
@@ -120,12 +131,21 @@ class UserView(View):
     def get(self, request):
         if request.user.is_authenticated:
             role = "client"
+            establishment_id = None
+            establishments = []
             if request.user.is_superuser:
                 role = "admin"
             elif hasattr(request.user, 'profil_gerant'):
                 role = "gerant"
+                etabs = request.user.profil_gerant.etablissements.all()
+                establishments = [{"id": e.id, "nom": e.nom} for e in etabs]
+                if etabs.exists():
+                    establishment_id = etabs.first().id
             elif hasattr(request.user, 'profil_pro'):
                 role = "professionnel"
+                if request.user.profil_pro.etablissement:
+                    establishment_id = request.user.profil_pro.etablissement.id
+                    establishments = [{"id": request.user.profil_pro.etablissement.id, "nom": request.user.profil_pro.etablissement.nom}]
 
             return JsonResponse({
                 "id": request.user.id,
@@ -133,7 +153,9 @@ class UserView(View):
                 "email": request.user.email,
                 "first_name": request.user.first_name,
                 "last_name": request.user.last_name,
-                "role": role
+                "role": role,
+                "establishment_id": establishment_id,
+                "establishments": establishments
             })
         else:
             return JsonResponse({"error": "Non authentifié"}, status=401)
@@ -176,12 +198,21 @@ class UserView(View):
                 update_session_auth_hash(request, user)
 
             role = "client"
+            establishment_id = None
+            establishments = []
             if user.is_superuser:
                 role = "admin"
             elif hasattr(user, 'profil_gerant'):
                 role = "gerant"
+                etabs = user.profil_gerant.etablissements.all()
+                establishments = [{"id": e.id, "nom": e.nom} for e in etabs]
+                if etabs.exists():
+                    establishment_id = etabs.first().id
             elif hasattr(user, 'profil_pro'):
                 role = "professionnel"
+                if user.profil_pro.etablissement:
+                    establishment_id = user.profil_pro.etablissement.id
+                    establishments = [{"id": user.profil_pro.etablissement.id, "nom": user.profil_pro.etablissement.nom}]
 
             return JsonResponse({
                 "id": user.id,
@@ -189,7 +220,9 @@ class UserView(View):
                 "email": user.email,
                 "first_name": user.first_name,
                 "last_name": user.last_name,
-                "role": role
+                "role": role,
+                "establishment_id": establishment_id,
+                "establishments": establishments
             })
         except Exception as e:
             return JsonResponse({"error": str(e)}, status=400)
@@ -287,8 +320,14 @@ class AdminUserDetailView(View):
                     
                 if role == 'client':
                     Client.objects.get_or_create(utilisateur=user)
+                    if hasattr(user, 'profil_gerant'):
+                        user.profil_gerant.delete()
+                    if hasattr(user, 'profil_pro'):
+                        user.profil_pro.delete()
                 elif role == 'gerant':
                     Gerant.objects.get_or_create(utilisateur=user)
+                    if hasattr(user, 'profil_pro'):
+                        user.profil_pro.delete()
                 elif role == 'professionnel':
                     etablissement_id = data.get('etablissement_id')
                     poste = data.get('poste', 'Coiffeur / Esthéticienne')
@@ -309,6 +348,9 @@ class AdminUserDetailView(View):
                     pro_profile.poste = poste
                     pro_profile.description = description
                     pro_profile.save()
+                    
+                    if hasattr(user, 'profil_gerant'):
+                        user.profil_gerant.delete()
                     
             user.save()
             return JsonResponse({"status": "success", "message": "Utilisateur mis à jour avec succès"}, status=200)

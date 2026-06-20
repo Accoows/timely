@@ -11,7 +11,7 @@ interface RegisterEstablishmentPageProps {
 type CategoryType = 'beauty' | 'restaurant' | 'hotel' | 'travel';
 
 export default function RegisterEstablishmentPage({ onNavigate }: RegisterEstablishmentPageProps) {
-  const { user } = useAuth();
+  const { user, updateUser } = useAuth();
 
   useEffect(() => {
     if (!user) {
@@ -21,6 +21,8 @@ export default function RegisterEstablishmentPage({ onNavigate }: RegisterEstabl
 
   const [name, setName] = useState('');
   const [address, setAddress] = useState('');
+  const [zipCode, setZipCode] = useState('');
+  const [city, setCity] = useState('');
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
   const [siret, setSiret] = useState('');
@@ -38,15 +40,29 @@ export default function RegisterEstablishmentPage({ onNavigate }: RegisterEstabl
     setError('');
 
     try {
-      await api.establishments.register({
+      const res = await api.establishments.register({
         nom: name,
         adresse: address,
+        ville: city,
+        code_postal: zipCode,
         telephone: phone,
         mail: email,
         siret,
         description,
         category
       });
+      if (user && res.establishment) {
+        const newEstab = { id: res.establishment.id, nom: res.establishment.nom };
+        const updatedEstabs = user.establishments 
+          ? [...user.establishments, newEstab] 
+          : [newEstab];
+        updateUser({
+          ...user,
+          role: 'gerant',
+          establishment_id: res.establishment.id,
+          establishments: updatedEstabs
+        });
+      }
       setSubmitted(true);
     } catch (err) {
       console.error(err);
@@ -208,12 +224,28 @@ export default function RegisterEstablishmentPage({ onNavigate }: RegisterEstabl
                     pattern="[0-9]{14}"
                   />
                   <InputField
-                    label="Adresse complète *"
+                    label="Adresse (Rue and number) *"
                     type="text"
                     required
                     value={address}
                     onChange={(e) => setAddress(e.target.value)}
-                    placeholder="Ex: 12 Rue de la Paix, 75002 Paris"
+                    placeholder="Ex: 12 Rue de la Paix"
+                  />
+                  <InputField
+                    label="Code Postal *"
+                    type="text"
+                    required
+                    value={zipCode}
+                    onChange={(e) => setZipCode(e.target.value)}
+                    placeholder="Ex: 75002"
+                  />
+                  <InputField
+                    label="Ville *"
+                    type="text"
+                    required
+                    value={city}
+                    onChange={(e) => setCity(e.target.value)}
+                    placeholder="Ex: Paris"
                   />
                   <InputField
                     label="Téléphone professionnel *"
