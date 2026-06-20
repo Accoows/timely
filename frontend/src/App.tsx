@@ -36,7 +36,10 @@ export default function App() {
     if (path === '/register-establishment') return 'register-establishment';
     if (path === '/profile') return 'profile';
     if (path === '/admin') return 'admin';
-    if (path === '/search') return 'search';
+    if (path === '/search') {
+      const search = window.location.search;
+      return search ? `search${search}` : 'search';
+    }
     if (path.startsWith('/establishment/')) {
       const parts = path.split('/');
       const id = parseInt(parts[parts.length - 1], 10);
@@ -55,7 +58,7 @@ export default function App() {
       window.history.pushState(null, '', `/${page}`);
     } else {
       const pathOnly = page.split('?')[0];
-      setCurrentPage(pathOnly);
+      setCurrentPage(page);
       const path = pathOnly === 'home' ? '/' : `/${page}`;
       window.history.pushState(null, '', path);
     }
@@ -90,7 +93,8 @@ export default function App() {
       } else if (path === '/admin') {
         setCurrentPage('admin');
       } else if (path === '/search') {
-        setCurrentPage('search');
+        const search = window.location.search;
+        setCurrentPage(search ? `search${search}` : 'search');
       } else if (path.startsWith('/establishment/')) {
         const parts = path.split('/');
         const id = parseInt(parts[parts.length - 1], 10);
@@ -110,7 +114,8 @@ export default function App() {
   }, []);
 
   const renderPage = () => {
-    switch (currentPage) {
+    const pageType = currentPage.split('?')[0];
+    switch (pageType) {
       case 'home':
         return <HomePage onNavigate={handleNavigate} />;
       case 'login':
@@ -139,7 +144,15 @@ export default function App() {
         const category = params.get('category') || undefined;
         const query = params.get('query') || undefined;
         const location = params.get('location') || undefined;
-        return <SearchPage onNavigate={handleNavigate} initialCategory={category} initialQuery={query} initialLocation={location} />;
+        return (
+          <SearchPage 
+            key={currentPage}
+            onNavigate={handleNavigate} 
+            initialCategory={category} 
+            initialQuery={query} 
+            initialLocation={location} 
+          />
+        );
       }
       default:
         return <NotFoundPage onNavigateHome={() => handleNavigate('home')} />;
