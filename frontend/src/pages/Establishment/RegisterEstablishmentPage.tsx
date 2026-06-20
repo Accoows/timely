@@ -11,7 +11,7 @@ interface RegisterEstablishmentPageProps {
 type CategoryType = 'beauty' | 'restaurant' | 'hotel' | 'travel';
 
 export default function RegisterEstablishmentPage({ onNavigate }: RegisterEstablishmentPageProps) {
-  const { user } = useAuth();
+  const { user, updateUser } = useAuth();
 
   useEffect(() => {
     if (!user) {
@@ -40,7 +40,7 @@ export default function RegisterEstablishmentPage({ onNavigate }: RegisterEstabl
     setError('');
 
     try {
-      await api.establishments.register({
+      const res = await api.establishments.register({
         nom: name,
         adresse: address,
         ville: city,
@@ -51,6 +51,17 @@ export default function RegisterEstablishmentPage({ onNavigate }: RegisterEstabl
         description,
         category
       });
+      if (user && res.establishment) {
+        const newEstab = { id: res.establishment.id, nom: res.establishment.nom };
+        const updatedEstabs = user.establishments 
+          ? [...user.establishments, newEstab] 
+          : [newEstab];
+        updateUser({
+          ...user,
+          establishment_id: res.establishment.id,
+          establishments: updatedEstabs
+        });
+      }
       setSubmitted(true);
     } catch (err) {
       console.error(err);

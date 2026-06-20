@@ -40,7 +40,9 @@ async function request<T>(url: string, options?: RequestInit): Promise<T> {
       if (errorJson && errorJson.error) {
         errMsg = errorJson.error;
       }
-    } catch (_) {}
+    } catch {
+      // Ignore if response is not valid JSON
+    }
     throw new ApiError(response.status, errMsg);
   }
 
@@ -300,7 +302,7 @@ export const api = {
       }
     },
     login: async (email: string, password_raw: string): Promise<User> => {
-      const response = await request<{ status: string; message: string; user: { id: number; firstname: string; lastname: string; role: UserRole } }>('/api/auth/login/', {
+      const response = await request<{ status: string; message: string; user: { id: number; firstname: string; lastname: string; role: UserRole; establishment_id?: number | null; establishments?: { id: number; nom: string }[] } }>('/api/auth/login/', {
         method: 'POST',
         body: JSON.stringify({ email, password: password_raw })
       });
@@ -310,7 +312,9 @@ export const api = {
         email: email,
         first_name: response.user.firstname,
         last_name: response.user.lastname,
-        role: response.user.role
+        role: response.user.role,
+        establishment_id: response.user.establishment_id,
+        establishments: response.user.establishments
       };
     },
     forgotPassword: async (email: string): Promise<{ status: string; message: string }> => {

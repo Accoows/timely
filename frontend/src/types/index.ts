@@ -1,5 +1,10 @@
 export type UserRole = 'client' | 'gerant' | 'professionnel' | 'admin';
 
+export interface UserEstablishment {
+  id: number;
+  nom: string;
+}
+
 export interface User {
   id: number;
   username: string;
@@ -7,6 +12,8 @@ export interface User {
   first_name: string;
   last_name: string;
   role: UserRole;
+  establishment_id?: number | null;
+  establishments?: UserEstablishment[];
 }
 
 export interface Secteur {

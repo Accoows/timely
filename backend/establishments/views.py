@@ -58,11 +58,26 @@ class ExploreListView(View):
             queryset = queryset.filter(nom__icontains=query)
 
         if location:
-            # If location query parameter is a numeric ID, search by ID. Else search by city/address text.
+            # If location query parameter is a numeric ID, search by ID. Else search by city/address/zip code text.
             if location.isdigit():
-                queryset = queryset.filter(lieu_id=location)
+                if len(location) == 5:
+                    queryset = queryset.filter(lieu__code_postal__icontains=location)
+                else:
+                    # Si l'ID de Lieu existe en base, on filtre par ID, sinon on traite comme un code postal/ville
+                    if Lieu.objects.filter(id=int(location)).exists():
+                        queryset = queryset.filter(lieu_id=location)
+                    else:
+                        queryset = queryset.filter(
+                            Q(lieu__ville__icontains=location) |
+                            Q(lieu__adresse__icontains=location) |
+                            Q(lieu__code_postal__icontains=location)
+                        )
             else:
-                queryset = queryset.filter(Q(lieu__ville__icontains=location) | Q(lieu__adresse__icontains=location))
+                queryset = queryset.filter(
+                    Q(lieu__ville__icontains=location) |
+                    Q(lieu__adresse__icontains=location) |
+                    Q(lieu__code_postal__icontains=location)
+                )
 
         data = []
         for etablissement in queryset:
