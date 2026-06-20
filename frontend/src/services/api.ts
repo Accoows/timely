@@ -150,6 +150,8 @@ export const api = {
       nom: string;
       siret: string;
       adresse: string;
+      ville: string;
+      code_postal: string;
       telephone: string;
       mail: string;
       description: string;
