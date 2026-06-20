@@ -88,6 +88,8 @@ interface BackendBooking {
   duree: number;
   status: string;
   establishment_name: string;
+  payment_method?: 'on_site' | 'stripe';
+  payment_status?: 'pending' | 'paid' | 'unpaid';
   prestation: {
     id: number;
     nom: string;
@@ -111,7 +113,9 @@ function mapBackendBooking(b: BackendBooking): Booking {
     id: b.id,
     establishment_name: b.establishment_name,
     booking_date: formattedDate,
-    status: b.status === 'confirme' ? 'success' : b.status === 'pending' ? 'pending' : 'cancelled'
+    status: (b.status === 'confirme' || b.status === 'success') ? 'success' : b.status === 'pending' ? 'pending' : 'cancelled',
+    payment_method: b.payment_method,
+    payment_status: b.payment_status
   };
 }
 
@@ -244,12 +248,15 @@ export const api = {
       const rawBookings = await request<BackendBooking[]>('/api/bookings/');
       return rawBookings.map(mapBackendBooking);
     },
-    create: async (bookingData: BookingInput): Promise<Booking> => {
-      const response = await request<{ status: string; booking: BackendBooking }>('/api/bookings/', {
+    create: async (bookingData: BookingInput): Promise<{ booking: Booking; payment_url?: string }> => {
+      const response = await request<{ status: string; booking: BackendBooking; payment_url?: string }>('/api/bookings/', {
         method: 'POST',
         body: JSON.stringify(bookingData)
       });
-      return mapBackendBooking(response.booking);
+      return {
+        booking: mapBackendBooking(response.booking),
+        payment_url: response.payment_url
+      };
     },
     getAvailableSlots: async (professionnelId: number, date: string): Promise<{ time: string; available: boolean }[]> => {
       const response = await request<{ status: string; slots: { time: string; available: boolean }[] }>(
@@ -266,6 +273,10 @@ export const api = {
       } catch {
         return [];
       }
+    },
+    getCheckoutUrl: async (bookingId: number): Promise<string> => {
+      const response = await request<{ status: string; payment_url: string }>(`/api/bookings/checkout/${bookingId}/`);
+      return response.payment_url;
     },
     cancel: async (bookingId: number): Promise<{ status: string; message: string }> => {
       return await request<{ status: string; message: string }>(`/api/bookings/${bookingId}/`, {

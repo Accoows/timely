@@ -83,7 +83,9 @@ export interface Booking {
   id: number;
   establishment_name: string;
   booking_date: string;
-  status: 'pending' | 'success' | 'cancelled';
+  status: 'pending' | 'success' | 'cancelled' | 'confirme';
+  payment_method?: 'on_site' | 'stripe';
+  payment_status?: 'pending' | 'paid' | 'unpaid';
 }
 
 export interface BookingInput {
@@ -92,6 +94,7 @@ export interface BookingInput {
   date_heure: string;
   duree?: number;
   status?: string;
+  payment_method?: 'on_site' | 'stripe';
 }
 
 export interface MessageSender {

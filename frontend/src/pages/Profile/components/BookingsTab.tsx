@@ -1,5 +1,7 @@
 import type { Booking } from '../../../types';
 import EmptyState from '../../../components/EmptyState';
+import { api } from '../../../services/api';
+import { useState } from 'react';
 
 interface BookingsTabProps {
   bookings: Booking[];
@@ -7,6 +9,20 @@ interface BookingsTabProps {
 }
 
 export default function BookingsTab({ bookings, onNavigate }: BookingsTabProps) {
+  const [payLoadingId, setPayLoadingId] = useState<number | null>(null);
+
+  const handlePay = async (bookingId: number) => {
+    try {
+      setPayLoadingId(bookingId);
+      const url = await api.bookings.getCheckoutUrl(bookingId);
+      window.location.assign(url);
+    } catch (err) {
+      console.error(err);
+      alert("Impossible de démarrer le paiement.");
+    } finally {
+      setPayLoadingId(null);
+    }
+  };
   return (
     <div>
       <h2 className="text-2xl font-black text-neutral-900 uppercase mb-6 pb-2 border-b-2 border-neutral-100">Mes Rendez-vous</h2>
@@ -39,12 +55,43 @@ export default function BookingsTab({ bookings, onNavigate }: BookingsTabProps) 
                   {booking.booking_date}
                 </p>
               </div>
-              <div>
-                <span className={`inline-block px-3 py-1 text-xs font-black uppercase tracking-wider border-2 border-neutral-900 rounded-md ${
-                  booking.status === 'success' ? 'bg-emerald-100 text-emerald-900' : 'bg-amber-100 text-amber-900'
-                }`}>
-                  {booking.status === 'success' ? 'Confirmé' : 'En attente'}
-                </span>
+              <div className="flex flex-col sm:items-end gap-2">
+                {booking.status === 'cancelled' ? (
+                  <span className="inline-block px-3 py-1 text-xs font-black uppercase tracking-wider border-2 border-neutral-900 rounded-md bg-rose-100 text-rose-900">
+                    Annulé
+                  </span>
+                ) : booking.status === 'pending' ? (
+                  <div className="flex flex-col sm:items-end gap-1.5">
+                    <span className="inline-block px-3 py-1 text-xs font-black uppercase tracking-wider border-2 border-neutral-900 rounded-md bg-amber-100 text-amber-900">
+                      En attente de paiement
+                    </span>
+                    {booking.payment_method === 'stripe' && booking.payment_status !== 'paid' && (
+                      <button
+                        onClick={() => handlePay(booking.id)}
+                        disabled={payLoadingId === booking.id}
+                        className="px-2.5 py-1 border-2 border-neutral-900 bg-amber-100 hover:bg-amber-200 text-neutral-900 font-black rounded-lg text-[10px] uppercase transition-all shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:translate-y-[-1px] hover:translate-x-[-1px] active:translate-y-0 active:translate-x-0 cursor-pointer"
+                      >
+                        {payLoadingId === booking.id ? "Redirection..." : "Payer maintenant"}
+                      </button>
+                    )}
+                  </div>
+                ) : (
+                  <>
+                    {booking.payment_method === 'on_site' ? (
+                      <span className="inline-block px-3 py-1 text-xs font-black uppercase tracking-wider border-2 border-neutral-900 rounded-md bg-emerald-100 text-emerald-950">
+                        Paiement sur place
+                      </span>
+                    ) : booking.payment_method === 'stripe' ? (
+                      <span className="inline-block px-3 py-1 text-xs font-black uppercase tracking-wider border-2 border-neutral-900 rounded-md bg-emerald-100 text-emerald-950">
+                        Payé par carte (Stripe)
+                      </span>
+                    ) : (
+                      <span className="inline-block px-3 py-1 text-xs font-black uppercase tracking-wider border-2 border-neutral-900 rounded-md bg-emerald-100 text-emerald-900">
+                        Confirmé
+                      </span>
+                    )}
+                  </>
+                )}
               </div>
             </div>
           ))}

@@ -12,6 +12,7 @@ import ProfilePage from './pages/Profile/ProfilePage';
 import SearchPage from './pages/Search/SearchPage';
 import AdminDashboard from './pages/Admin/AdminDashboard';
 import EstablishmentDashboard from './pages/Establishment/EstablishmentDashboard';
+import PaymentConfirmationPage from './pages/Payment/PaymentConfirmationPage';
 
 
 
@@ -36,6 +37,7 @@ export default function App() {
     if (path === '/forgot-password') return 'forgot-password';
     if (path === '/register-establishment') return 'register-establishment';
     if (path === '/profile') return 'profile';
+    if (path === '/payment-confirmation') return 'payment-confirmation';
     if (path === '/admin') return 'admin';
     if (path === '/establishment-dashboard') return 'establishment-dashboard';
     if (path === '/search') {
@@ -92,6 +94,8 @@ export default function App() {
         setCurrentPage('register-establishment');
       } else if (path === '/profile') {
         setCurrentPage('profile');
+      } else if (path === '/payment-confirmation') {
+        setCurrentPage('payment-confirmation');
       } else if (path === '/admin') {
         setCurrentPage('admin');
       } else if (path === '/establishment-dashboard') {
@@ -141,6 +145,8 @@ export default function App() {
         );
       case 'profile':
         return user ? <ProfilePage onNavigate={handleNavigate} /> : <LoginPage onNavigate={handleNavigate} />;
+      case 'payment-confirmation':
+        return <PaymentConfirmationPage onNavigate={handleNavigate} />;
       case 'admin':
         return user && user.role === 'admin' ? <AdminDashboard onNavigate={handleNavigate} /> : <NotFoundPage onNavigateHome={() => handleNavigate('home')} />;
       case 'establishment-dashboard':

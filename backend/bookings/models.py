@@ -9,6 +9,9 @@ class Reservation(models.Model):
     date_heure = models.DateTimeField()
     duree = models.PositiveIntegerField(default=30) 
     status = models.CharField(max_length=50, default="confirme")
+    payment_method = models.CharField(max_length=50, default="on_site")
+    payment_status = models.CharField(max_length=50, default="unpaid")
+    payment_attempts = models.PositiveIntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
