@@ -195,7 +195,7 @@ export default function SearchPage({ onNavigate, initialCategory, initialQuery, 
   };
 
   const renderFilterBar = () => {
-    if (establishments.length === 0) return null;
+    if (establishments.length === 0 && minRating === null && selectedSubCategory === null) return null;
 
     return (
       <div className="mb-8 p-4 bg-white border-2 border-neutral-900 rounded-2xl shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] flex flex-col md:flex-row gap-6 items-start md:items-center justify-between animate-fadeIn">
@@ -322,6 +322,8 @@ export default function SearchPage({ onNavigate, initialCategory, initialQuery, 
               setSelectedLocation(null);
               setLocations([]);
               setEstablishments([]);
+              setMinRating(null);
+              setSelectedSubCategory(null);
             }}
             className={`px-3 py-1.5 rounded border transition-colors ${
               !selectedSector
@@ -337,6 +339,8 @@ export default function SearchPage({ onNavigate, initialCategory, initialQuery, 
             onClick={() => {
               setSelectedLocation(null);
               setEstablishments([]);
+              setMinRating(null);
+              setSelectedSubCategory(null);
             }}
             className={`px-3 py-1.5 rounded border transition-colors disabled:opacity-50 disabled:pointer-events-none ${
               selectedSector && !selectedLocation
@@ -386,7 +390,7 @@ export default function SearchPage({ onNavigate, initialCategory, initialQuery, 
                 </Button>
               </div>
 
-              {establishments.length === 0 ? (
+              {establishments.length === 0 && minRating === null && selectedSubCategory === null ? (
                 <EmptyState
                   title="Aucun résultat trouvé"
                   description="Nous n'avons trouvé aucun établissement correspondant à vos critères de recherche spécifiques."
@@ -503,6 +507,8 @@ export default function SearchPage({ onNavigate, initialCategory, initialQuery, 
                       setSelectedLocation(null);
                       setLocations([]);
                       setEstablishments([]);
+                      setMinRating(null);
+                      setSelectedSubCategory(null);
                     }}>
                       Retour aux secteurs
                     </Button>
@@ -524,6 +530,8 @@ export default function SearchPage({ onNavigate, initialCategory, initialQuery, 
                         setSelectedLocation(null);
                         setLocations([]);
                         setEstablishments([]);
+                        setMinRating(null);
+                        setSelectedSubCategory(null);
                       }}
                       actionVariant="primary"
                     />
@@ -571,6 +579,8 @@ export default function SearchPage({ onNavigate, initialCategory, initialQuery, 
                       <Button variant="outline" size="sm" onClick={() => {
                         setSelectedLocation(null);
                         setEstablishments([]);
+                        setMinRating(null);
+                        setSelectedSubCategory(null);
                       }}>
                         Changer de lieu
                       </Button>
@@ -580,7 +590,7 @@ export default function SearchPage({ onNavigate, initialCategory, initialQuery, 
                     </div>
                   </div>
 
-                  {establishments.length === 0 ? (
+                  {establishments.length === 0 && minRating === null && selectedSubCategory === null ? (
                     <EmptyState
                       title="Aucun prestataire trouvé"
                       description="Il n'y a aucun établissement correspondant à ce secteur dans cette zone actuellement."
@@ -593,6 +603,8 @@ export default function SearchPage({ onNavigate, initialCategory, initialQuery, 
                       onAction={() => {
                         setSelectedLocation(null);
                         setEstablishments([]);
+                        setMinRating(null);
+                        setSelectedSubCategory(null);
                       }}
                       actionVariant="primary"
                     />
