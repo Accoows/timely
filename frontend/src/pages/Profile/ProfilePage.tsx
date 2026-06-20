@@ -18,12 +18,32 @@ interface ProfilePageProps {
 
 export default function ProfilePage({ onNavigate }: ProfilePageProps) {
   const { user, updateUser, logout } = useAuth();
-  const [activeTab, setActiveTab] = useState<'profile' | 'bookings' | 'favorites' | 'messages' | 'invoices' | 'reviews' | 'establishment'>('profile');
-
+  const [activeTab, setActiveTab] = useState<'profile' | 'bookings' | 'favorites' | 'messages' | 'invoices' | 'reviews' | 'establishment'>(() => {
+    const params = new URLSearchParams(window.location.search);
+    const tabParam = params.get('tab');
+    if (tabParam === 'bookings' || tabParam === 'invoices') {
+      return tabParam;
+    }
+    return 'profile';
+  });
   const [error, setError] = useState('');
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [favorites, setFavorites] = useState<Etablissement[]>([]);
   const [invoices, setInvoices] = useState<Invoice[]>([]);
+  const [payLoadingId, setPayLoadingId] = useState<number | null>(null);
+
+  const handlePay = async (bookingId: number) => {
+    try {
+      setPayLoadingId(bookingId);
+      const url = await api.bookings.getCheckoutUrl(bookingId);
+      window.location.assign(url);
+    } catch (err) {
+      console.error(err);
+      setError("Impossible de démarrer le paiement.");
+    } finally {
+      setPayLoadingId(null);
+    }
+  };
 
   // Redirect if not logged in
   useEffect(() => {
@@ -31,6 +51,18 @@ export default function ProfilePage({ onNavigate }: ProfilePageProps) {
       onNavigate('login');
     }
   }, [user, onNavigate]);
+
+  // Fetch bookings unconditionally to monitor pending payments
+  useEffect(() => {
+    if (!user) return;
+    api.bookings.list()
+      .then(data => {
+        setBookings(data);
+      })
+      .catch(err => {
+        console.error("Error fetching bookings:", err);
+      });
+  }, [user]);
 
   // Load real API bookings and favorites
   useEffect(() => {
@@ -164,6 +196,8 @@ export default function ProfilePage({ onNavigate }: ProfilePageProps) {
     });
   }
 
+  const pendingPaymentBooking = bookings.find(b => b.payment_method === 'stripe' && b.payment_status !== 'paid');
+
   return (
     <div className="flex-1 max-w-7xl w-full mx-auto py-12 px-4">
       {/* Title */}
@@ -207,7 +241,7 @@ export default function ProfilePage({ onNavigate }: ProfilePageProps) {
           </button>
 
           <div className="h-[2px] bg-neutral-200 my-4"></div>
-
+          
           <Button
             type="button"
             variant="outline"
@@ -222,6 +256,29 @@ export default function ProfilePage({ onNavigate }: ProfilePageProps) {
         {/* Content Box */}
         <main className="w-full lg:w-3/4 bg-white border-2 border-neutral-900 p-6 sm:p-8 rounded-2xl shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]">
           {error && <Alert type="error" message={error} className="mb-6" />}
+
+          {pendingPaymentBooking && (
+            <div className="mb-6 p-4 border-2 border-neutral-900 bg-amber-50 rounded-xl shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <h4 className="font-extrabold text-amber-900 text-sm uppercase tracking-wider flex items-center gap-1.5">
+                  <svg className="w-4 h-4 text-amber-900" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
+                  </svg>
+                  Paiement en attente
+                </h4>
+                <p className="text-xs text-neutral-700 mt-1 font-semibold">
+                  Votre rendez-vous chez <strong className="text-neutral-950 font-black">{pendingPaymentBooking.establishment_name}</strong> le {pendingPaymentBooking.booking_date} n'est pas encore réglé.
+                </p>
+              </div>
+              <button
+                onClick={() => handlePay(pendingPaymentBooking.id)}
+                disabled={payLoadingId === pendingPaymentBooking.id}
+                className="shrink-0 px-4 py-2 border-2 border-neutral-900 bg-amber-100 hover:bg-amber-200 text-neutral-900 font-black rounded-lg text-xs uppercase transition-all shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:translate-y-[-1px] hover:translate-x-[-1px] active:translate-y-0 active:translate-x-0 cursor-pointer disabled:opacity-50"
+              >
+                {payLoadingId === pendingPaymentBooking.id ? "Redirection..." : "Payer maintenant"}
+              </button>
+            </div>
+          )}
 
           {activeTab === 'profile' && <ProfileTab user={user} updateUser={updateUser} onNavigate={onNavigate} />}
           {activeTab === 'bookings' && <BookingsTab bookings={bookings} onNavigate={onNavigate} onRefreshBookings={handleRefreshBookings} />}

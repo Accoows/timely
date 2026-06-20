@@ -34,6 +34,7 @@ export default function EstablishmentDetailPage({ establishmentId, onNavigate }:
   const [bookingSuccess, setBookingSuccess] = useState(false);
   const [bookingError, setBookingError] = useState<string | null>(null);
   const [bookingLoading, setBookingLoading] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState<'on_site' | 'stripe'>('on_site');
 
   // Detail tabs state (prestations, infos, messages)
   const [activeTab, setActiveTab] = useState<'prestations' | 'infos' | 'messages'>('prestations');
@@ -305,14 +306,19 @@ export default function EstablishmentDetailPage({ establishmentId, onNavigate }:
       
       const dateHeureISO = `${selectedDate}T${selectedTime}:00`;
       
-      await api.bookings.create({
+      const res = await api.bookings.create({
         professionnel_id: selectedCollaborateur.id,
         prestation_id: selectedPrestation.id,
         date_heure: dateHeureISO,
-        duree: 30
+        duree: 30,
+        payment_method: paymentMethod
       });
 
-      setBookingSuccess(true);
+      if (res.payment_url) {
+        window.location.assign(res.payment_url);
+      } else {
+        setBookingSuccess(true);
+      }
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : "Une erreur est survenue lors de la réservation.";
       setBookingError(errorMsg);
@@ -756,24 +762,58 @@ export default function EstablishmentDetailPage({ establishmentId, onNavigate }:
                               </button>
                             </div>
                           ) : user ? (
-                            <div className="flex gap-3">
-                              <Button
-                                onClick={handleBookSlot}
-                                variant="primary"
-                                loading={bookingLoading}
-                                disabled={bookingLoading}
-                              >
-                                {bookingLoading ? "Réservation en cours..." : "Valider mon rendez-vous"}
-                              </Button>
-                              <button
-                                onClick={() => {
-                                  setSelectedDate(null);
-                                  setSelectedTime(null);
-                                }}
-                                className="px-4 py-2 border border-neutral-200 hover:bg-neutral-50 text-neutral-600 hover:text-neutral-900 text-xs font-bold rounded-xl transition-all cursor-pointer"
-                              >
-                                Annuler
-                              </button>
+                            <div className="space-y-4">
+                              <div className="space-y-2 pt-2 border-t border-neutral-100">
+                                <label className="text-[10px] font-black text-neutral-400 uppercase tracking-wider block">
+                                  Mode de paiement
+                                </label>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                  <button
+                                    type="button"
+                                    onClick={() => setPaymentMethod('on_site')}
+                                    className={`flex flex-col items-start p-3 border-2 rounded-xl text-left transition-all cursor-pointer ${
+                                      paymentMethod === 'on_site'
+                                        ? 'border-neutral-900 bg-neutral-50 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]'
+                                        : 'border-neutral-200 hover:border-neutral-400 bg-white'
+                                    }`}
+                                  >
+                                    <span className="font-extrabold text-xs text-neutral-900">Sur place</span>
+                                    <span className="text-[9px] text-neutral-500 mt-0.5 font-semibold">Payer à l'établissement</span>
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => setPaymentMethod('stripe')}
+                                    className={`flex flex-col items-start p-3 border-2 rounded-xl text-left transition-all cursor-pointer ${
+                                      paymentMethod === 'stripe'
+                                        ? 'border-neutral-900 bg-neutral-50 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]'
+                                        : 'border-neutral-200 hover:border-neutral-400 bg-white'
+                                    }`}
+                                  >
+                                    <span className="font-extrabold text-xs text-neutral-900">Carte bancaire</span>
+                                    <span className="text-[9px] text-neutral-500 mt-0.5 font-semibold">Payer via Stripe Test</span>
+                                  </button>
+                                </div>
+                              </div>
+
+                              <div className="flex gap-3">
+                                <Button
+                                  onClick={handleBookSlot}
+                                  variant="primary"
+                                  loading={bookingLoading}
+                                  disabled={bookingLoading}
+                                >
+                                  {bookingLoading ? "Réservation en cours..." : "Valider mon rendez-vous"}
+                                </Button>
+                                <button
+                                  onClick={() => {
+                                    setSelectedDate(null);
+                                    setSelectedTime(null);
+                                  }}
+                                  className="px-4 py-2 border border-neutral-200 hover:bg-neutral-50 text-neutral-600 hover:text-neutral-900 text-xs font-bold rounded-xl transition-all cursor-pointer"
+                                >
+                                  Annuler
+                                </button>
+                              </div>
                             </div>
                           ) : (
                             <div className="border border-neutral-200 bg-[#FBFAF8] rounded-xl p-4 text-center">

@@ -10,8 +10,22 @@ interface BookingsTabProps {
 }
 
 export default function BookingsTab({ bookings, onNavigate, onRefreshBookings }: BookingsTabProps) {
+  const [payLoadingId, setPayLoadingId] = useState<number | null>(null);
   const [isCancelling, setIsCancelling] = useState(false);
   const isCancellingRef = useRef(false);
+
+  const handlePay = async (bookingId: number) => {
+    try {
+      setPayLoadingId(bookingId);
+      const url = await api.bookings.getCheckoutUrl(bookingId);
+      window.location.assign(url);
+    } catch (err) {
+      console.error(err);
+      alert("Impossible de démarrer le paiement.");
+    } finally {
+      setPayLoadingId(null);
+    }
+  };
 
   const handleCancel = async (id: number) => {
     if (isCancellingRef.current) return;
@@ -70,17 +84,58 @@ export default function BookingsTab({ bookings, onNavigate, onRefreshBookings }:
                   {booking.booking_date}
                 </p>
               </div>
-              <div className="flex items-center gap-2">
-                <button
-                  disabled={isCancelling}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleCancel(booking.id);
-                  }}
-                  className="border-2 border-red-600 bg-white hover:bg-red-50 text-red-600 shadow-[2px_2px_0px_0px_rgba(220,38,38,1)] transition-all font-black rounded-xl px-3 py-1.5 text-xs cursor-pointer select-none focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  Annuler
-                </button>
+              <div className="flex flex-col sm:items-end gap-2">
+                {booking.status === 'cancelled' ? (
+                  <span className="inline-block px-3 py-1 text-xs font-black uppercase tracking-wider border-2 border-neutral-900 rounded-md bg-rose-100 text-rose-900">
+                    Annulé
+                  </span>
+                ) : (
+                  <div className="flex flex-col sm:items-end gap-2">
+                    {booking.status === 'pending' ? (
+                      <span className="inline-block px-3 py-1 text-xs font-black uppercase tracking-wider border-2 border-neutral-900 rounded-md bg-amber-100 text-amber-900">
+                        En attente de paiement
+                      </span>
+                    ) : (
+                      <>
+                        {booking.payment_method === 'on_site' ? (
+                          <span className="inline-block px-3 py-1 text-xs font-black uppercase tracking-wider border-2 border-neutral-900 rounded-md bg-emerald-100 text-emerald-950">
+                            Paiement sur place
+                          </span>
+                        ) : booking.payment_method === 'stripe' ? (
+                          <span className="inline-block px-3 py-1 text-xs font-black uppercase tracking-wider border-2 border-neutral-900 rounded-md bg-emerald-100 text-emerald-950">
+                            Payé par carte (Stripe)
+                          </span>
+                        ) : (
+                          <span className="inline-block px-3 py-1 text-xs font-black uppercase tracking-wider border-2 border-neutral-900 rounded-md bg-emerald-100 text-emerald-900">
+                            Confirmé
+                          </span>
+                        )}
+                      </>
+                    )}
+
+                    <div className="flex gap-2">
+                      {booking.status === 'pending' && booking.payment_method === 'stripe' && booking.payment_status !== 'paid' && (
+                        <button
+                          onClick={() => handlePay(booking.id)}
+                          disabled={payLoadingId === booking.id}
+                          className="px-2.5 py-1.5 border-2 border-neutral-900 bg-amber-100 hover:bg-amber-200 text-neutral-900 font-black rounded-xl text-xs uppercase transition-all shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:translate-y-[-1px] hover:translate-x-[-1px] active:translate-y-0 active:translate-x-0 cursor-pointer disabled:opacity-50"
+                        >
+                          {payLoadingId === booking.id ? "Redirection..." : "Payer maintenant"}
+                        </button>
+                      )}
+                      <button
+                        disabled={isCancelling}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleCancel(booking.id);
+                        }}
+                        className="border-2 border-red-600 bg-white hover:bg-red-50 text-red-600 shadow-[2px_2px_0px_0px_rgba(220,38,38,1)] transition-all font-black rounded-xl px-3 py-1.5 text-xs cursor-pointer select-none focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed hover:translate-y-[-1px] hover:translate-x-[-1px] active:translate-y-0 active:translate-x-0"
+                      >
+                        Annuler
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           ))}

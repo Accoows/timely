@@ -4,9 +4,41 @@ from django.views import View
 from django.http import JsonResponse
 from django.utils import timezone
 from django.utils.dateparse import parse_datetime
+from django.shortcuts import redirect
+import stripe
+from django.conf import settings
 from .models import Reservation
 from authentication.models import Client, Professionnel
 from establishments.models import Prestation
+
+stripe.api_key = getattr(settings, 'STRIPE_SECRET_KEY', '')
+
+def get_frontend_url(request):
+    origin = request.headers.get('Origin') or request.META.get('HTTP_ORIGIN')
+    if origin:
+        return origin
+    referer = request.headers.get('Referer') or request.META.get('HTTP_REFERER')
+    if referer:
+        from urllib.parse import urlparse
+        parsed = urlparse(referer)
+        return f"{parsed.scheme}://{parsed.netloc}"
+    return "http://localhost:5173"
+
+def get_backend_url(request):
+    frontend_url = get_frontend_url(request)
+    if "timely.stellarbit.cc" in frontend_url:
+        return "https://timely.stellarbit.cc"
+    if "localhost" in frontend_url:
+        return "http://localhost:8000"
+        
+    scheme = 'https' if request.headers.get('X-Forwarded-Proto') == 'https' or request.is_secure() else 'http'
+    host = request.get_host()
+    if host.startswith("backend"):
+        return "http://localhost:8000"
+    return f"{scheme}://{host}"
+
+
+
 
 class BookingListView(View):
     def get(self, request):
@@ -42,6 +74,8 @@ class BookingListView(View):
                 "date_heure": r.date_heure.isoformat(),
                 "duree": r.duree,
                 "status": r.status,
+                "payment_method": r.payment_method,
+                "payment_status": r.payment_status,
                 "establishment_name": r.professionnel.etablissement.nom,
                 "prestation": {
                     "id": r.prestation.id,
@@ -84,7 +118,7 @@ class BookingListView(View):
             prestation_id = data.get('prestation_id')
             date_heure_str = data.get('date_heure')
             duree = data.get('duree')
-            status = data.get('status', 'confirme')
+            payment_method = data.get('payment_method', 'on_site')
             
             # Si c'est un gérant ou un employé, il peut réserver pour un client spécifique
             if is_staff_user:
@@ -143,6 +177,10 @@ class BookingListView(View):
                 if start_time < eb_end and end_time > eb_start:
                     return JsonResponse({"error": "Le créneau demandé chevauche un rendez-vous existant."}, status=400)
                     
+            # Déterminer les statuts par défaut selon la méthode de paiement
+            status_val = "pending" if payment_method == "stripe" else "confirme"
+            pay_status_val = "pending" if payment_method == "stripe" else "unpaid"
+
             # Créer la réservation
             reservation = Reservation.objects.create(
                 client=client,
@@ -150,17 +188,47 @@ class BookingListView(View):
                 prestation=prestation,
                 date_heure=dt,
                 duree=duree,
-                status=status
+                status=status_val,
+                payment_method=payment_method,
+                payment_status=pay_status_val,
+                payment_attempts=1 if payment_method == "stripe" else 0
             )
             
+            payment_url = None
+            if payment_method == "stripe":
+                backend_url = get_backend_url(request)
+                checkout_session = stripe.checkout.Session.create(
+                    payment_method_types=['card'],
+                    line_items=[{
+                        'price_data': {
+                            'currency': 'eur',
+                            'product_data': {
+                                'name': f"{prestation.nom} avec {professionnel.utilisateur.first_name}",
+                            },
+                            'unit_amount': int(prestation.cout * 100),
+                        },
+                        'quantity': 1,
+                    }],
+                    mode='payment',
+                    success_url=f"{backend_url}/api/bookings/success/?session_id={{CHECKOUT_SESSION_ID}}",
+                    cancel_url=f"{backend_url}/api/bookings/cancel/?booking_id={reservation.id}",
+                    metadata={
+                        'booking_id': str(reservation.id)
+                    }
+                )
+                payment_url = checkout_session.url
+
             return JsonResponse({
                 "status": "success",
                 "message": "Réservation créée avec succès !",
+                "payment_url": payment_url,
                 "booking": {
                     "id": reservation.id,
                     "date_heure": reservation.date_heure.isoformat(),
                     "duree": reservation.duree,
-                    "status": reservation.status
+                    "status": reservation.status,
+                    "payment_method": reservation.payment_method,
+                    "payment_status": reservation.payment_status
                 }
             }, status=201)
             
@@ -335,11 +403,91 @@ class DashboardCalendarView(View):
 
 class CheckoutView(View):
     def get(self, request, booking_id):
-        return JsonResponse({"message": f"Checkout placeholder for booking id {booking_id}"}, status=200)
+        if not request.user.is_authenticated:
+            return JsonResponse({"error": "Non authentifié"}, status=401)
+        try:
+            reservation = Reservation.objects.get(id=booking_id)
+            if reservation.status == "cancelled":
+                return JsonResponse({"error": "Ce rendez-vous a été annulé suite à trop de tentatives de paiement."}, status=400)
+                
+            # If they already tried twice (payment_attempts >= 2), cancel the booking
+            if reservation.payment_attempts >= 2:
+                reservation.status = "cancelled"
+                reservation.save()
+                return JsonResponse({"error": "Nombre maximal de tentatives de paiement atteint (2). Le rendez-vous est annulé."}, status=400)
+                
+            # Increment attempts
+            reservation.payment_attempts += 1
+            reservation.save()
+
+            backend_url = get_backend_url(request)
+            checkout_session = stripe.checkout.Session.create(
+                payment_method_types=['card'],
+                line_items=[{
+                    'price_data': {
+                        'currency': 'eur',
+                        'product_data': {
+                            'name': f"{reservation.prestation.nom} avec {reservation.professionnel.utilisateur.first_name}",
+                        },
+                        'unit_amount': int(reservation.prestation.cout * 100),
+                    },
+                    'quantity': 1,
+                }],
+                mode='payment',
+                success_url=f"{backend_url}/api/bookings/success/?session_id={{CHECKOUT_SESSION_ID}}",
+                cancel_url=f"{backend_url}/api/bookings/cancel/?booking_id={reservation.id}",
+                metadata={
+                    'booking_id': str(reservation.id)
+                }
+            )
+            return JsonResponse({"status": "success", "payment_url": checkout_session.url}, status=200)
+        except Exception as e:
+            return JsonResponse({"error": str(e)}, status=400)
+
+class BookingCancelView(View):
+    def get(self, request):
+        booking_id = request.GET.get('booking_id')
+        if booking_id:
+            try:
+                reservation = Reservation.objects.get(id=booking_id)
+                if reservation.payment_attempts >= 2:
+                    reservation.status = "cancelled"
+                    reservation.save()
+            except Exception as e:
+                print(f"Error handling booking cancel: {e}")
+        
+        frontend_url = get_frontend_url(request)
+        url = f"{frontend_url}/payment-confirmation?status=cancelled"
+        if booking_id:
+            url += f"&booking_id={booking_id}"
+        return redirect(url)
 
 class BookingSuccessView(View):
     def get(self, request):
-        return JsonResponse({"message": "Booking success placeholder"}, status=200)
+        session_id = request.GET.get('session_id')
+        booking_id = None
+        if session_id:
+            try:
+                session = stripe.checkout.Session.retrieve(session_id)
+                metadata = getattr(session, 'metadata', None) or session.get('metadata', {})
+                if isinstance(metadata, dict):
+                    booking_id = metadata.get('booking_id')
+                else:
+                    booking_id = getattr(metadata, 'booking_id', None)
+                
+                if booking_id:
+                    reservation = Reservation.objects.get(id=booking_id)
+                    reservation.status = "confirme"
+                    reservation.payment_status = "paid"
+                    reservation.save()
+            except Exception as e:
+                print(f"Error confirming payment: {e}")
+        
+        frontend_url = get_frontend_url(request)
+        url = f"{frontend_url}/payment-confirmation?status=success"
+        if booking_id:
+            url += f"&booking_id={booking_id}"
+        return redirect(url)
 
 class DashboardPOSView(View):
     def get(self, request):
@@ -347,5 +495,54 @@ class DashboardPOSView(View):
 
 class InvoiceListView(View):
     def get(self, request):
-        return JsonResponse({"message": "Invoice list placeholder"}, status=200)
+        if not request.user.is_authenticated:
+            return JsonResponse({"error": "Non authentifié"}, status=401)
+        
+        user = request.user
+        invoices = []
+        
+        if hasattr(user, 'profil_client'):
+            reservations = Reservation.objects.filter(client=user.profil_client).select_related(
+                'prestation', 'professionnel__etablissement'
+            ).order_by('-created_at')
+            for r in reservations:
+                ref_year = r.created_at.year
+                invoices.append({
+                    "id": r.id,
+                    "reference": f"FAC-{ref_year}-{r.id:04d}",
+                    "establishment_name": r.professionnel.etablissement.nom,
+                    "date": r.created_at.strftime('%d/%m/%Y'),
+                    "amount": f"{r.prestation.cout} €",
+                    "status": "success" if r.payment_status == "paid" else "pending"
+                })
+        elif hasattr(user, 'profil_gerant'):
+            reservations = Reservation.objects.filter(
+                professionnel__etablissement__gerant=user.profil_gerant
+            ).select_related('prestation', 'professionnel__etablissement').order_by('-created_at')
+            for r in reservations:
+                ref_year = r.created_at.year
+                invoices.append({
+                    "id": r.id,
+                    "reference": f"FAC-{ref_year}-{r.id:04d}",
+                    "establishment_name": r.professionnel.etablissement.nom,
+                    "date": r.created_at.strftime('%d/%m/%Y'),
+                    "amount": f"{r.prestation.cout} €",
+                    "status": "success" if r.payment_status == "paid" else "pending"
+                })
+        elif hasattr(user, 'profil_pro'):
+            reservations = Reservation.objects.filter(
+                professionnel=user.profil_pro
+            ).select_related('prestation', 'professionnel__etablissement').order_by('-created_at')
+            for r in reservations:
+                ref_year = r.created_at.year
+                invoices.append({
+                    "id": r.id,
+                    "reference": f"FAC-{ref_year}-{r.id:04d}",
+                    "establishment_name": r.professionnel.etablissement.nom,
+                    "date": r.created_at.strftime('%d/%m/%Y'),
+                    "amount": f"{r.prestation.cout} €",
+                    "status": "success" if r.payment_status == "paid" else "pending"
+                })
+                
+        return JsonResponse({"invoices": invoices}, status=200)
 
