@@ -19,7 +19,7 @@ function getCookie(name: string): string | null {
 // Generic HTTP request helper
 async function request<T>(url: string, options?: RequestInit): Promise<T> {
   const headers = new Headers(options?.headers);
-  if (!headers.has('Content-Type')) {
+  if (!headers.has('Content-Type') && !(options?.body instanceof FormData)) {
     headers.set('Content-Type', 'application/json');
   }
 
@@ -168,6 +168,20 @@ export const api = {
       return await request<{ status: string; message: string }>(`/api/establishments/${id}/`, {
         method: 'PUT',
         body: JSON.stringify(data)
+      });
+    },
+    uploadPhoto: async (id: number, file: File): Promise<{ status: string; message: string; photos: string[] }> => {
+      const formData = new FormData();
+      formData.append('image', file);
+      return request<{ status: string; message: string; photos: string[] }>(`/api/establishments/${id}/upload-photo/`, {
+        method: 'POST',
+        body: formData
+      });
+    },
+    deletePhoto: async (id: number, photoUrl: string): Promise<{ status: string; message: string; photos: string[] }> => {
+      return request<{ status: string; message: string; photos: string[] }>(`/api/establishments/${id}/upload-photo/`, {
+        method: 'DELETE',
+        body: JSON.stringify({ url: photoUrl })
       });
     },
     delete: async (id: number): Promise<{ status: string; message: string }> => {

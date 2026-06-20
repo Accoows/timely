@@ -1,7 +1,10 @@
+import os
 from django.views import View
 from django.http import JsonResponse
 from django.db.models import Q
 import json
+from django.core.files.storage import FileSystemStorage
+from django.conf import settings
 from .models import Etablissement, Secteur, Lieu, Photo, Prestation
 from authentication.models import Gerant, Client
 
@@ -494,6 +497,104 @@ class ServiceDetailView(View):
         try:
             prestation.delete()
             return JsonResponse({"status": "success", "message": "Prestation supprimée avec succès"}, status=200)
+        except Exception as e:
+            return JsonResponse({"error": str(e)}, status=400)
+
+
+class EstablishmentPhotoUploadView(View):
+    def post(self, request, id):
+        if not request.user.is_authenticated:
+            return JsonResponse({"error": "Non authentifié"}, status=401)
+            
+        try:
+            etablissement = Etablissement.objects.get(id=id)
+        except Etablissement.DoesNotExist:
+            return JsonResponse({"error": "Établissement non trouvé"}, status=404)
+            
+        is_admin = request.user.is_superuser or request.user.is_staff
+        is_owner = hasattr(request.user, 'profil_gerant') and etablissement.gerant == request.user.profil_gerant
+        if not (is_admin or is_owner):
+            return JsonResponse({"error": "Accès interdit à cet établissement"}, status=403)
+            
+        uploaded_file = request.FILES.get('image') or request.FILES.get('file')
+        if not uploaded_file:
+            return JsonResponse({"error": "Aucun fichier fourni"}, status=400)
+            
+        allowed_extensions = ['.png', '.jpg', '.jpeg', '.gif', '.webp']
+        ext = os.path.splitext(uploaded_file.name)[1].lower()
+        if ext not in allowed_extensions:
+            return JsonResponse({"error": f"Extension non autorisée. Extensions valides : {', '.join(allowed_extensions)}"}, status=400)
+            
+        try:
+            os.makedirs(os.path.join(settings.MEDIA_ROOT, 'establishments'), exist_ok=True)
+            fs = FileSystemStorage(location=os.path.join(settings.MEDIA_ROOT, 'establishments'))
+            clean_name = f"estab_{id}_{uploaded_file.name}"
+            filename = fs.save(clean_name, uploaded_file)
+            
+            media_url = settings.MEDIA_URL
+            if not media_url.startswith('/'):
+                media_url = '/' + media_url
+            if not media_url.endswith('/'):
+                media_url = media_url + '/'
+            
+            url_photo = f"{media_url}establishments/{filename}"
+            
+            Photo.objects.create(etablissement=etablissement, url_photo=url_photo)
+            
+            photos = [p.url_photo for p in etablissement.photos.all()]
+            return JsonResponse({
+                "status": "success",
+                "message": "Image uploadée avec succès",
+                "photos": photos
+            }, status=200)
+        except Exception as e:
+            return JsonResponse({"error": str(e)}, status=500)
+
+    def delete(self, request, id):
+        if not request.user.is_authenticated:
+            return JsonResponse({"error": "Non authentifié"}, status=401)
+            
+        try:
+            etablissement = Etablissement.objects.get(id=id)
+        except Etablissement.DoesNotExist:
+            return JsonResponse({"error": "Établissement non trouvé"}, status=404)
+            
+        is_admin = request.user.is_superuser or request.user.is_staff
+        is_owner = hasattr(request.user, 'profil_gerant') and etablissement.gerant == request.user.profil_gerant
+        if not (is_admin or is_owner):
+            return JsonResponse({"error": "Accès interdit à cet établissement"}, status=403)
+            
+        try:
+            data = json.loads(request.body)
+            url_photo = data.get('url')
+            if not url_photo:
+                return JsonResponse({"error": "URL de la photo manquante"}, status=400)
+                
+            photo_obj = Photo.objects.filter(etablissement=etablissement, url_photo=url_photo).first()
+            if not photo_obj:
+                return JsonResponse({"error": "Photo non trouvée pour cet établissement"}, status=404)
+                
+            media_url = settings.MEDIA_URL
+            if not media_url.startswith('/'):
+                media_url = '/' + media_url
+            
+            if url_photo.startswith(media_url):
+                relative_path = url_photo[len(media_url):]
+                file_path = os.path.join(settings.MEDIA_ROOT, relative_path)
+                if os.path.exists(file_path):
+                    try:
+                        os.remove(file_path)
+                    except Exception as err:
+                        print("Error deleting media file:", err)
+                        
+            photo_obj.delete()
+            
+            photos = [p.url_photo for p in etablissement.photos.all()]
+            return JsonResponse({
+                "status": "success",
+                "message": "Photo supprimée avec succès",
+                "photos": photos
+            }, status=200)
         except Exception as e:
             return JsonResponse({"error": str(e)}, status=400)
 

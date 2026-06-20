@@ -17,6 +17,9 @@ urlpatterns = [
     # URL finale : /api/establishments/<id>/ (ex: /api/establishments/4/)
     path('<int:id>/', views.EstablishmentDetailView.as_view(), name='establishment_detail'),
     
+    # URL finale : /api/establishments/<id>/upload-photo/
+    path('<int:id>/upload-photo/', views.EstablishmentPhotoUploadView.as_view(), name='establishment_upload_photo'),
+    
     # URL finale : /api/establishments/<id>/services/ (gestion des prestations de l'établissement)
     path('<int:id>/services/', views.ServiceListView.as_view(), name='establishment_services'),
     
