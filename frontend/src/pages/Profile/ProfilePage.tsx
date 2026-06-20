@@ -10,6 +10,7 @@ import InvoicesTab from './components/InvoicesTab';
 import ReviewsTab from './components/ReviewsTab';
 import Alert from '../../components/Alert';
 import EstablishmentTab from './components/EstablishmentTab';
+import NewProAccountTab from './components/NewProAccountTab';
 import type { Booking, Etablissement, Invoice } from '../../types';
 
 interface ProfilePageProps {
@@ -18,7 +19,7 @@ interface ProfilePageProps {
 
 export default function ProfilePage({ onNavigate }: ProfilePageProps) {
   const { user, updateUser, logout } = useAuth();
-  const [activeTab, setActiveTab] = useState<'profile' | 'bookings' | 'favorites' | 'messages' | 'invoices' | 'reviews' | 'establishment'>('profile');
+  const [activeTab, setActiveTab] = useState<'profile' | 'bookings' | 'favorites' | 'messages' | 'invoices' | 'reviews' | 'establishment' | 'new-pro-account'>('profile');
 
   const [error, setError] = useState('');
   const [bookings, setBookings] = useState<Booking[]>([]);
@@ -107,7 +108,7 @@ export default function ProfilePage({ onNavigate }: ProfilePageProps) {
       });
   };
 
-  const menuItems: { id: 'profile' | 'bookings' | 'favorites' | 'messages' | 'invoices' | 'reviews' | 'establishment'; label: string; icon: React.ReactNode }[] = [
+  const menuItems: { id: 'profile' | 'bookings' | 'favorites' | 'messages' | 'invoices' | 'reviews' | 'establishment' | 'new-pro-account'; label: string; icon: React.ReactNode }[] = [
     {
       id: 'profile', label: 'Mon compte', icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
@@ -118,7 +119,7 @@ export default function ProfilePage({ onNavigate }: ProfilePageProps) {
     {
       id: 'bookings', label: 'Mes Rendez-vous', icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5m-9-6h.008v.008H12v-.008ZM12 15h.008v.008H12V15Zm0 2.25h.008v.008H12v-.008ZM9.75 15h.008v.008H9.75V15Zm0 2.25h.008v.008H9.75v-.008ZM7.5 15h.008v.008H7.5V15Zm0 2.25h.008v.008H7.5v-.008Zm6.75-4.5h.008v.008h-.008v-.008Zm0 2.25h.008v.008h-.008V15Zm0 2.25h.008v.008h-.008v-.008Zm2.25-4.5h.008v.008H16.5v-.008Zm0 2.25h.008v.008H16.5V15Z" />
+          <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5m-9-6h.008v.008H12v-.008ZM12 15h.008v.008H12V15Zm0 2.25h.008v.008H12v-.008ZM9.75 15h.008v.008H9.75V15Zm0 2.25h.008v.008H9.75v-.008ZM7.5 15h.008v.008H7.5V15Zm0 2.25h.008v.008H7.5v-.008Zm6.75-4.5h.008v.008h-.008v-.008Zm0 2.25h.008v.008h-.008V15Zm0 2.25h.008v.008h-.008v-.008Zm2.25-4.5h.008v.008H16.5v-.008ZM0 2.25h.008v.008H16.5V15Z" />
         </svg>
       )
     },
@@ -146,7 +147,7 @@ export default function ProfilePage({ onNavigate }: ProfilePageProps) {
     {
       id: 'reviews', label: 'Mes avis', icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M8.625 12a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H8.25m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H12m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 0 1-2.555-.337A5.972 5.972 0 0 1 5.41 20.97a.75.75 0 0 1-1.074-.765 5.99 5.99 0 0 1 1.523-3.078C4.504 15.742 3 13.999 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25Z" />
+          <path strokeLinecap="round" strokeLinejoin="round" d="M8.625 12a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H8.25m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H12m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 0 1-2.555-.337A5.972 5.972 0 0 1 5.41 20.97a.75.75 0 0 1-1.074-.765 5.99 5.99 0 0 1 1.523-3.078C4.504 15.742 3 13.999 3 12c0-4.556 4.03-8.25 9 8.25s9 3.694 9 8.25Z" />
         </svg>
       )
     }
@@ -159,6 +160,15 @@ export default function ProfilePage({ onNavigate }: ProfilePageProps) {
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" d="M12 21a9.004 9.004 0 0 0 8.716-6.747M12 21a9.004 9.004 0 0 1-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 0 1 7.843 4.582M12 3a8.997 8.997 0 0 0-7.843 4.582m15.686 0A11.953 11.953 0 0 1 12 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0 1 21 12c0 .778-.099 1.533-.284 2.253m0 0A11.952 11.952 0 0 1 12 15c-2.998 0-5.74-1.1-7.843-2.918m0 0A8.959 8.959 0 0 1 3 12c0-.778.099-1.533.284-2.253" />
+        </svg>
+      )
+    });
+    menuItems.push({
+      id: 'new-pro-account',
+      label: 'Nouveau compte pro',
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M18 7.5v3m0 0v3m0-3h3m-3 0h-3m-2.25-4.125a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0zM3 19.235v-.11a6.375 6.375 0 0 1 12.75 0v.109A12.318 12.318 0 0 1 9.374 21c-2.331 0-4.512-.645-6.374-1.766z" />
         </svg>
       )
     });
@@ -230,6 +240,7 @@ export default function ProfilePage({ onNavigate }: ProfilePageProps) {
           {activeTab === 'invoices' && <InvoicesTab invoices={invoices} onNavigate={onNavigate} />}
           {activeTab === 'reviews' && <ReviewsTab onNavigate={onNavigate} />}
           {activeTab === 'establishment' && <EstablishmentTab user={user} updateUser={updateUser} onNavigate={onNavigate} />}
+          {activeTab === 'new-pro-account' && <NewProAccountTab user={user} />}
         </main>
       </div>
     </div>

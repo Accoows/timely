@@ -367,6 +367,30 @@ export const api = {
         body: JSON.stringify({ email, password: password_raw, firstname, lastname })
       });
     },
+    registerPro: async (data: {
+      email: string;
+      password_raw: string;
+      firstname: string;
+      lastname: string;
+      poste: string;
+      description: string;
+      date_embauche: string;
+      etablissement_id: number;
+    }): Promise<{ status: string; message: string }> => {
+      return await request<{ status: string; message: string }>('/api/auth/register-pro/', {
+        method: 'POST',
+        body: JSON.stringify({
+          email: data.email,
+          password: data.password_raw,
+          firstname: data.firstname,
+          lastname: data.lastname,
+          poste: data.poste,
+          description: data.description,
+          date_embauche: data.date_embauche,
+          etablissement_id: data.etablissement_id
+        })
+      });
+    },
     logout: async (): Promise<void> => {
       await request<void>('/api/auth/logout/', { method: 'POST' });
     },
