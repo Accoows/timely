@@ -107,7 +107,20 @@ function mapBackendBooking(b: BackendBooking): Booking {
     id: b.id,
     establishment_name: b.establishment_name,
     booking_date: formattedDate,
-    status: b.status === 'confirme' ? 'success' : b.status === 'pending' ? 'pending' : 'cancelled'
+    status: b.status === 'confirme' ? 'success' : b.status === 'pending' ? 'pending' : 'cancelled',
+    raw_date_heure: b.date_heure,
+    professionnel: b.professionnel ? {
+      id: b.professionnel.id,
+      nom: b.professionnel.nom,
+      prenom: b.professionnel.prenom,
+      poste: b.professionnel.poste
+    } : undefined,
+    prestation: b.prestation ? {
+      id: b.prestation.id,
+      nom: b.prestation.nom,
+      cout: parseFloat(b.prestation.cout),
+      description: b.prestation.description
+    } : undefined
   };
 }
 
@@ -247,10 +260,9 @@ export const api = {
       });
       return mapBackendBooking(response.booking);
     },
-    getAvailableSlots: async (professionnelId: number, date: string): Promise<{ time: string; available: boolean }[]> => {
-      const response = await request<{ status: string; slots: { time: string; available: boolean }[] }>(
-        `/api/bookings/available-slots/?professionnel_id=${professionnelId}&date=${date}`
-      );
+    getAvailableSlots: async (professionnelId: number, date: string, excludeBookingId?: number): Promise<{ time: string; available: boolean }[]> => {
+      const url = `/api/bookings/available-slots/?professionnel_id=${professionnelId}&date=${date}${excludeBookingId ? `&exclude_booking_id=${excludeBookingId}` : ''}`;
+      const response = await request<{ status: string; slots: { time: string; available: boolean }[] }>(url);
       return response.slots;
     },
     getInvoices: async (): Promise<Invoice[]> => {
@@ -266,6 +278,12 @@ export const api = {
     cancel: async (bookingId: number): Promise<{ status: string; message: string }> => {
       return await request<{ status: string; message: string }>(`/api/bookings/${bookingId}/`, {
         method: 'DELETE'
+      });
+    },
+    update: async (bookingId: number, data: { date_heure: string }): Promise<{ status: string; message: string }> => {
+      return await request<{ status: string; message: string }>(`/api/bookings/${bookingId}/`, {
+        method: 'PUT',
+        body: JSON.stringify(data)
       });
     }
   },

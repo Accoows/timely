@@ -222,11 +222,87 @@ class BookingDetailView(View):
         reservation.delete()
         return JsonResponse({"status": "success", "message": "Réservation supprimée avec succès"}, status=200)
 
+    def put(self, request, booking_id):
+        if not request.user.is_authenticated:
+            return JsonResponse({"error": "Non authentifié"}, status=401)
+            
+        try:
+            reservation = Reservation.objects.get(id=booking_id)
+        except Reservation.DoesNotExist:
+            return JsonResponse({"error": "Réservation non trouvée"}, status=404)
+            
+        user = request.user
+        authorized = False
+        
+        # Vérifier les permissions
+        if hasattr(user, 'profil_client') and reservation.client == user.profil_client:
+            authorized = True
+        elif hasattr(user, 'profil_gerant') and reservation.professionnel.etablissement.gerant == user.profil_gerant:
+            authorized = True
+        elif hasattr(user, 'profil_pro') and reservation.professionnel == user.profil_pro:
+            authorized = True
+        elif user.is_staff:
+            authorized = True
+            
+        if not authorized:
+            return JsonResponse({"error": "Accès interdit à cette réservation"}, status=403)
+            
+        try:
+            data = json.loads(request.body)
+            date_heure_str = data.get('date_heure')
+            if not date_heure_str:
+                return JsonResponse({"error": "Le champ date_heure est requis"}, status=400)
+                
+            # Analyser la date
+            dt = parse_datetime(date_heure_str)
+            if not dt:
+                return JsonResponse({"error": "Format date_heure invalide (utilisez ISO 8601)"}, status=400)
+            if timezone.is_naive(dt):
+                dt = timezone.make_aware(dt, timezone.get_default_timezone())
+                
+            # Vérification de non-chevauchement
+            start_time = dt
+            end_time = dt + timedelta(minutes=reservation.duree)
+            
+            # Récupérer les réservations existantes du professionnel le même jour, excluant celle-ci
+            date_only = dt.date()
+            existing_bookings = Reservation.objects.filter(
+                professionnel=reservation.professionnel,
+                status="confirme",
+                date_heure__date=date_only
+            ).exclude(id=reservation.id)
+            
+            for eb in existing_bookings:
+                eb_start = eb.date_heure
+                eb_end = eb_start + timedelta(minutes=eb.duree)
+                # Overlap condition
+                if start_time < eb_end and end_time > eb_start:
+                    return JsonResponse({"error": "Le créneau demandé chevauche un rendez-vous existant."}, status=400)
+                    
+            # Mettre à jour la date_heure
+            reservation.date_heure = dt
+            reservation.save()
+            
+            return JsonResponse({
+                "status": "success",
+                "message": "Réservation mise à jour avec succès !",
+                "booking": {
+                    "id": reservation.id,
+                    "date_heure": reservation.date_heure.isoformat(),
+                    "duree": reservation.duree,
+                    "status": reservation.status
+                }
+            }, status=200)
+            
+        except Exception as e:
+            return JsonResponse({"error": str(e)}, status=400)
+
 
 class AvailableSlotsView(View):
     def get(self, request):
         professionnel_id = request.GET.get('professionnel_id')
         date_str = request.GET.get('date') # Format YYYY-MM-DD
+        exclude_booking_id = request.GET.get('exclude_booking_id')
         
         if not professionnel_id or not date_str:
             return JsonResponse({"error": "Paramètres professionnel_id et date requis"}, status=400)
@@ -258,6 +334,11 @@ class AvailableSlotsView(View):
             status="confirme",
             date_heure__date=target_date
         )
+        if exclude_booking_id:
+            try:
+                existing_bookings = existing_bookings.exclude(id=int(exclude_booking_id))
+            except ValueError:
+                pass
         
         # Convertir les réservations existantes en datetime timezone-aware pour comparaison
         bookings_range = []

@@ -86,6 +86,19 @@ export interface Booking {
   establishment_name: string;
   booking_date: string;
   status: 'pending' | 'success' | 'cancelled';
+  raw_date_heure?: string;
+  professionnel?: {
+    id: number;
+    nom: string;
+    prenom: string;
+    poste: string;
+  };
+  prestation?: {
+    id: number;
+    nom: string;
+    cout: number;
+    description?: string;
+  };
 }
 
 export interface BookingInput {

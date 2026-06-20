@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import type { Booking } from '../../../types';
 import EmptyState from '../../../components/EmptyState';
 import { api } from '../../../services/api';
@@ -12,19 +12,20 @@ interface BookingsTabProps {
 export default function BookingsTab({ bookings, onNavigate, onRefreshBookings }: BookingsTabProps) {
   const [isCancelling, setIsCancelling] = useState(false);
   const isCancellingRef = useRef(false);
+  const [selectedBookingForReschedule, setSelectedBookingForReschedule] = useState<Booking | null>(null);
 
   const handleCancel = async (id: number) => {
     if (isCancellingRef.current) return;
-    
+
     isCancellingRef.current = true;
     setIsCancelling(true);
-    
+
     if (!confirm("Voulez-vous vraiment annuler ce rendez-vous ?")) {
       isCancellingRef.current = false;
       setIsCancelling(false);
       return;
     }
-    
+
     try {
       await api.bookings.cancel(id);
       onRefreshBookings?.();
@@ -71,6 +72,18 @@ export default function BookingsTab({ bookings, onNavigate, onRefreshBookings }:
                 </p>
               </div>
               <div className="flex items-center gap-2">
+                {booking.status !== 'cancelled' && (
+                  <button
+                    disabled={isCancelling}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSelectedBookingForReschedule(booking);
+                    }}
+                    className="border-2 border-neutral-900 bg-white hover:bg-neutral-50 text-neutral-900 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all font-black rounded-xl px-3 py-1.5 text-xs cursor-pointer select-none focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Modifier
+                  </button>
+                )}
                 <button
                   disabled={isCancelling}
                   onClick={(e) => {
@@ -86,6 +99,278 @@ export default function BookingsTab({ bookings, onNavigate, onRefreshBookings }:
           ))}
         </div>
       )}
+
+      {selectedBookingForReschedule && (
+        <RescheduleModal
+          booking={selectedBookingForReschedule}
+          onClose={() => setSelectedBookingForReschedule(null)}
+          onSuccess={() => {
+            setSelectedBookingForReschedule(null);
+            onRefreshBookings?.();
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
+interface RescheduleModalProps {
+  booking: Booking;
+  onClose: () => void;
+  onSuccess: () => void;
+}
+
+function RescheduleModal({ booking, onClose, onSuccess }: RescheduleModalProps) {
+  const [weekOffset, setWeekOffset] = useState(0);
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const [selectedTime, setSelectedTime] = useState<string | null>(null);
+  const [loadingSlots, setLoadingSlots] = useState(false);
+  const [weeklySlots, setWeeklySlots] = useState<{ [date: string]: { time: string; available: boolean }[] }>({});
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const getWeeklyDays = (offset: number) => {
+    const days = [];
+    const locale = 'fr-FR';
+    for (let i = 0; i < 7; i++) {
+      const d = new Date();
+      d.setDate(d.getDate() + (offset * 7) + i);
+      
+      const dayName = d.toLocaleDateString(locale, { weekday: 'long' });
+      const dayNum = d.getDate();
+      const monthName = d.toLocaleDateString(locale, { month: 'long' });
+
+      const yyyy = d.getFullYear();
+      const mm = String(d.getMonth() + 1).padStart(2, '0');
+      const dd = String(d.getDate()).padStart(2, '0');
+      const fullDate = `${yyyy}-${mm}-${dd}`;
+      
+      days.push({ dayName, dayNum, monthName, fullDate });
+    }
+    return days;
+  };
+
+  const weeklyDays = getWeeklyDays(weekOffset);
+
+  useEffect(() => {
+    if (!booking.professionnel?.id) {
+      setError("Les informations du professionnel ne sont pas disponibles pour ce rendez-vous.");
+      return;
+    }
+
+    let active = true;
+    const fetchSlots = async () => {
+      setLoadingSlots(true);
+      setError(null);
+      try {
+        const results = await Promise.all(
+          weeklyDays.map(async (day) => {
+            if (day.dayName.toLowerCase() === 'dimanche') {
+              return { dateStr: day.fullDate, slots: [] };
+            }
+            try {
+              const slots = await api.bookings.getAvailableSlots(
+                booking.professionnel!.id,
+                day.fullDate,
+                booking.id
+              );
+              return { dateStr: day.fullDate, slots };
+            } catch {
+              return { dateStr: day.fullDate, slots: [] };
+            }
+          })
+        );
+
+        if (active) {
+          const slotsMap: { [date: string]: { time: string; available: boolean }[] } = {};
+          results.forEach((res) => {
+            slotsMap[res.dateStr] = res.slots;
+          });
+          setWeeklySlots(slotsMap);
+        }
+      } catch (err) {
+        console.error(err);
+        if (active) setError("Erreur de chargement des créneaux de la semaine.");
+      } finally {
+        if (active) setLoadingSlots(false);
+      }
+    };
+
+    fetchSlots();
+    return () => {
+      active = false;
+    };
+  }, [booking.professionnel?.id, weekOffset, booking.id]);
+
+  const handleSave = async () => {
+    if (!selectedDate || !selectedTime) return;
+    setSaving(true);
+    setError(null);
+    try {
+      const dateHeureISO = `${selectedDate}T${selectedTime}:00`;
+      await api.bookings.update(booking.id, { date_heure: dateHeureISO });
+      onSuccess();
+    } catch (err) {
+      console.error(err);
+      setError(err instanceof Error ? err.message : "Une erreur est survenue lors de la replanification.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-neutral-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div 
+        className="bg-white border-4 border-neutral-900 rounded-2xl p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] w-full max-w-4xl max-h-[90vh] overflow-y-auto flex flex-col gap-6"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex justify-between items-center border-b-2 border-neutral-100 pb-4">
+          <h2 className="text-xl font-black text-neutral-900 uppercase">Replanifier le rendez-vous</h2>
+          <button 
+            onClick={onClose}
+            className="w-8 h-8 border-2 border-neutral-900 hover:bg-neutral-50 rounded-xl flex items-center justify-center font-bold cursor-pointer"
+          >
+            ✕
+          </button>
+        </div>
+
+        {/* Current booking info */}
+        <div className="bg-neutral-50 border-2 border-neutral-900 p-4 rounded-xl flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <h4 className="font-extrabold text-neutral-900 text-sm">{booking.establishment_name}</h4>
+            <p className="text-xs text-neutral-500 font-semibold mt-1">
+              Service : <span className="text-neutral-800">{booking.prestation?.nom || "Non spécifié"}</span>
+            </p>
+            <p className="text-xs text-neutral-500 font-semibold mt-0.5">
+              Professionnel : <span className="text-neutral-800">{booking.professionnel ? `Avec ${booking.professionnel.prenom} (${booking.professionnel.poste})` : "Non spécifié"}</span>
+            </p>
+          </div>
+          <div className="text-left md:text-right shrink-0">
+            <span className="text-xs font-bold text-neutral-400 block">Date actuelle</span>
+            <span className="text-xs font-black text-neutral-900">{booking.booking_date}</span>
+          </div>
+        </div>
+
+        {error && (
+          <div className="bg-red-50 text-red-800 border-2 border-red-600 p-4 rounded-xl font-bold text-xs">
+            ⚠️ {error}
+          </div>
+        )}
+
+        {booking.professionnel?.id && (
+          <>
+            {/* Week navigation */}
+            <div className="flex justify-between items-center mt-2">
+              <h3 className="text-xs font-extrabold uppercase tracking-wider text-neutral-500">
+                Choix de la nouvelle date & heure
+              </h3>
+              
+              <div className="flex items-center gap-2 text-xs font-semibold text-neutral-500">
+                <button
+                  disabled={weekOffset === 0}
+                  onClick={() => setWeekOffset(prev => Math.max(0, prev - 1))}
+                  className="w-7 h-7 border-2 border-neutral-900 rounded-lg bg-white flex items-center justify-center hover:bg-neutral-50 disabled:opacity-50 cursor-pointer text-xs"
+                >
+                  &lt;
+                </button>
+                <span>Semaine {weekOffset + 1}</span>
+                <button
+                  onClick={() => setWeekOffset(prev => prev + 1)}
+                  className="w-7 h-7 border-2 border-neutral-900 rounded-lg bg-white flex items-center justify-center hover:bg-neutral-50 cursor-pointer text-xs"
+                >
+                  &gt;
+                </button>
+              </div>
+            </div>
+
+            {/* Slots Grid */}
+            <div className="bg-white border-2 border-neutral-900 rounded-xl p-4 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] overflow-x-auto relative min-h-[150px]">
+              {loadingSlots && (
+                <div className="absolute inset-0 bg-white/70 backdrop-blur-[1px] flex justify-center items-center z-10">
+                  <div className="w-8 h-8 border-2 border-neutral-850 border-t-transparent animate-spin rounded-full"></div>
+                </div>
+              )}
+
+              <div className="grid grid-cols-7 gap-2 min-w-[650px] text-center select-none">
+                {weeklyDays.map((day) => {
+                  const daySlots = weeklySlots[day.fullDate] || [];
+                  const isSunday = day.dayName.toLowerCase() === 'dimanche';
+                  
+                  return (
+                    <div key={day.fullDate} className="space-y-3">
+                      <div className="border-b-2 border-neutral-100 pb-2">
+                        <span className="text-[10px] font-bold text-neutral-400 block capitalize">{day.dayName.split(' ')[0]}</span>
+                        <span className="text-[11px] font-black text-neutral-800 block mt-0.5">{day.dayNum} {day.monthName.split(' ')[0]}</span>
+                      </div>
+
+                      <div className="space-y-1.5 max-h-[250px] overflow-y-auto pr-0.5">
+                        {isSunday ? (
+                          <span className="text-[10px] font-bold text-red-400 block py-3">Fermé</span>
+                        ) : daySlots.length > 0 ? (
+                          daySlots.map((slot) => {
+                            const isCurrent = selectedDate === day.fullDate && selectedTime === slot.time;
+                            return (
+                              <button
+                                key={slot.time}
+                                type="button"
+                                disabled={!slot.available}
+                                onClick={() => {
+                                  setSelectedDate(day.fullDate);
+                                  setSelectedTime(slot.time);
+                                  setError(null);
+                                }}
+                                className={`w-full py-1.5 text-[10px] font-black rounded-lg border-2 transition-all cursor-pointer ${
+                                  !slot.available 
+                                    ? 'bg-neutral-50/50 text-neutral-200 border-neutral-100 cursor-not-allowed line-through' 
+                                    : isCurrent 
+                                      ? 'bg-neutral-900 text-white border-neutral-900 shadow-sm' 
+                                      : 'bg-white text-neutral-850 border-neutral-350 hover:bg-neutral-50'
+                                }`}
+                              >
+                                {slot.time}
+                              </button>
+                            );
+                          })
+                        ) : (
+                          <span className="text-[9px] font-bold text-neutral-350 block py-3">Aucun</span>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Validation / Confirmation bar */}
+            {selectedDate && selectedTime && (
+              <div className="bg-neutral-50 border-2 border-neutral-900 p-4 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 mt-2">
+                <div className="text-left">
+                  <span className="text-xs font-bold text-neutral-450 block">Nouvel horaire sélectionné</span>
+                  <p className="text-xs text-neutral-800 font-extrabold">
+                    Le {selectedDate.split('-').reverse().join('/')} à {selectedTime}
+                  </p>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <button
+                    disabled={saving}
+                    onClick={onClose}
+                    className="border-2 border-neutral-900 bg-white hover:bg-neutral-50 text-neutral-900 font-black rounded-xl px-4 py-2 text-xs shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all cursor-pointer disabled:opacity-50"
+                  >
+                    Annuler
+                  </button>
+                  <button
+                    disabled={saving}
+                    onClick={handleSave}
+                    className="border-2 border-neutral-900 bg-neutral-900 hover:bg-neutral-850 text-white font-black rounded-xl px-4 py-2 text-xs shadow-[2px_2px_0px_0px_rgba(0,0,0,0.15)] transition-all cursor-pointer disabled:opacity-50"
+                  >
+                    {saving ? "Replanification..." : "Confirmer"}
+                  </button>
+                </div>
+              </div>
+            )}
+          </>
+        )}
+      </div>
     </div>
   );
 }
