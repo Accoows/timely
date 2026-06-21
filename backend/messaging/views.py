@@ -13,13 +13,10 @@ class DiscussionListView(View):
         user = request.user
         discussions = Discussion.objects.none()
         
-        # Déterminer les discussions en fonction du rôle
         if hasattr(user, 'profil_client'):
             discussions = Discussion.objects.filter(client=user.profil_client)
         elif hasattr(user, 'profil_gerant'):
             discussions = Discussion.objects.filter(etablissement__gerant=user.profil_gerant)
-        elif hasattr(user, 'profil_pro'):
-            discussions = Discussion.objects.filter(etablissement=user.profil_pro.etablissement)
         elif user.is_staff:
             discussions = Discussion.objects.all()
         else:
@@ -98,12 +95,10 @@ class DiscussionListView(View):
 
 class MessageCreateView(View):
     def _is_authorized(self, user, discussion):
-        # Vérifie si l'utilisateur est le client de la discussion, ou le gérant/employé de l'établissement
+        # Vérifie si l'utilisateur est le client de la discussion, ou le gérant de l'établissement
         if hasattr(user, 'profil_client') and discussion.client == user.profil_client:
             return True
         if hasattr(user, 'profil_gerant') and discussion.etablissement.gerant == user.profil_gerant:
-            return True
-        if hasattr(user, 'profil_pro') and discussion.etablissement == user.profil_pro.etablissement:
             return True
         if user.is_staff:
             return True

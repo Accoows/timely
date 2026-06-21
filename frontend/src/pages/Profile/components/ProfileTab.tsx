@@ -113,6 +113,16 @@ export default function ProfileTab({ user, updateUser, onNavigate }: ProfileTabP
             Accéder au Dashboard Admin
           </Button>
         )}
+        {(user.role === 'gerant' || user.role === 'professionnel') && (
+          <Button 
+            onClick={() => onNavigate('establishment-dashboard')}
+            variant="primary"
+            size="sm"
+            className="shadow-sm"
+          >
+            Accéder au Dashboard Établissement
+          </Button>
+        )}
       </div>
       
       {error && <Alert type="error" message={error} className="mb-6" />}

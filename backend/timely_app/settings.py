@@ -22,6 +22,7 @@ DEBUG = env('DEBUG')
 ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=['localhost', '127.0.0.1', '0.0.0.0', 'backend', 'timely_backend', 'timely.stellarbit.cc'])
 CSRF_TRUSTED_ORIGINS = env.list('CSRF_TRUSTED_ORIGINS', default=['https://timely.stellarbit.cc', 'http://localhost', 'http://127.0.0.1', 'http://localhost:5173', 'http://127.0.0.1:5173'])
 ADMIN_URL = env('ADMIN_URL', default='backoffice/')
+PUBLIC_URL = env('PUBLIC_URL', default='https://timely.stellarbit.cc')
 
 # Application definition
 INSTALLED_APPS = [
@@ -118,5 +119,15 @@ USE_TZ = True
 STATIC_URL = 'static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
+# Media files (uploaded photos)
+MEDIA_URL = 'media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Stripe Settings
+STRIPE_SECRET_KEY = env('STRIPE_SECRET_KEY', default='')
+STRIPE_PUBLISHABLE_KEY = env('STRIPE_PUBLISHABLE_KEY', default='')
+
+

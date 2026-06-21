@@ -34,6 +34,9 @@ export default function EstablishmentTab({ user, updateUser, onNavigate }: Estab
   const [editVille, setEditVille] = useState('');
   const [editCodePostal, setEditCodePostal] = useState('');
   const [editHoraires, setEditHoraires] = useState<Record<string, string>>({});
+  const [isManagingPhotos, setIsManagingPhotos] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [photoError, setPhotoError] = useState<string | null>(null);
 
   const fetchEstablishmentDetails = useCallback(async () => {
     if (!resolvedId) {
@@ -82,6 +85,47 @@ export default function EstablishmentTab({ user, updateUser, onNavigate }: Estab
       active = false;
     };
   }, [fetchEstablishmentDetails]);
+
+  const handleUploadPhoto = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploading(true);
+    setPhotoError(null);
+    try {
+      const res = await api.establishments.uploadPhoto(resolvedId!, file);
+      if (establishment) {
+        setEstablishment({
+          ...establishment,
+          photos: res.photos
+        });
+      }
+      alert("Photo ajoutée avec succès.");
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Erreur lors de l'upload de la photo.";
+      setPhotoError(msg);
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleDeletePhoto = async (photoUrl: string) => {
+    if (!confirm("Voulez-vous vraiment supprimer cette photo ?")) return;
+    setPhotoError(null);
+    try {
+      const res = await api.establishments.deletePhoto(resolvedId!, photoUrl);
+      if (establishment) {
+        setEstablishment({
+          ...establishment,
+          photos: res.photos
+        });
+      }
+      alert("Photo supprimée.");
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Erreur lors de la suppression de la photo.";
+      setPhotoError(msg);
+    }
+  };
 
   const handleUpdateEstablishment = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -262,6 +306,13 @@ export default function EstablishmentTab({ user, updateUser, onNavigate }: Estab
             Éditer la page
           </Button>
           <Button
+            onClick={() => setIsManagingPhotos(true)}
+            variant="outline"
+            size="sm"
+          >
+            Gérer les photos
+          </Button>
+          <Button
             onClick={handleDeleteEstablishment}
             variant="outline"
             className="border-red-600 text-red-600 hover:bg-red-50"
@@ -410,6 +461,88 @@ export default function EstablishmentTab({ user, updateUser, onNavigate }: Estab
                 <button type="submit" className="border-2 border-neutral-900 bg-neutral-900 hover:bg-neutral-800 text-white shadow-[2px_2px_0px_0px_rgba(0,0,0,0.15)] transition-all font-black rounded-xl px-4 py-2 cursor-pointer text-xs">Enregistrer</button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Photo Management Modal */}
+      {isManagingPhotos && (
+        <div className="modal modal-open bg-neutral-900/60 backdrop-blur-sm">
+          <div className="modal-box bg-white border-2 border-neutral-900 text-neutral-900 max-w-2xl rounded-2xl max-h-[90vh] overflow-y-auto shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] p-6 md:p-8">
+            <div className="flex justify-between items-center mb-6 border-b-2 border-neutral-900 pb-3">
+              <h3 className="font-black text-xl uppercase tracking-tight text-neutral-900">Gérer les Photos</h3>
+              <button 
+                type="button"
+                onClick={() => { setIsManagingPhotos(false); setPhotoError(null); }}
+                className="text-neutral-500 hover:text-neutral-900 font-bold text-sm focus:outline-none"
+              >
+                ✕
+              </button>
+            </div>
+
+            {photoError && <Alert type="error" message={photoError} className="mb-6" />}
+
+            {/* Photos List Grid */}
+            <div className="space-y-6">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                {(!establishment.photos || establishment.photos.length === 0) ? (
+                  <p className="col-span-full text-center text-sm text-neutral-500 italic py-8">
+                    Aucune photo pour le moment.
+                  </p>
+                ) : (
+                  establishment.photos.map((pUrl, idx) => (
+                    <div key={idx} className="relative group border-2 border-neutral-900 rounded-xl overflow-hidden shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] h-32 bg-neutral-50">
+                      <img 
+                        src={pUrl} 
+                        alt={`Aperçu ${idx + 1}`} 
+                        className="w-full h-full object-cover"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => handleDeletePhoto(pUrl)}
+                        className="absolute top-2 right-2 bg-red-600 hover:bg-red-700 text-white rounded-full p-1.5 shadow border border-neutral-900 cursor-pointer focus:outline-none opacity-0 group-hover:opacity-100 transition-opacity"
+                        title="Supprimer cette photo"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
+                        </svg>
+                      </button>
+                    </div>
+                  ))
+                )}
+              </div>
+
+              {/* Upload Zone */}
+              <div className="border-2 border-dashed border-neutral-900 rounded-2xl p-6 bg-neutral-50/50 flex flex-col items-center justify-center text-center">
+                <svg className="w-10 h-10 text-neutral-400 mb-2" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 16.5V9.75m0 0 3 3m-3-3-3 3M6.75 19.5a4.5 4.5 0 0 1-1.41-8.775 5.25 5.25 0 0 1 10.233-2.33 3 3 0 0 1 3.758 3.848A3.752 3.752 0 0 1 18 19.5H6.75Z" />
+                </svg>
+                <div className="text-xs font-bold text-neutral-700 mb-3">
+                  {uploading ? "Upload en cours..." : "Sélectionnez une nouvelle image à ajouter"}
+                </div>
+                <label className={`border-2 border-neutral-900 bg-white hover:bg-neutral-50 text-neutral-800 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:translate-y-[-1px] hover:translate-x-[-1px] active:translate-y-[0px] active:translate-x-[0px] active:shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] transition-all font-black rounded-xl px-4 py-2 cursor-pointer text-xs ${uploading ? 'opacity-50 pointer-events-none' : ''}`}>
+                  <span>Parcourir</span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleUploadPhoto}
+                    className="hidden"
+                    disabled={uploading}
+                  />
+                </label>
+                <p className="text-[10px] text-neutral-400 mt-2">Formats acceptés : PNG, JPG, JPEG, GIF, WEBP (Max. 5 Mo)</p>
+              </div>
+            </div>
+
+            <div className="flex gap-2 justify-end pt-6 border-t-2 border-neutral-900 mt-6">
+              <button 
+                type="button" 
+                onClick={() => { setIsManagingPhotos(false); setPhotoError(null); }} 
+                className="border-2 border-neutral-900 bg-neutral-900 hover:bg-neutral-800 text-white shadow-[2px_2px_0px_0px_rgba(0,0,0,0.15)] transition-all font-black rounded-xl px-4 py-2 cursor-pointer text-xs"
+              >
+                Fermer
+              </button>
+            </div>
           </div>
         </div>
       )}

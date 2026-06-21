@@ -1,6 +1,7 @@
 from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
+from django.conf.urls.static import static
 
 admin_url = getattr(settings, 'ADMIN_URL', 'backoffice/')
 if not admin_url.endswith('/'):
@@ -15,3 +16,6 @@ urlpatterns = [
     path('api/interactions/', include('interactions.urls')),
     path('', include('core.urls')), 
 ]
+
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

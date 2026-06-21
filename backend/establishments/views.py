@@ -1,7 +1,10 @@
+import os
 from django.views import View
 from django.http import JsonResponse
 from django.db.models import Q
 import json
+from django.core.files.storage import FileSystemStorage
+from django.conf import settings
 from .models import Etablissement, Secteur, Lieu, Photo, Prestation
 from authentication.models import Gerant, Client
 
@@ -25,8 +28,7 @@ class LocationListView(View):
                 "id": loc.id,
                 "adresse": loc.adresse,
                 "ville": loc.ville,
-                "code_postal": loc.code_postal,
-                "region": loc.region
+                "code_postal": loc.code_postal
             })
         return JsonResponse({"status": "success", "locations": data}, status=200)
 
@@ -96,8 +98,7 @@ class ExploreListView(View):
                     "id": etablissement.lieu.id,
                     "adresse": etablissement.lieu.adresse,
                     "ville": etablissement.lieu.ville,
-                    "code_postal": etablissement.lieu.code_postal,
-                    "region": etablissement.lieu.region
+                    "code_postal": etablissement.lieu.code_postal
                 } if etablissement.lieu else None,
                 "secteur": {
                     "id": etablissement.secteur.id,
@@ -153,8 +154,7 @@ class EstablishmentDetailView(View):
                     "id": etablissement.lieu.id,
                     "adresse": etablissement.lieu.adresse,
                     "ville": etablissement.lieu.ville,
-                    "code_postal": etablissement.lieu.code_postal,
-                    "region": etablissement.lieu.region
+                    "code_postal": etablissement.lieu.code_postal
                 } if etablissement.lieu else None,
                 "secteur": {
                     "id": etablissement.secteur.id,
@@ -197,7 +197,6 @@ class EstablishmentDetailView(View):
             telephone = data.get('telephone')
             mail = data.get('mail')
             site_web = data.get('site_web')
-            status = data.get('status')
             secteur_id = data.get('secteur_id')
             gerant_id = data.get('gerant_id')
             lieu_data = data.get('lieu')
@@ -214,8 +213,6 @@ class EstablishmentDetailView(View):
                 etablissement.mail = mail
             if site_web is not None:
                 etablissement.site_web = site_web
-            if status is not None:
-                etablissement.status = status
                 
             if secteur_id is not None:
                 try:
@@ -233,7 +230,6 @@ class EstablishmentDetailView(View):
                 adresse = lieu_data.get('adresse')
                 ville = lieu_data.get('ville')
                 code_postal = lieu_data.get('code_postal')
-                region = lieu_data.get('region')
                 
                 if etablissement.lieu:
                     lieu = etablissement.lieu
@@ -246,8 +242,6 @@ class EstablishmentDetailView(View):
                     lieu.ville = ville
                 if code_postal is not None:
                     lieu.code_postal = code_postal
-                if region is not None:
-                    lieu.region = region
                 lieu.save()
                 etablissement.lieu = lieu
                 
@@ -380,12 +374,14 @@ class RegisterEstablishmentView(View):
             if not nom or not siret or not adresse or not ville or not code_postal or not category:
                 return JsonResponse({"error": "Champs nom, siret, adresse, ville, code_postal et category requis"}, status=400)
                 
-            # Mappage de la catégorie en Secteur
             secteur_mapping = {
                 'beauty': 'Beauté & Soins',
                 'restaurant': 'Restauration',
                 'hotel': 'Hébergement',
-                'travel': 'Voyages & Transports'
+                'travel': 'Voyages & Transports',
+                'hair': 'Coiffure',
+                'barber': 'Barbier',
+                'massage': 'Massage & Bien-être'
             }
             secteur_nom = secteur_mapping.get(category)
             if not secteur_nom:
@@ -404,7 +400,7 @@ class RegisterEstablishmentView(View):
             # Récupérer ou créer le profil Gérant pour l'utilisateur connecté
             gerant, _ = Gerant.objects.get_or_create(utilisateur=request.user)
             
-            # Créer l'établissement en statut actif pour les tests
+            # Créer l'établissement
             etablissement = Etablissement.objects.create(
                 nom=nom,
                 secteur=secteur,
@@ -412,8 +408,7 @@ class RegisterEstablishmentView(View):
                 gerant=gerant,
                 description=description,
                 telephone=telephone,
-                mail=mail,
-                status="actif"
+                mail=mail
             )
             
             return JsonResponse({
@@ -422,8 +417,7 @@ class RegisterEstablishmentView(View):
                 "establishment": {
                     "id": etablissement.id,
                     "nom": etablissement.nom,
-                    "siret": siret,
-                    "status": etablissement.status
+                    "siret": siret
                 }
             }, status=201)
             
@@ -494,6 +488,104 @@ class ServiceDetailView(View):
         try:
             prestation.delete()
             return JsonResponse({"status": "success", "message": "Prestation supprimée avec succès"}, status=200)
+        except Exception as e:
+            return JsonResponse({"error": str(e)}, status=400)
+
+
+class EstablishmentPhotoUploadView(View):
+    def post(self, request, id):
+        if not request.user.is_authenticated:
+            return JsonResponse({"error": "Non authentifié"}, status=401)
+            
+        try:
+            etablissement = Etablissement.objects.get(id=id)
+        except Etablissement.DoesNotExist:
+            return JsonResponse({"error": "Établissement non trouvé"}, status=404)
+            
+        is_admin = request.user.is_superuser or request.user.is_staff
+        is_owner = hasattr(request.user, 'profil_gerant') and etablissement.gerant == request.user.profil_gerant
+        if not (is_admin or is_owner):
+            return JsonResponse({"error": "Accès interdit à cet établissement"}, status=403)
+            
+        uploaded_file = request.FILES.get('image') or request.FILES.get('file')
+        if not uploaded_file:
+            return JsonResponse({"error": "Aucun fichier fourni"}, status=400)
+            
+        allowed_extensions = ['.png', '.jpg', '.jpeg', '.gif', '.webp']
+        ext = os.path.splitext(uploaded_file.name)[1].lower()
+        if ext not in allowed_extensions:
+            return JsonResponse({"error": f"Extension non autorisée. Extensions valides : {', '.join(allowed_extensions)}"}, status=400)
+            
+        try:
+            os.makedirs(os.path.join(settings.MEDIA_ROOT, 'establishments'), exist_ok=True)
+            fs = FileSystemStorage(location=os.path.join(settings.MEDIA_ROOT, 'establishments'))
+            clean_name = f"estab_{id}_{uploaded_file.name}"
+            filename = fs.save(clean_name, uploaded_file)
+            
+            media_url = settings.MEDIA_URL
+            if not media_url.startswith('/'):
+                media_url = '/' + media_url
+            if not media_url.endswith('/'):
+                media_url = media_url + '/'
+            
+            url_photo = f"{media_url}establishments/{filename}"
+            
+            Photo.objects.create(etablissement=etablissement, url_photo=url_photo)
+            
+            photos = [p.url_photo for p in etablissement.photos.all()]
+            return JsonResponse({
+                "status": "success",
+                "message": "Image uploadée avec succès",
+                "photos": photos
+            }, status=200)
+        except Exception as e:
+            return JsonResponse({"error": str(e)}, status=500)
+
+    def delete(self, request, id):
+        if not request.user.is_authenticated:
+            return JsonResponse({"error": "Non authentifié"}, status=401)
+            
+        try:
+            etablissement = Etablissement.objects.get(id=id)
+        except Etablissement.DoesNotExist:
+            return JsonResponse({"error": "Établissement non trouvé"}, status=404)
+            
+        is_admin = request.user.is_superuser or request.user.is_staff
+        is_owner = hasattr(request.user, 'profil_gerant') and etablissement.gerant == request.user.profil_gerant
+        if not (is_admin or is_owner):
+            return JsonResponse({"error": "Accès interdit à cet établissement"}, status=403)
+            
+        try:
+            data = json.loads(request.body)
+            url_photo = data.get('url')
+            if not url_photo:
+                return JsonResponse({"error": "URL de la photo manquante"}, status=400)
+                
+            photo_obj = Photo.objects.filter(etablissement=etablissement, url_photo=url_photo).first()
+            if not photo_obj:
+                return JsonResponse({"error": "Photo non trouvée pour cet établissement"}, status=404)
+                
+            media_url = settings.MEDIA_URL
+            if not media_url.startswith('/'):
+                media_url = '/' + media_url
+            
+            if url_photo.startswith(media_url):
+                relative_path = url_photo[len(media_url):]
+                file_path = os.path.join(settings.MEDIA_ROOT, relative_path)
+                if os.path.exists(file_path):
+                    try:
+                        os.remove(file_path)
+                    except Exception as err:
+                        print("Error deleting media file:", err)
+                        
+            photo_obj.delete()
+            
+            photos = [p.url_photo for p in etablissement.photos.all()]
+            return JsonResponse({
+                "status": "success",
+                "message": "Photo supprimée avec succès",
+                "photos": photos
+            }, status=200)
         except Exception as e:
             return JsonResponse({"error": str(e)}, status=400)
 

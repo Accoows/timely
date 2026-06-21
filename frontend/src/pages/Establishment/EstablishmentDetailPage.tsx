@@ -34,6 +34,7 @@ export default function EstablishmentDetailPage({ establishmentId, onNavigate }:
   const [bookingSuccess, setBookingSuccess] = useState(false);
   const [bookingError, setBookingError] = useState<string | null>(null);
   const [bookingLoading, setBookingLoading] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState<'on_site' | 'stripe'>('on_site');
 
   // Detail tabs state (prestations, infos, messages)
   const [activeTab, setActiveTab] = useState<'prestations' | 'infos' | 'messages'>('prestations');
@@ -288,6 +289,25 @@ export default function EstablishmentDetailPage({ establishmentId, onNavigate }:
     }
   };
 
+  // Handle review deletion
+  const handleDeleteReview = async (reviewId: number) => {
+    if (!window.confirm("Êtes-vous sûr de vouloir supprimer cet avis ?")) return;
+    try {
+      setReviewsLoading(true);
+      setReviewErrorMsg("");
+      setReviewSuccessMsg("");
+      await api.reviews.delete(reviewId);
+      setReviewSuccessMsg("L'avis a bien été supprimé !");
+      loadReviews();
+    } catch (err: unknown) {
+      console.error("Erreur lors de la suppression de l'avis :", err);
+      const msg = err instanceof Error ? err.message : "Impossible de supprimer cet avis.";
+      setReviewErrorMsg(msg);
+    } finally {
+      setReviewsLoading(false);
+    }
+  };
+
   // Handle booking creation
   const handleBookSlot = async () => {
     if (!user) {
@@ -305,14 +325,19 @@ export default function EstablishmentDetailPage({ establishmentId, onNavigate }:
       
       const dateHeureISO = `${selectedDate}T${selectedTime}:00`;
       
-      await api.bookings.create({
+      const res = await api.bookings.create({
         professionnel_id: selectedCollaborateur.id,
         prestation_id: selectedPrestation.id,
         date_heure: dateHeureISO,
-        duree: 30
+        duree: 30,
+        payment_method: paymentMethod
       });
 
-      setBookingSuccess(true);
+      if (res.payment_url) {
+        window.location.assign(res.payment_url);
+      } else {
+        setBookingSuccess(true);
+      }
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : "Une erreur est survenue lors de la réservation.";
       setBookingError(errorMsg);
@@ -756,24 +781,58 @@ export default function EstablishmentDetailPage({ establishmentId, onNavigate }:
                               </button>
                             </div>
                           ) : user ? (
-                            <div className="flex gap-3">
-                              <Button
-                                onClick={handleBookSlot}
-                                variant="primary"
-                                loading={bookingLoading}
-                                disabled={bookingLoading}
-                              >
-                                {bookingLoading ? "Réservation en cours..." : "Valider mon rendez-vous"}
-                              </Button>
-                              <button
-                                onClick={() => {
-                                  setSelectedDate(null);
-                                  setSelectedTime(null);
-                                }}
-                                className="px-4 py-2 border border-neutral-200 hover:bg-neutral-50 text-neutral-600 hover:text-neutral-900 text-xs font-bold rounded-xl transition-all cursor-pointer"
-                              >
-                                Annuler
-                              </button>
+                            <div className="space-y-4">
+                              <div className="space-y-2 pt-2 border-t border-neutral-100">
+                                <label className="text-[10px] font-black text-neutral-400 uppercase tracking-wider block">
+                                  Mode de paiement
+                                </label>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                  <button
+                                    type="button"
+                                    onClick={() => setPaymentMethod('on_site')}
+                                    className={`flex flex-col items-start p-3 border-2 rounded-xl text-left transition-all cursor-pointer ${
+                                      paymentMethod === 'on_site'
+                                        ? 'border-neutral-900 bg-neutral-50 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]'
+                                        : 'border-neutral-200 hover:border-neutral-400 bg-white'
+                                    }`}
+                                  >
+                                    <span className="font-extrabold text-xs text-neutral-900">Sur place</span>
+                                    <span className="text-[9px] text-neutral-500 mt-0.5 font-semibold">Payer à l'établissement</span>
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => setPaymentMethod('stripe')}
+                                    className={`flex flex-col items-start p-3 border-2 rounded-xl text-left transition-all cursor-pointer ${
+                                      paymentMethod === 'stripe'
+                                        ? 'border-neutral-900 bg-neutral-50 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]'
+                                        : 'border-neutral-200 hover:border-neutral-400 bg-white'
+                                    }`}
+                                  >
+                                    <span className="font-extrabold text-xs text-neutral-900">Carte bancaire</span>
+                                    <span className="text-[9px] text-neutral-500 mt-0.5 font-semibold">Payer via Stripe Test</span>
+                                  </button>
+                                </div>
+                              </div>
+
+                              <div className="flex gap-3">
+                                <Button
+                                  onClick={handleBookSlot}
+                                  variant="primary"
+                                  loading={bookingLoading}
+                                  disabled={bookingLoading}
+                                >
+                                  {bookingLoading ? "Réservation en cours..." : "Valider mon rendez-vous"}
+                                </Button>
+                                <button
+                                  onClick={() => {
+                                    setSelectedDate(null);
+                                    setSelectedTime(null);
+                                  }}
+                                  className="px-4 py-2 border border-neutral-200 hover:bg-neutral-50 text-neutral-600 hover:text-neutral-900 text-xs font-bold rounded-xl transition-all cursor-pointer"
+                                >
+                                  Annuler
+                                </button>
+                              </div>
                             </div>
                           ) : (
                             <div className="border border-neutral-200 bg-[#FBFAF8] rounded-xl p-4 text-center">
@@ -1004,18 +1063,36 @@ export default function EstablishmentDetailPage({ establishmentId, onNavigate }:
                     </div>
                   ) : establishmentReviews.length > 0 ? (
                     <div className="p-4 space-y-3 max-h-[200px] overflow-y-auto border-b border-neutral-100 text-left">
-                      {establishmentReviews.map((rev) => (
-                        <div key={rev.id} className="border-b border-neutral-50 pb-2 last:border-b-0">
-                          <div className="flex justify-between items-center text-[10px] font-bold text-neutral-800">
-                            <span>{rev.client?.first_name || "Client"}</span>
-                            <span className="text-neutral-400">{new Date(rev.date_envoie).toLocaleDateString('fr-FR')}</span>
+                      {establishmentReviews.map((rev) => {
+                        const canDelete = user && (
+                          user.role === 'admin' ||
+                          user.email === rev.client?.email ||
+                          (user.role === 'gerant' && (user.establishment_id === establishmentId || user.establishments?.some(e => e.id === establishmentId)))
+                        );
+                        return (
+                          <div key={rev.id} className="border-b border-neutral-50 pb-2 last:border-b-0">
+                            <div className="flex justify-between items-center text-[10px] font-bold text-neutral-800">
+                              <span>{rev.client?.first_name || "Client"}</span>
+                              <div className="flex items-center gap-2">
+                                <span className="text-neutral-400">{new Date(rev.date_envoie).toLocaleDateString('fr-FR')}</span>
+                                {canDelete && (
+                                  <button
+                                    onClick={() => handleDeleteReview(rev.id)}
+                                    className="text-red-500 hover:text-red-700 font-extrabold cursor-pointer transition-colors"
+                                    title="Supprimer l'avis"
+                                  >
+                                    ✕
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+                            <div className="text-[10px] text-amber-500 tracking-widest mt-0.5">
+                              {"★".repeat(rev.note || 5)}{"☆".repeat(5 - (rev.note || 5))}
+                            </div>
+                            <p className="text-[11px] text-neutral-600 mt-1 font-medium italic">"{rev.message}"</p>
                           </div>
-                          <div className="text-[10px] text-amber-500 tracking-widest mt-0.5">
-                            {"★".repeat(rev.note || 5)}{"☆".repeat(5 - (rev.note || 5))}
-                          </div>
-                          <p className="text-[11px] text-neutral-600 mt-1 font-medium italic">"{rev.message}"</p>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   ) : (
                     <div className="p-6 text-center text-xs text-neutral-450 border-b border-neutral-100 font-medium">

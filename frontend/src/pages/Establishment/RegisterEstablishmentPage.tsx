@@ -8,7 +8,7 @@ interface RegisterEstablishmentPageProps {
   onNavigate: (page: string) => void;
 }
 
-type CategoryType = 'beauty' | 'restaurant' | 'hotel' | 'travel';
+type CategoryType = 'beauty' | 'restaurant' | 'hotel' | 'travel' | 'hair' | 'barber' | 'massage';
 
 export default function RegisterEstablishmentPage({ onNavigate }: RegisterEstablishmentPageProps) {
   const { user, updateUser } = useAuth();
@@ -74,6 +74,40 @@ export default function RegisterEstablishmentPage({ onNavigate }: RegisterEstabl
 
   const categories = [
     {
+      id: 'hair' as CategoryType,
+      name: 'Coiffure',
+      desc: 'Salons de coiffure pour hommes, femmes et enfants.',
+      icon: (
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+          <circle cx="6" cy="6" r="3" />
+          <path d="M8.12 8.12 12 12" />
+          <path d="M20 4 8.12 15.88" />
+          <circle cx="6" cy="18" r="3" />
+          <path d="M14.8 14.8 20 20" />
+        </svg>
+      )
+    },
+    {
+      id: 'barber' as CategoryType,
+      name: 'Barbier',
+      desc: 'Taille de barbe, rasage traditionnel et soins masculins.',
+      icon: (
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M3 12c0 4 3 7 9 7s9-3 9-7M5 12c0 2 2.5 4 7 4s7-2 7-4M8 12c0 1 1.5 2 4 2s4-1 4-2" />
+        </svg>
+      )
+    },
+    {
+      id: 'massage' as CategoryType,
+      name: 'Massage & Bien-être',
+      desc: 'Massages relaxants, thalassothérapie et soins du corps.',
+      icon: (
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+        </svg>
+      )
+    },
+    {
       id: 'beauty' as CategoryType,
       name: 'Beauté & Soins',
       desc: 'Salons de coiffure, instituts de beauté, spas et bien-être.',
@@ -89,9 +123,7 @@ export default function RegisterEstablishmentPage({ onNavigate }: RegisterEstabl
       desc: 'Gastronomie, bistrots, cafés et services de restauration.',
       icon: (
         <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          {/* Fork */}
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 3v6a3 3 0 003 3h0a3 3 0 003-3V3M8 12v9M7 3v5M9 3v5" />
-          {/* Knife */}
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 3v18M17 3a3 3 0 013 3v6a3 3 0 01-3 3" />
         </svg>
       )
@@ -102,7 +134,7 @@ export default function RegisterEstablishmentPage({ onNavigate }: RegisterEstabl
       desc: 'Hôtels, maisons d\'hôtes, gîtes et résidences de vacances.',
       icon: (
         <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
         </svg>
       )
     },
@@ -128,13 +160,13 @@ export default function RegisterEstablishmentPage({ onNavigate }: RegisterEstabl
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
-            <h2 className="text-3xl font-extrabold text-neutral-900 tracking-tight">Demande reçue !</h2>
+            <h2 className="text-3xl font-extrabold text-neutral-900 tracking-tight">Félicitations !</h2>
             <p className="text-neutral-600 text-base max-w-xl mx-auto leading-relaxed">
-              Merci d'avoir inscrit votre établissement <strong>{name}</strong> sur Timely. Nos équipes vont valider vos informations (notamment votre numéro SIRET <strong>{siret}</strong>) sous 24h ouvrées. Vous recevrez un e-mail de confirmation dès la mise en ligne.
+              Votre établissement <strong>{name}</strong> a été créé avec succès et est maintenant en ligne sur Timely. Vous pouvez dès à présent le gérer depuis votre tableau de bord.
             </p>
             <div className="pt-4 max-w-xs mx-auto">
-              <Button onClick={() => onNavigate('home')} fullWidth>
-                Retour à l'accueil
+              <Button onClick={() => onNavigate('profile')} fullWidth>
+                Accéder à mon tableau de bord
               </Button>
             </div>
           </div>

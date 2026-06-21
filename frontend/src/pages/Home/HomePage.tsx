@@ -57,7 +57,6 @@ export default function HomePage({ onNavigate }: HomePageProps) {
   useEffect(() => {
     const categoryObj = CATEGORIES.find(cat => cat.id === activeCategory);
     fetchEstablishments(categoryObj?.filterVal, '', '');
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeCategory]);
 
   const handleSearch = (query: string, location: string) => {
@@ -110,17 +109,32 @@ export default function HomePage({ onNavigate }: HomePageProps) {
           
           <div className="categories-grid">
             <CategoryCard 
-              name="Beauté & Soins" 
+              name="Coiffure" 
               image="https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=600&q=80" 
+              onClick={() => handleCategoryClick('Coiffure')}
+            />
+            <CategoryCard 
+              name="Beauté & Soins" 
+              image="https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=600&q=80" 
               onClick={() => handleCategoryClick('Beauté & Soins')}
             />
             <CategoryCard 
-              name="Tables de Restaurant" 
+              name="Massage & Bien-être" 
+              image="https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=600&q=80" 
+              onClick={() => handleCategoryClick('Massage & Bien-être')}
+            />
+            <CategoryCard 
+              name="Barbier" 
+              image="https://images.unsplash.com/photo-1503951914875-452162b0f3f1?auto=format&fit=crop&w=600&q=80" 
+              onClick={() => handleCategoryClick('Barbier')}
+            />
+            <CategoryCard 
+              name="Restauration" 
               image="https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=600&q=80" 
               onClick={() => handleCategoryClick('Restauration')}
             />
             <CategoryCard 
-              name="Hôtels & Hébergements" 
+              name="Hébergement" 
               image="https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=600&q=80" 
               onClick={() => handleCategoryClick('Hébergement')}
             />

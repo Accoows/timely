@@ -26,7 +26,6 @@ export interface Lieu {
   adresse: string;
   ville: string;
   code_postal?: string | null;
-  region?: string | null;
 }
 
 export interface Prestation {
@@ -58,7 +57,6 @@ export interface Etablissement {
   lieu?: Lieu | null;
   gerant?: EtablissementGerant | null;
   description?: string;
-  status?: string;
   telephone?: string;
   mail?: string;
   site_web?: string;
@@ -85,7 +83,22 @@ export interface Booking {
   id: number;
   establishment_name: string;
   booking_date: string;
-  status: 'pending' | 'success' | 'cancelled';
+  status: 'pending' | 'success' | 'cancelled' | 'confirme';
+  payment_method?: 'on_site' | 'stripe';
+  payment_status?: 'pending' | 'paid' | 'unpaid' | 'refunded';
+  raw_date_heure?: string;
+  professionnel?: {
+    id: number;
+    nom: string;
+    prenom: string;
+    poste: string;
+  };
+  prestation?: {
+    id: number;
+    nom: string;
+    cout: number;
+    description?: string;
+  };
 }
 
 export interface BookingInput {
@@ -94,6 +107,7 @@ export interface BookingInput {
   date_heure: string;
   duree?: number;
   status?: string;
+  payment_method?: 'on_site' | 'stripe';
 }
 
 export interface MessageSender {
@@ -155,7 +169,7 @@ export interface Invoice {
   establishment_name: string;
   date: string;
   amount: string;
-  status: 'success' | 'pending';
+  status: 'success' | 'pending' | 'refunded';
 }
 
 export interface AdminUser {
@@ -174,6 +188,9 @@ export interface AdminUser {
     etablissement_nom: string;
     poste: string;
     description: string;
+  } | null;
+  gerant_details?: {
+    establishments: { id: number; nom: string }[];
   } | null;
   client_details?: {
     telephone: string;

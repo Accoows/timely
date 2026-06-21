@@ -253,9 +253,9 @@ class Command(BaseCommand):
                 "mail": "nice@detente-sauna.fr",
                 "site_web": "https://www.nice-detente-sauna.fr",
                 "photos": [
-                    "https://images.unsplash.com/photo-1596178060810-72cb612a4df9?auto=format&fit=crop&w=600&q=80",
+                    "https://images.unsplash.com/photo-1512290923902-8a9f81dc236c?auto=format&fit=crop&w=600&q=80",
                     "https://images.unsplash.com/photo-1600334089648-b0d9d3028eb2?auto=format&fit=crop&w=600&q=80",
-                    "https://images.unsplash.com/photo-1512290923902-8a9f81dc236c?auto=format&fit=crop&w=600&q=80"
+                    "https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?auto=format&fit=crop&w=600&q=80"
                 ],
                 "prestations": [
                     {"nom": "Massage Ayurvédique Abhyanga (1h)", "cout": 85.00, "description": "Massage indien traditionnel rééquilibrant à l'huile chaude de sésame."},
@@ -587,8 +587,7 @@ class Command(BaseCommand):
                 adresse=data["adresse"],
                 ville=data["ville"],
                 defaults={
-                    "code_postal": data["code_postal"],
-                    "region": data["region"]
+                    "code_postal": data["code_postal"]
                 }
             )
             if lieu_created:

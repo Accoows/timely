@@ -1,5 +1,7 @@
+import { useState } from 'react';
 import EmptyState from '../../../components/EmptyState';
 import type { Invoice } from '../../../types';
+import InvoiceModal from '../../../components/InvoiceModal';
 
 interface InvoicesTabProps {
   invoices: Invoice[];
@@ -7,6 +9,8 @@ interface InvoicesTabProps {
 }
 
 export default function InvoicesTab({ invoices, onNavigate }: InvoicesTabProps) {
+  const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
+
   return (
     <div>
       <h2 className="text-2xl font-black text-neutral-900 uppercase mb-6 pb-2 border-b-2 border-neutral-100">Mes Factures</h2>
@@ -33,6 +37,7 @@ export default function InvoicesTab({ invoices, onNavigate }: InvoicesTabProps) 
                 <th className="p-4">Date</th>
                 <th className="p-4">Montant</th>
                 <th className="p-4">Statut</th>
+                <th className="p-4 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y-2 divide-neutral-900 text-sm font-bold text-neutral-700">
@@ -44,16 +49,33 @@ export default function InvoicesTab({ invoices, onNavigate }: InvoicesTabProps) 
                   <td className="p-4 font-black text-neutral-900">{invoice.amount}</td>
                   <td className="p-4">
                     <span className={`px-2 py-0.5 text-[10px] font-black uppercase border-2 border-neutral-900 rounded ${
-                      invoice.status === 'success' ? 'bg-emerald-100 text-emerald-900' : 'bg-amber-100 text-amber-900'
+                      invoice.status === 'success' ? 'bg-emerald-100 text-emerald-900' :
+                      invoice.status === 'refunded' ? 'bg-blue-100 text-blue-900' : 'bg-amber-100 text-amber-900'
                     }`}>
-                      {invoice.status === 'success' ? 'Payé' : 'En attente'}
+                      {invoice.status === 'success' ? 'Payé' :
+                       invoice.status === 'refunded' ? 'Remboursé' : 'En attente'}
                     </span>
+                  </td>
+                  <td className="p-4 text-right">
+                    <button
+                      onClick={() => setSelectedInvoice(invoice)}
+                      className="px-2.5 py-1 border-2 border-neutral-900 bg-white hover:bg-neutral-50 text-neutral-900 font-extrabold rounded-lg text-xs transition-all shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:translate-y-[-1px] hover:translate-x-[-1px] active:translate-y-0 active:translate-x-0 cursor-pointer"
+                    >
+                      Facture
+                    </button>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
+      )}
+
+      {selectedInvoice && (
+        <InvoiceModal 
+          invoice={selectedInvoice} 
+          onClose={() => setSelectedInvoice(null)} 
+        />
       )}
     </div>
   );

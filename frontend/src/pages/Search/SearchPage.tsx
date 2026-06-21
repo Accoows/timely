@@ -69,7 +69,7 @@ export default function SearchPage({ onNavigate, initialCategory, initialQuery, 
       }
     }
     loadSectors();
-  }, []);
+  }, [initialCategory]);
 
   // Step 2: Load locations when a sector is selected (and direct search is not active)
   useEffect(() => {
@@ -549,10 +549,9 @@ export default function SearchPage({ onNavigate, initialCategory, initialQuery, 
                               <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" />
                             </svg>
                           </div>
-                          <h3 className="text-xl font-black text-neutral-900 uppercase tracking-tight mb-1">
+                          <h3 className="text-xl font-black text-neutral-900 uppercase tracking-tight mb-3">
                             {loc.ville}
                           </h3>
-                          <p className="text-xs font-semibold text-neutral-500 mb-3">{loc.region || 'France'}</p>
                           <span className="text-[10px] font-black uppercase tracking-wider bg-neutral-900 text-white px-2.5 py-1 rounded border border-neutral-900">
                             {loc.code_postal || 'Adresse'}
                           </span>

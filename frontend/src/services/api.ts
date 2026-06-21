@@ -19,7 +19,7 @@ function getCookie(name: string): string | null {
 // Generic HTTP request helper
 async function request<T>(url: string, options?: RequestInit): Promise<T> {
   const headers = new Headers(options?.headers);
-  if (!headers.has('Content-Type')) {
+  if (!headers.has('Content-Type') && !(options?.body instanceof FormData)) {
     headers.set('Content-Type', 'application/json');
   }
 
@@ -37,8 +37,12 @@ async function request<T>(url: string, options?: RequestInit): Promise<T> {
     let errMsg = `Erreur API: ${response.status} ${response.statusText}`;
     try {
       const errorJson = await response.json();
-      if (errorJson && errorJson.error) {
-        errMsg = errorJson.error;
+      if (errorJson) {
+        if (errorJson.error) {
+          errMsg = errorJson.error;
+        } else if (errorJson.message) {
+          errMsg = errorJson.message;
+        }
       }
     } catch {
       // Ignore if response is not valid JSON
@@ -84,6 +88,8 @@ interface BackendBooking {
   duree: number;
   status: string;
   establishment_name: string;
+  payment_method?: 'on_site' | 'stripe';
+  payment_status?: 'pending' | 'paid' | 'unpaid';
   prestation: {
     id: number;
     nom: string;
@@ -107,7 +113,22 @@ function mapBackendBooking(b: BackendBooking): Booking {
     id: b.id,
     establishment_name: b.establishment_name,
     booking_date: formattedDate,
-    status: b.status === 'confirme' ? 'success' : b.status === 'pending' ? 'pending' : 'cancelled'
+    status: (b.status === 'confirme' || b.status === 'success') ? 'success' : b.status === 'pending' ? 'pending' : 'cancelled',
+    payment_method: b.payment_method,
+    payment_status: b.payment_status,
+    raw_date_heure: b.date_heure,
+    professionnel: b.professionnel ? {
+      id: b.professionnel.id,
+      nom: b.professionnel.nom,
+      prenom: b.professionnel.prenom,
+      poste: b.professionnel.poste
+    } : undefined,
+    prestation: b.prestation ? {
+      id: b.prestation.id,
+      nom: b.prestation.nom,
+      cout: parseFloat(b.prestation.cout),
+      description: b.prestation.description
+    } : undefined
   };
 }
 
@@ -127,9 +148,9 @@ export const api = {
       const response = await request<{ status: string; establishment: Etablissement }>(`/api/establishments/${id}/`);
       return mapBackendEtablissement(response.establishment);
     },
-    explore: async (filters: { 
-      query?: string; 
-      location?: string; 
+    explore: async (filters: {
+      query?: string;
+      location?: string;
       sector?: string | number;
       sort?: string;
       min_rating?: number | null;
@@ -142,7 +163,7 @@ export const api = {
       if (filters.sort && filters.sort !== 'default') params.append('sort', filters.sort);
       if (filters.min_rating) params.append('min_rating', String(filters.min_rating));
       if (filters.sub_category) params.append('sub_category', filters.sub_category);
-      
+
       const queryString = params.toString();
       const url = `/api/establishments/explore/${queryString ? `?${queryString}` : ''}`;
       const response = await request<{ status: string; establishments: Etablissement[] }>(url);
@@ -158,8 +179,8 @@ export const api = {
       mail: string;
       description: string;
       category: string;
-    }): Promise<{ status: string; message: string; establishment: { id: number; nom: string; status: string } }> => {
-      return await request<{ status: string; message: string; establishment: { id: number; nom: string; status: string } }>('/api/establishments/register/', {
+    }): Promise<{ status: string; message: string; establishment: { id: number; nom: string } }> => {
+      return await request<{ status: string; message: string; establishment: { id: number; nom: string } }>('/api/establishments/register/', {
         method: 'POST',
         body: JSON.stringify(data)
       });
@@ -168,6 +189,20 @@ export const api = {
       return await request<{ status: string; message: string }>(`/api/establishments/${id}/`, {
         method: 'PUT',
         body: JSON.stringify(data)
+      });
+    },
+    uploadPhoto: async (id: number, file: File): Promise<{ status: string; message: string; photos: string[] }> => {
+      const formData = new FormData();
+      formData.append('image', file);
+      return request<{ status: string; message: string; photos: string[] }>(`/api/establishments/${id}/upload-photo/`, {
+        method: 'POST',
+        body: formData
+      });
+    },
+    deletePhoto: async (id: number, photoUrl: string): Promise<{ status: string; message: string; photos: string[] }> => {
+      return request<{ status: string; message: string; photos: string[] }>(`/api/establishments/${id}/upload-photo/`, {
+        method: 'DELETE',
+        body: JSON.stringify({ url: photoUrl })
       });
     },
     delete: async (id: number): Promise<{ status: string; message: string }> => {
@@ -226,17 +261,19 @@ export const api = {
       const rawBookings = await request<BackendBooking[]>('/api/bookings/');
       return rawBookings.map(mapBackendBooking);
     },
-    create: async (bookingData: BookingInput): Promise<Booking> => {
-      const response = await request<{ status: string; booking: BackendBooking }>('/api/bookings/', {
+    create: async (bookingData: BookingInput): Promise<{ booking: Booking; payment_url?: string }> => {
+      const response = await request<{ status: string; booking: BackendBooking; payment_url?: string }>('/api/bookings/', {
         method: 'POST',
         body: JSON.stringify(bookingData)
       });
-      return mapBackendBooking(response.booking);
+      return {
+        booking: mapBackendBooking(response.booking),
+        payment_url: response.payment_url
+      };
     },
-    getAvailableSlots: async (professionnelId: number, date: string): Promise<{ time: string; available: boolean }[]> => {
-      const response = await request<{ status: string; slots: { time: string; available: boolean }[] }>(
-        `/api/bookings/available-slots/?professionnel_id=${professionnelId}&date=${date}`
-      );
+    getAvailableSlots: async (professionnelId: number, date: string, excludeBookingId?: number): Promise<{ time: string; available: boolean }[]> => {
+      const url = `/api/bookings/available-slots/?professionnel_id=${professionnelId}&date=${date}${excludeBookingId ? `&exclude_booking_id=${excludeBookingId}` : ''}`;
+      const response = await request<{ status: string; slots: { time: string; available: boolean }[] }>(url);
       return response.slots;
     },
     getInvoices: async (): Promise<Invoice[]> => {
@@ -249,9 +286,19 @@ export const api = {
         return [];
       }
     },
+    getCheckoutUrl: async (bookingId: number): Promise<string> => {
+      const response = await request<{ status: string; payment_url: string }>(`/api/bookings/checkout/${bookingId}/`);
+      return response.payment_url;
+    },
     cancel: async (bookingId: number): Promise<{ status: string; message: string }> => {
       return await request<{ status: string; message: string }>(`/api/bookings/${bookingId}/`, {
         method: 'DELETE'
+      });
+    },
+    update: async (bookingId: number, data: { date_heure: string }): Promise<{ status: string; message: string }> => {
+      return await request<{ status: string; message: string }>(`/api/bookings/${bookingId}/`, {
+        method: 'PUT',
+        body: JSON.stringify(data)
       });
     }
   },
@@ -290,6 +337,12 @@ export const api = {
         body: JSON.stringify({ etablissement_id: establishmentId, message, note })
       });
       return response.review;
+    },
+    delete: async (reviewId: number): Promise<{ status: string; message: string }> => {
+      return await request<{ status: string; message: string }>('/api/interactions/review/', {
+        method: 'DELETE',
+        body: JSON.stringify({ review_id: reviewId })
+      });
     }
   },
 
@@ -329,12 +382,36 @@ export const api = {
         body: JSON.stringify({ email, password: password_raw, firstname, lastname })
       });
     },
+    registerPro: async (data: {
+      email: string;
+      password_raw: string;
+      firstname: string;
+      lastname: string;
+      poste: string;
+      description: string;
+      date_embauche: string;
+      etablissement_id: number;
+    }): Promise<{ status: string; message: string }> => {
+      return await request<{ status: string; message: string }>('/api/auth/register-pro/', {
+        method: 'POST',
+        body: JSON.stringify({
+          email: data.email,
+          password: data.password_raw,
+          firstname: data.firstname,
+          lastname: data.lastname,
+          poste: data.poste,
+          description: data.description,
+          date_embauche: data.date_embauche,
+          etablissement_id: data.etablissement_id
+        })
+      });
+    },
     logout: async (): Promise<void> => {
       await request<void>('/api/auth/logout/', { method: 'POST' });
     },
-    updateCurrentUser: async (profileData: { 
-      first_name?: string; 
-      last_name?: string; 
+    updateCurrentUser: async (profileData: {
+      first_name?: string;
+      last_name?: string;
       email?: string;
       old_password?: string;
       new_password?: string;
