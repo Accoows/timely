@@ -691,13 +691,15 @@ class Command(BaseCommand):
             # 5. Populate Prestations (Services)
             # Delete old services first to avoid duplicates
             Prestation.objects.filter(etablissement=etablissement).delete()
+            created_prestations = []
             for prest in data["prestations"]:
-                Prestation.objects.create(
+                p = Prestation.objects.create(
                     nom=prest["nom"],
                     cout=prest["cout"],
                     description=prest["description"],
                     etablissement=etablissement
                 )
+                created_prestations.append(p)
             self.stdout.write(self.style.SUCCESS(f"  -> {len(data['prestations'])} Prestations enregistrées"))
 
             # 6. Populate Photos
@@ -711,6 +713,7 @@ class Command(BaseCommand):
 
             # 7. Populate Collaborateurs (Professionnels)
             # Keep track of old collaborateurs to avoid user leaks if necessary, but here we just get_or_create user accounts
+            created_pros = []
             for employee in data["collaborateurs"]:
                 emp_username = f"pro.{remove_accents(employee['first_name'].lower())}.{remove_accents(employee['last_name'].lower())}@example.com"
                 emp_user, emp_user_created = User.objects.get_or_create(
@@ -739,4 +742,11 @@ class Command(BaseCommand):
                     pro_profile.etablissement = etablissement
                     pro_profile.poste = employee["poste"]
                     pro_profile.save()
-            self.stdout.write(self.style.SUCCESS(f"  -> {len(data['collaborateurs'])} Collaborateurs enregistrés"))
+                
+                created_pros.append(pro_profile)
+                
+            # Assign ALL pros to ALL prestations for this establishment
+            for p in created_prestations:
+                p.collaborateurs.set(created_pros)
+
+            self.stdout.write(self.style.SUCCESS(f"  -> {len(data['collaborateurs'])} Collaborateurs enregistrés (et affectés aux prestations)"))
