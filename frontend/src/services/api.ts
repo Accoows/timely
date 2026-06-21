@@ -58,14 +58,14 @@ async function request<T>(url: string, options?: RequestInit): Promise<T> {
 }
 
 const getEstablishmentImage = (sectorName?: string) => {
-  if (sectorName === 'Coiffure') return 'https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=600&q=80';
-  if (sectorName === 'Barbier') return 'https://images.unsplash.com/photo-1503951914875-452162b0f3f1?auto=format&fit=crop&w=600&q=80';
-  if (sectorName === 'Massage & Bien-être') return 'https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=600&q=80';
-  if (sectorName === 'Beauté & Soins') return 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=600&q=80';
-  if (sectorName === 'Restauration') return 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=600&q=80';
-  if (sectorName === 'Hébergement') return 'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=600&q=80';
-  if (sectorName === 'Voyages & Transports') return 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&w=600&q=80';
-  return 'https://images.unsplash.com/photo-1521791136368-1a8b27526d5f?auto=format&fit=crop&w=600&q=80';
+  if (sectorName === 'Coiffure') return '/images/coiffure.jpg';
+  if (sectorName === 'Barbier') return '/images/barbier.jpg';
+  if (sectorName === 'Massage & Bien-être') return '/images/massage.jpg';
+  if (sectorName === 'Beauté & Soins') return '/images/beaute.jpg';
+  if (sectorName === 'Restauration') return '/images/restauration.jpg';
+  if (sectorName === 'Hébergement') return '/images/hebergement.jpg';
+  if (sectorName === 'Voyages & Transports') return '/images/voyages.jpg';
+  return '/images/default.jpg';
 };
 
 function mapBackendEtablissement(est: Etablissement): Etablissement {
