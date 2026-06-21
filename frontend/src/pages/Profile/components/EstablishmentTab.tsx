@@ -304,6 +304,13 @@ export default function EstablishmentTab({ user, updateUser, onNavigate }: Estab
             Page établissement
           </Button>
           <Button
+            onClick={() => onNavigate('establishment-dashboard')}
+            variant="outline"
+            size="sm"
+          >
+            Dashboard
+          </Button>
+          <Button
             onClick={() => setIsEditing(true)}
             variant="outline"
             size="sm"
