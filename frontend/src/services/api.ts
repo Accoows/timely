@@ -235,14 +235,14 @@ export const api = {
       const response = await request<{ status: string; services: Prestation[] }>(`/api/establishments/${establishmentId}/services/`);
       return response.services;
     },
-    create: async (establishmentId: number, data: { nom: string; cout: number; description?: string }): Promise<Prestation> => {
+     create: async (establishmentId: number, data: { nom: string; cout: number; description?: string; collaborateurs?: number[] }): Promise<Prestation> => {
       const response = await request<{ status: string; message: string; service: Prestation }>(`/api/establishments/${establishmentId}/services/`, {
         method: 'POST',
         body: JSON.stringify(data)
       });
       return response.service;
     },
-    update: async (serviceId: number, data: { nom?: string; cout?: number; description?: string }): Promise<Prestation> => {
+    update: async (serviceId: number, data: { nom?: string; cout?: number; description?: string; collaborateurs?: number[] }): Promise<Prestation> => {
       const response = await request<{ status: string; message: string; service: Prestation }>(`/api/establishments/services/${serviceId}/`, {
         method: 'PUT',
         body: JSON.stringify(data)

@@ -6,7 +6,7 @@ import json
 from django.core.files.storage import FileSystemStorage
 from django.conf import settings
 from .models import Etablissement, Secteur, Lieu, Photo, Prestation
-from authentication.models import Gerant, Client
+from authentication.models import Gerant, Client, Professionnel
 
 class SectorListView(View):
     def get(self, request):
@@ -132,7 +132,8 @@ class EstablishmentDetailView(View):
                     "id": prest.id,
                     "nom": prest.nom,
                     "cout": float(prest.cout),
-                    "description": prest.description or ""
+                    "description": prest.description or "",
+                    "collaborateurs": [c.id for c in prest.collaborateurs.all()]
                 })
 
             collaborateurs = []
@@ -316,7 +317,8 @@ class ServiceListView(View):
                 "id": p.id,
                 "nom": p.nom,
                 "cout": float(p.cout),
-                "description": p.description or ""
+                "description": p.description or "",
+                "collaborateurs": [c.id for c in p.collaborateurs.all()]
             })
         return JsonResponse({"status": "success", "services": data}, status=200)
 
@@ -341,6 +343,7 @@ class ServiceListView(View):
             nom = data.get('nom')
             cout = data.get('cout')
             description = data.get('description', '')
+            collaborateur_ids = data.get('collaborateurs', [])
             
             if not nom or cout is None:
                 return JsonResponse({"error": "Champs nom et cout requis"}, status=400)
@@ -351,6 +354,9 @@ class ServiceListView(View):
                 description=description,
                 etablissement=etablissement
             )
+            if collaborateur_ids:
+                prestation.collaborateurs.set(collaborateur_ids)
+                
             return JsonResponse({
                 "status": "success",
                 "message": "Prestation créée avec succès",
@@ -358,7 +364,8 @@ class ServiceListView(View):
                     "id": prestation.id,
                     "nom": prestation.nom,
                     "cout": float(prestation.cout),
-                    "description": prestation.description
+                    "description": prestation.description,
+                    "collaborateurs": [c.id for c in prestation.collaborateurs.all()]
                 }
             }, status=201)
         except Exception as e:
@@ -422,6 +429,14 @@ class RegisterEstablishmentView(View):
                 mail=mail
             )
             
+            # Créer automatiquement un professionnel par défaut pour le gérant de l'établissement s'il n'en a pas déjà un
+            if not hasattr(request.user, 'profil_pro'):
+                Professionnel.objects.get_or_create(
+                    utilisateur=request.user,
+                    etablissement=etablissement,
+                    defaults={"poste": "Gérant / Collaborateur"}
+                )
+            
             return JsonResponse({
                 "status": "success",
                 "message": "Établissement enregistré avec succès et profil gérant activé !",
@@ -458,6 +473,7 @@ class ServiceDetailView(View):
             nom = data.get('nom')
             cout = data.get('cout')
             description = data.get('description')
+            collaborateur_ids = data.get('collaborateurs')
             
             if nom is not None:
                 prestation.nom = nom
@@ -465,6 +481,8 @@ class ServiceDetailView(View):
                 prestation.cout = float(cout)
             if description is not None:
                 prestation.description = description
+            if collaborateur_ids is not None:
+                prestation.collaborateurs.set(collaborateur_ids)
                 
             prestation.save()
             return JsonResponse({
@@ -474,7 +492,8 @@ class ServiceDetailView(View):
                     "id": prestation.id,
                     "nom": prestation.nom,
                     "cout": float(prestation.cout),
-                    "description": prestation.description
+                    "description": prestation.description,
+                    "collaborateurs": [c.id for c in prestation.collaborateurs.all()]
                 }
             }, status=200)
         except Exception as e:

@@ -117,6 +117,24 @@ export default function EstablishmentDetailPage({ establishmentId, onNavigate }:
     };
   }, [establishmentId]);
 
+  // Auto-select first compatible professional when selectedPrestation changes
+  useEffect(() => {
+    if (selectedPrestation && establishment?.collaborateurs) {
+      const compatible = establishment.collaborateurs.filter(col => 
+        selectedPrestation.collaborateurs?.includes(col.id)
+      );
+      if (compatible.length > 0) {
+        if (!selectedCollaborateur || !compatible.some(c => c.id === selectedCollaborateur.id)) {
+          setSelectedCollaborateur(compatible[0]);
+        }
+      } else {
+        setSelectedCollaborateur(null);
+      }
+    } else {
+      setSelectedCollaborateur(null);
+    }
+  }, [selectedPrestation, establishment?.collaborateurs]);
+
   // Check if establishment is in user's favorites
   useEffect(() => {
     let active = true;
@@ -405,6 +423,11 @@ export default function EstablishmentDetailPage({ establishmentId, onNavigate }:
   };
   const horaires = establishment.horaires || defaultHoraires;
   const daysOrder = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"];
+  
+  const compatibleCollaborateurs = establishment.collaborateurs?.filter(col => 
+    selectedPrestation?.collaborateurs?.includes(col.id)
+  ) || [];
+  
   const displayedSlots = (!selectedCollaborateur || !selectedPrestation) ? {} : weeklySlots;
 
   const categoryLabel = establishment.secteur?.nom || establishment.category || "Établissement";
@@ -674,18 +697,18 @@ export default function EstablishmentDetailPage({ establishmentId, onNavigate }:
 
                       <div className="flex items-center gap-4 shrink-0">
                         {/* Selector Dropdown: "Choisir avec qui ?" */}
-                        {establishment.collaborateurs && establishment.collaborateurs.length > 0 && (
+                        {compatibleCollaborateurs.length > 0 ? (
                           <div className="relative">
                             <select
                               value={selectedCollaborateur?.id || ""}
                               onChange={(e) => {
                                 const val = parseInt(e.target.value);
-                                const found = establishment.collaborateurs?.find(c => c.id === val);
+                                const found = compatibleCollaborateurs.find(c => c.id === val);
                                 if (found) setSelectedCollaborateur(found);
                               }}
                               className="bg-white border border-neutral-200 rounded-xl px-3 py-2 text-xs font-bold text-neutral-800 focus:outline-none focus:border-neutral-900 select-none shadow-sm pr-8 cursor-pointer appearance-none"
                             >
-                              {establishment.collaborateurs.map((col) => (
+                              {compatibleCollaborateurs.map((col) => (
                                 <option key={col.id} value={col.id}>
                                   Avec {col.prenom} ({col.poste})
                                 </option>
@@ -693,6 +716,8 @@ export default function EstablishmentDetailPage({ establishmentId, onNavigate }:
                             </select>
                             <span className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-neutral-400 text-[10px]">▼</span>
                           </div>
+                        ) : (
+                          <span className="text-xs font-bold text-red-500 italic">Aucun professionnel disponible pour ce service</span>
                         )}
 
                         {/* Supprimer button */}
@@ -758,7 +783,9 @@ export default function EstablishmentDetailPage({ establishmentId, onNavigate }:
                         <div className="grid grid-cols-7 gap-3 min-w-[700px] text-center select-none">
                           {weeklyDays.map((day) => {
                             const daySlots = displayedSlots[day.fullDate] || [];
-                            const isSunday = day.dayName.toLowerCase() === 'dimanche';
+                            const dayNameCapitalized = day.dayName.charAt(0).toUpperCase() + day.dayName.slice(1).toLowerCase();
+                            const daySchedule = horaires[dayNameCapitalized] || "Fermé";
+                            const isClosed = daySchedule.toLowerCase().includes("fermé");
                             
                             return (
                               <div key={day.fullDate} className="space-y-4">
@@ -770,7 +797,7 @@ export default function EstablishmentDetailPage({ establishmentId, onNavigate }:
 
                                 {/* Vertical Slots List */}
                                 <div className="space-y-2 max-h-[350px] overflow-y-auto pr-0.5 scrollbar-thin">
-                                  {isSunday ? (
+                                  {isClosed ? (
                                     <span className="text-[10px] font-bold text-red-400 block py-4">Fermé</span>
                                   ) : daySlots.length > 0 ? (
                                     daySlots.map((slot) => {

@@ -33,6 +33,7 @@ export interface Prestation {
   nom: string;
   cout: number;
   description?: string;
+  collaborateurs?: number[];
 }
 
 export interface Collaborateur {

@@ -42,6 +42,7 @@ export default function EstablishmentTab({ user, updateUser, onNavigate }: Estab
   const [newPrestationNom, setNewPrestationNom] = useState('');
   const [newPrestationCout, setNewPrestationCout] = useState('');
   const [newPrestationDesc, setNewPrestationDesc] = useState('');
+  const [selectedNewPrestationPros, setSelectedNewPrestationPros] = useState<number[]>([]);
 
   const fetchEstablishmentDetails = useCallback(async () => {
     if (!resolvedId) {
@@ -148,7 +149,8 @@ export default function EstablishmentTab({ user, updateUser, onNavigate }: Estab
       const newPrest = await api.prestations.create(resolvedId, {
         nom: newPrestationNom,
         cout: parseFloat(newPrestationCout),
-        description: newPrestationDesc
+        description: newPrestationDesc,
+        collaborateurs: selectedNewPrestationPros
       });
       if (establishment) {
         setEstablishment({
@@ -159,6 +161,7 @@ export default function EstablishmentTab({ user, updateUser, onNavigate }: Estab
       setNewPrestationNom('');
       setNewPrestationCout('');
       setNewPrestationDesc('');
+      setSelectedNewPrestationPros([]);
       alert("Prestation ajoutée avec succès !");
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Erreur lors de l'ajout de la prestation.";
@@ -535,6 +538,14 @@ export default function EstablishmentTab({ user, updateUser, onNavigate }: Estab
                         <span className="text-xs font-bold text-neutral-900">{prest.nom}</span>
                         <span className="text-xs text-neutral-500 ml-2">({prest.cout} €)</span>
                         {prest.description && <p className="text-[10px] text-neutral-400 mt-0.5">{prest.description}</p>}
+                        {prest.collaborateurs && prest.collaborateurs.length > 0 && (
+                          <p className="text-[9px] text-violet-750 font-bold mt-1">
+                            Professionnels compatibles : {prest.collaborateurs.map(pid => {
+                              const colObj = establishment.collaborateurs?.find(c => c.id === pid);
+                              return colObj ? `${colObj.prenom}` : null;
+                            }).filter(Boolean).join(', ')}
+                          </p>
+                        )}
                       </div>
                       <button
                         type="button"
@@ -584,6 +595,37 @@ export default function EstablishmentTab({ user, updateUser, onNavigate }: Estab
                     className="input w-full bg-white border border-neutral-900 rounded-lg focus:outline-none text-xs text-neutral-900 font-bold p-2"
                   />
                 </div>
+
+                {/* Checklist of professionals */}
+                {establishment.collaborateurs && establishment.collaborateurs.length > 0 && (
+                  <div className="form-control">
+                    <label className="label text-[10px] font-bold text-neutral-500 uppercase py-0.5">Professionnels affectés</label>
+                    <div className="flex flex-wrap gap-2 mt-1">
+                      {establishment.collaborateurs.map(col => {
+                        const isChecked = selectedNewPrestationPros.includes(col.id);
+                        return (
+                          <label key={col.id} className="flex items-center gap-1.5 bg-white border border-neutral-300 rounded-lg px-2.5 py-1 text-xs font-bold text-neutral-800 cursor-pointer select-none">
+                            <input
+                              type="checkbox"
+                              checked={isChecked}
+                              onChange={() => {
+                                if (isChecked) {
+                                  setSelectedNewPrestationPros(prev => prev.filter(id => id !== col.id));
+                                } else {
+                                  setSelectedNewPrestationPros(prev => [...prev, col.id]);
+                                }
+                              }}
+                              className="checkbox checkbox-xs rounded-full border-2 border-neutral-900 checked:bg-neutral-900 checked:text-white"
+                              style={{ '--chkbg': '#171717', '--chkfg': '#ffffff' } as React.CSSProperties}
+                            />
+                            <span>{col.prenom}</span>
+                          </label>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
                 <button
                   type="button"
                   onClick={handleAddPrestation}

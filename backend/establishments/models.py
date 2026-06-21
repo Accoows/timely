@@ -52,6 +52,7 @@ class Prestation(models.Model):
     cout = models.DecimalField(max_digits=10, decimal_places=2)
     description = models.TextField(blank=True, null=True)
     etablissement = models.ForeignKey(Etablissement, on_delete=models.CASCADE, related_name='prestations')
+    collaborateurs = models.ManyToManyField('authentication.Professionnel', related_name='prestations', blank=True)
 
     def __str__(self):
         return f"{self.nom} ({self.cout} €)"
