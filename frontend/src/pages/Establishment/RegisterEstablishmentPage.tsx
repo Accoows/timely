@@ -244,13 +244,14 @@ export default function RegisterEstablishmentPage({ onNavigate }: RegisterEstabl
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="Ex: Le Bistrot Gourmet"
+                    maxLength={100}
                   />
                   <InputField
                     label="Numéro SIRET (14 chiffres) *"
                     type="text"
                     required
                     value={siret}
-                    onChange={(e) => setSiret(e.target.value)}
+                    onChange={(e) => setSiret(e.target.value.replace(/[^0-9]/g, ''))}
                     placeholder="Ex: 12345678901234"
                     maxLength={14}
                     pattern="[0-9]{14}"
@@ -262,14 +263,17 @@ export default function RegisterEstablishmentPage({ onNavigate }: RegisterEstabl
                     value={address}
                     onChange={(e) => setAddress(e.target.value)}
                     placeholder="Ex: 12 Rue de la Paix"
+                    maxLength={200}
                   />
                   <InputField
                     label="Code Postal *"
                     type="text"
                     required
                     value={zipCode}
-                    onChange={(e) => setZipCode(e.target.value)}
+                    onChange={(e) => setZipCode(e.target.value.replace(/[^0-9]/g, ''))}
                     placeholder="Ex: 75002"
+                    maxLength={5}
+                    pattern="[0-9]{5}"
                   />
                   <InputField
                     label="Ville *"
@@ -278,14 +282,17 @@ export default function RegisterEstablishmentPage({ onNavigate }: RegisterEstabl
                     value={city}
                     onChange={(e) => setCity(e.target.value)}
                     placeholder="Ex: Paris"
+                    maxLength={100}
                   />
                   <InputField
-                    label="Téléphone professionnel *"
+                    label="Téléphone professionnel (10 chiffres) *"
                     type="tel"
                     required
                     value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    placeholder="Ex: 01 23 45 67 89"
+                    onChange={(e) => setPhone(e.target.value.replace(/[^0-9]/g, ''))}
+                    placeholder="Ex: 0123456789"
+                    maxLength={10}
+                    pattern="0[1-9][0-9]{8}"
                   />
                   <InputField
                     label="E-mail de contact *"
