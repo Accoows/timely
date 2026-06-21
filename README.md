@@ -59,19 +59,24 @@ timely/
 │   ├── interactions/           # App de gestion des avis clients et des favoris
 │   ├── messaging/              # App de gestion du chat en direct (messagerie)
 │   ├── core/                   # Utilitaires communs et application de base
+│   ├── media/                  # Dossier pour les fichiers uploadés (images, etc)
 │   ├── manage.py               # Script utilitaire Django
 │   ├── requirements.txt        # Dépendances Python (Django, DRF, psycopg2...)
+│   ├── start.sh                # Script de démarrage en mode développement
+│   ├── start-prod.sh           # Script de démarrage en mode production
 │   └── Dockerfile              # Recette Docker pour l'API
 │
 ├── frontend/                   # Partie Frontend (React Client)
 │   ├── src/
+│   │   ├── assets/             # Fichiers statiques (images, polices...)
 │   │   ├── components/         # Composants réutilisables (InputField, Button, Alert...)
 │   │   ├── context/            # Contexte global (AuthContext pour la session utilisateur)
 │   │   ├── pages/              # Vues de l'application (Home, Search, Profile, Admin...)
 │   │   ├── services/           # Services API client (api.ts pour fetch les routes Django)
 │   │   ├── types/              # Déclarations des interfaces TypeScript (index.ts)
 │   │   ├── App.tsx             # Composant racine et gestionnaire de routes
-│   │   └── main.tsx            # Point d'entrée de l'application
+│   │   ├── main.tsx            # Point d'entrée de l'application
+│   │   └── index.css           # Feuille de style principale (Tailwind)
 │   │
 │   ├── public/                 # Ressources statiques accessibles au front
 │   ├── package.json            # Dépendances Node.js (Vite, React, Tailwind)
