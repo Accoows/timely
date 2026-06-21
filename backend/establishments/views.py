@@ -105,6 +105,8 @@ class ExploreListView(View):
             data.append({
                 "id": etablissement.id,
                 "nom": etablissement.nom,
+                "mail": etablissement.mail or "",
+                "description": etablissement.description or "",
                 "lieu": {
                     "id": etablissement.lieu.id,
                     "adresse": etablissement.lieu.adresse,
@@ -115,6 +117,12 @@ class ExploreListView(View):
                     "id": etablissement.secteur.id,
                     "nom": etablissement.secteur.nom
                 } if etablissement.secteur else None,
+                "gerant": {
+                    "id": etablissement.gerant.id,
+                    "prenom": etablissement.gerant.utilisateur.first_name,
+                    "nom": etablissement.gerant.utilisateur.last_name,
+                    "email": etablissement.gerant.utilisateur.email
+                } if etablissement.gerant else None,
                 "note_globale": float(etablissement.note_globale),
                 "photos": [p.url_photo for p in etablissement.photos.all()]
             })
