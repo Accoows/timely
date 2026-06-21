@@ -20,15 +20,26 @@ class LocationListView(View):
         
         queryset = Lieu.objects.all()
         if sector_id:
-            queryset = queryset.filter(etablissements__secteur_id=sector_id).distinct()
+            queryset = queryset.filter(etablissements__secteur_id=sector_id)
             
+        # Group by city (ville) and postal code (code_postal) to return unique zones
+        unique_locations = queryset.values('ville', 'code_postal').distinct().order_by('ville')
+        
         data = []
-        for loc in queryset:
+        for loc in unique_locations:
+            ville = loc['ville']
+            code_postal = loc['code_postal']
+            if not ville:
+                continue
+                
+            # Use code_postal (if valid 5 digit) or ville as the ID to trigger zip/city wide filtering
+            loc_id = code_postal if (code_postal and len(code_postal) == 5) else ville
+            
             data.append({
-                "id": loc.id,
-                "adresse": loc.adresse,
-                "ville": loc.ville,
-                "code_postal": loc.code_postal
+                "id": loc_id,
+                "adresse": "",
+                "ville": ville,
+                "code_postal": code_postal
             })
         return JsonResponse({"status": "success", "locations": data}, status=200)
 
@@ -390,8 +401,8 @@ class RegisterEstablishmentView(View):
             # Récupérer ou créer le secteur
             secteur, _ = Secteur.objects.get_or_create(nom=secteur_nom)
             
-            # Créer le lieu
-            lieu = Lieu.objects.create(
+            # Récupérer ou créer le lieu pour éviter les doublons d'adresse exacte en base
+            lieu, _ = Lieu.objects.get_or_create(
                 adresse=adresse,
                 ville=ville,
                 code_postal=code_postal
