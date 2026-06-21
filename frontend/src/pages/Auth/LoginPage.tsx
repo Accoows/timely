@@ -23,8 +23,9 @@ export default function LoginPage({ onNavigate }: LoginPageProps) {
     try {
       await login(username, password);
       onNavigate('home');
-    } catch (err: any) {
-      setError(err?.message || 'Identifiants incorrects. Veuillez réessayer.');
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Identifiants incorrects. Veuillez réessayer.';
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
