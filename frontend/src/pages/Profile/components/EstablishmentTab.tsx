@@ -87,25 +87,30 @@ export default function EstablishmentTab({ user, updateUser, onNavigate }: Estab
   }, [fetchEstablishmentDetails]);
 
   const handleUploadPhoto = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
 
     setUploading(true);
     setPhotoError(null);
     try {
-      const res = await api.establishments.uploadPhoto(resolvedId!, file);
+      let finalPhotos = establishment?.photos || [];
+      for (let i = 0; i < files.length; i++) {
+        const res = await api.establishments.uploadPhoto(resolvedId!, files[i]);
+        finalPhotos = res.photos;
+      }
       if (establishment) {
         setEstablishment({
           ...establishment,
-          photos: res.photos
+          photos: finalPhotos
         });
       }
-      alert("Photo ajoutée avec succès.");
+      alert(`${files.length} photo(s) ajoutée(s) avec succès.`);
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Erreur lors de l'upload de la photo.";
+      const msg = err instanceof Error ? err.message : "Erreur lors de l'upload d'une ou plusieurs photos.";
       setPhotoError(msg);
     } finally {
       setUploading(false);
+      e.target.value = '';
     }
   };
 
@@ -525,6 +530,7 @@ export default function EstablishmentTab({ user, updateUser, onNavigate }: Estab
                   <input
                     type="file"
                     accept="image/*"
+                    multiple
                     onChange={handleUploadPhoto}
                     className="hidden"
                     disabled={uploading}

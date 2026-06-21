@@ -506,46 +506,86 @@ export default function EstablishmentDetailPage({ establishmentId, onNavigate }:
         
         {/* Photo Grid Section (Exactly matching Planity layout) */}
         {photos && photos.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-8">
-            {/* Main Photo (left) */}
-            <div 
-              onClick={() => handleOpenGallery(0)}
-              className="md:col-span-2 rounded-2xl overflow-hidden h-[250px] md:h-[360px] bg-neutral-100 relative group cursor-pointer"
-            >
-              <img 
-                src={photos[0]} 
-                alt="Main" 
-                className="w-full h-full object-cover group-hover:scale-[1.01] transition-transform duration-300"
-              />
-            </div>
-            
-            {/* Sub Photos Stack (right) */}
-            <div className="grid grid-rows-2 gap-3 h-[250px] md:h-[360px]">
+          photos.length === 1 ? (
+            <div className="mb-8">
               <div 
-                onClick={() => handleOpenGallery(1)}
-                className="rounded-2xl overflow-hidden h-full bg-neutral-100 group cursor-pointer"
+                onClick={() => handleOpenGallery(0)}
+                className="w-full rounded-2xl overflow-hidden h-[250px] md:h-[360px] bg-neutral-100 relative group cursor-pointer"
               >
                 <img 
-                  src={photos[1] || photos[0]} 
+                  src={photos[0]} 
+                  alt="Main" 
+                  className="w-full h-full object-cover group-hover:scale-[1.01] transition-transform duration-300"
+                />
+              </div>
+            </div>
+          ) : photos.length === 2 ? (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-8">
+              {/* Main Photo (left) */}
+              <div 
+                onClick={() => handleOpenGallery(0)}
+                className="md:col-span-2 rounded-2xl overflow-hidden h-[250px] md:h-[360px] bg-neutral-100 relative group cursor-pointer"
+              >
+                <img 
+                  src={photos[0]} 
+                  alt="Main" 
+                  className="w-full h-full object-cover group-hover:scale-[1.01] transition-transform duration-300"
+                />
+              </div>
+              {/* Sub Photo (right) */}
+              <div 
+                onClick={() => handleOpenGallery(1)}
+                className="rounded-2xl overflow-hidden h-[250px] md:h-[360px] bg-neutral-100 group cursor-pointer"
+              >
+                <img 
+                  src={photos[1]} 
                   className="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-300"
                   alt="Sub 1"
                 />
               </div>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-8">
+              {/* Main Photo (left) */}
               <div 
-                onClick={() => handleOpenGallery(2)}
-                className="relative rounded-2xl overflow-hidden h-full bg-neutral-100 group cursor-pointer"
+                onClick={() => handleOpenGallery(0)}
+                className="md:col-span-2 rounded-2xl overflow-hidden h-[250px] md:h-[360px] bg-neutral-100 relative group cursor-pointer"
               >
                 <img 
-                  src={photos[2] || photos[0]} 
-                  className="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-300"
-                  alt="Sub 2"
+                  src={photos[0]} 
+                  alt="Main" 
+                  className="w-full h-full object-cover group-hover:scale-[1.01] transition-transform duration-300"
                 />
-                <div className="absolute inset-0 bg-black/45 hover:bg-black/40 transition-colors backdrop-blur-[1.5px] flex items-center justify-center text-white font-bold text-xs md:text-sm">
-                  Voir les {photos.length} photos
+              </div>
+              
+              {/* Sub Photos Stack (right) */}
+              <div className="grid grid-rows-2 gap-3 h-[250px] md:h-[360px]">
+                <div 
+                  onClick={() => handleOpenGallery(1)}
+                  className="rounded-2xl overflow-hidden h-full bg-neutral-100 group cursor-pointer"
+                >
+                  <img 
+                    src={photos[1]} 
+                    className="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-300"
+                    alt="Sub 1"
+                  />
+                </div>
+                <div 
+                  onClick={() => handleOpenGallery(2)}
+                  className="relative rounded-2xl overflow-hidden h-full bg-neutral-100 group cursor-pointer"
+                >
+                  <img 
+                    src={photos[2]} 
+                    className="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-300"
+                    alt="Sub 2"
+                  />
+                  <div className="absolute inset-0 bg-black/45 hover:bg-black/40 transition-colors backdrop-blur-[1.5px] flex items-center justify-center text-white font-bold text-xs md:text-sm">
+                    Voir les {photos.length} photos
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
+          )
         ) : (
           <div className="mb-8 p-12 border-2 border-dashed border-neutral-900 rounded-2xl bg-white text-center flex flex-col items-center justify-center shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
             <div className="w-12 h-12 rounded-full bg-violet-50 flex items-center justify-center text-neutral-900 border-2 border-neutral-900 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] mb-4">

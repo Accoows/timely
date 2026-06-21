@@ -61,6 +61,9 @@ class Photo(models.Model):
     url_photo = models.URLField(max_length=500)
     etablissement = models.ForeignKey(Etablissement, on_delete=models.CASCADE, related_name='photos')
 
+    class Meta:
+        ordering = ['id']
+
     def __str__(self):
         return f"Photo de {self.etablissement.nom} : {self.url_photo}"
 
