@@ -102,6 +102,13 @@ interface BackendBooking {
     prenom: string;
     poste: string;
   };
+  client?: {
+    id: number;
+    nom: string;
+    prenom: string;
+    email: string;
+    telephone?: string | null;
+  };
 }
 
 function mapBackendBooking(b: BackendBooking): Booking {
@@ -128,6 +135,13 @@ function mapBackendBooking(b: BackendBooking): Booking {
       nom: b.prestation.nom,
       cout: parseFloat(b.prestation.cout),
       description: b.prestation.description
+    } : undefined,
+    client: b.client ? {
+      id: b.client.id,
+      nom: b.client.nom,
+      prenom: b.client.prenom,
+      email: b.client.email,
+      telephone: b.client.telephone
     } : undefined
   };
 }
@@ -424,6 +438,7 @@ export const api = {
       first_name?: string;
       last_name?: string;
       email?: string;
+      telephone?: string | null;
       old_password?: string;
       new_password?: string;
     }): Promise<User> => {

@@ -202,6 +202,10 @@ class UserView(View):
             role = "client"
             establishment_id = None
             establishments = []
+            telephone = None
+            if hasattr(request.user, 'profil_client'):
+                telephone = request.user.profil_client.telephone
+
             if request.user.is_superuser:
                 role = "admin"
             elif hasattr(request.user, 'profil_gerant'):
@@ -224,7 +228,8 @@ class UserView(View):
                 "last_name": request.user.last_name,
                 "role": role,
                 "establishment_id": establishment_id,
-                "establishments": establishments
+                "establishments": establishments,
+                "telephone": telephone
             })
         else:
             return JsonResponse({"error": "Non authentifié"}, status=401)
@@ -237,6 +242,7 @@ class UserView(View):
             first_name = data.get('first_name')
             last_name = data.get('last_name')
             email = data.get('email')
+            telephone = data.get('telephone')
 
             user = request.user
             if first_name is not None:
@@ -249,6 +255,12 @@ class UserView(View):
                     return JsonResponse({"error": "Cet email est déjà utilisé"}, status=400)
                 user.email = email
                 user.username = email
+            
+            if telephone is not None and hasattr(user, 'profil_client'):
+                if telephone != '' and (not telephone.isdigit() or len(telephone) != 10):
+                    return JsonResponse({"error": "Le numéro de téléphone doit contenir exactement 10 chiffres"}, status=400)
+                user.profil_client.telephone = telephone
+                user.profil_client.save()
 
             # Password change logic
             old_password = data.get('old_password')
@@ -283,6 +295,10 @@ class UserView(View):
                     establishment_id = user.profil_pro.etablissement.id
                     establishments = [{"id": user.profil_pro.etablissement.id, "nom": user.profil_pro.etablissement.nom}]
 
+            telephone = None
+            if hasattr(user, 'profil_client'):
+                telephone = user.profil_client.telephone
+
             return JsonResponse({
                 "id": user.id,
                 "username": user.username,
@@ -291,7 +307,8 @@ class UserView(View):
                 "last_name": user.last_name,
                 "role": role,
                 "establishment_id": establishment_id,
-                "establishments": establishments
+                "establishments": establishments,
+                "telephone": telephone
             })
         except Exception as e:
             return JsonResponse({"error": str(e)}, status=400)

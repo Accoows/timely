@@ -15,6 +15,7 @@ export default function ProfileTab({ user, updateUser, onNavigate }: ProfileTabP
   const [firstName, setFirstName] = useState(user.first_name || '');
   const [lastName, setLastName] = useState(user.last_name || '');
   const [email, setEmail] = useState(user.email || '');
+  const [telephone, setTelephone] = useState(user.telephone || '');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
@@ -37,7 +38,8 @@ export default function ProfileTab({ user, updateUser, onNavigate }: ProfileTabP
       const updated = await api.auth.updateCurrentUser({
         first_name: firstName,
         last_name: lastName,
-        email: email
+        email: email,
+        telephone: telephone
       });
       updateUser(updated);
       setSuccess('Profil mis à jour avec succès !');
@@ -148,14 +150,27 @@ export default function ProfileTab({ user, updateUser, onNavigate }: ProfileTabP
           />
         </div>
 
-        <InputField
-          label="Adresse e-mail"
-          type="email"
-          required
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          placeholder="timely.pro@example.com"
-        />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <InputField
+            label="Adresse e-mail"
+            type="email"
+            required
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="timely.pro@example.com"
+          />
+          <InputField
+            label="Numéro de téléphone (Optionnel)"
+            type="tel"
+            value={telephone}
+            onChange={(e) => setTelephone(e.target.value.replace(/\D/g, ''))}
+            placeholder="Ex: 0612345678"
+            pattern="[0-9]{10}"
+            maxLength={10}
+            minLength={10}
+            title="Le numéro de téléphone doit contenir exactement 10 chiffres."
+          />
+        </div>
 
         <div>
           <label className="block text-sm font-bold text-neutral-900 mb-2">
