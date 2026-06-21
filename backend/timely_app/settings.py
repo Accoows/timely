@@ -38,7 +38,6 @@ INSTALLED_APPS = [
     'corsheaders',
     
     # Tes applications
-    'core',
     'authentication',
     'establishments',
     'bookings',

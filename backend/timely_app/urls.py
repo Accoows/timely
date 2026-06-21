@@ -14,7 +14,6 @@ urlpatterns = [
     path('api/bookings/', include('bookings.urls')),
     path('api/messaging/', include('messaging.urls')),
     path('api/interactions/', include('interactions.urls')),
-    path('', include('core.urls')), 
 ]
 
 if settings.DEBUG:
