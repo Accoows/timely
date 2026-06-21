@@ -32,18 +32,18 @@ Le projet est divisé en deux parties autonomes :
 
 ## Choix Techniques et Justifications
 
-*   **Django & Django REST Framework (Backend)** :
-    *   *Rapidité de développement* : Permet de concevoir rapidement une API REST propre et sécurisée grâce aux vues et routeurs intégrés.
-    *   *Back-office intégré* : La console d'administration par défaut de Django (`/backoffice/`) fait gagner un temps précieux pour gérer les données brutes (utilisateurs, établissements, réservations).
-    *   *Sécurité* : Gestion native de l'authentification et des jetons CSRF pour sécuriser les requêtes du frontend.
-*   **React + TypeScript + Vite (Frontend)** :
-    *   *Typecheck statique* : TypeScript évite la majorité des erreurs d'incompatibilité de données entre l'API et le client.
-    *   *Vitesse (Vite)* : Démarrage instantané et rechargement à chaud (Hot Module Replacement) ultrarapide en développement.
-*   **Tailwind CSS v4 & DaisyUI v5 (Style)** :
-    *   *Style sur-mesure* : Tailwind permet de réaliser l'esthétique néo-brutaliste propre à l'application sans écrire de CSS verbeux.
-    *   *Composants DaisyUI* : Accélère le maquettage des formulaires, boutons et menus grâce à des composants accessibles et pré-stylisés.
-*   **Docker & Docker Compose (Orchestration)** :
-    *   *Portabilité* : Garantit que l'application s'exécute exactement de la même manière sur les machines de tous les développeurs (Mac, Windows, Linux) sans conflits de versions de Node.js, Python ou PostgreSQL.
+- **Django & Django REST Framework (Backend)** :
+  - _Rapidité de développement_ : Permet de concevoir rapidement une API REST propre et sécurisée grâce aux vues et routeurs intégrés.
+  - _Back-office intégré_ : La console d'administration par défaut de Django (`/backoffice/`) fait gagner un temps précieux pour gérer les données brutes (utilisateurs, établissements, réservations).
+  - _Sécurité_ : Gestion native de l'authentification et des jetons CSRF pour sécuriser les requêtes du frontend.
+- **React + TypeScript + Vite (Frontend)** :
+  - _Typecheck statique_ : TypeScript évite la majorité des erreurs d'incompatibilité de données entre l'API et le client.
+  - _Vitesse (Vite)_ : Démarrage instantané et rechargement à chaud (Hot Module Replacement) ultrarapide en développement.
+- **Tailwind CSS v4 & DaisyUI v5 (Style)** :
+  - _Style sur-mesure_ : Tailwind permet de réaliser l'esthétique néo-brutaliste propre à l'application sans écrire de CSS verbeux.
+  - _Composants DaisyUI_ : Accélère le maquettage des formulaires, boutons et menus grâce à des composants accessibles et pré-stylisés.
+- **Docker & Docker Compose (Orchestration)** :
+  - _Portabilité_ : Garantit que l'application s'exécute exactement de la même manière sur les machines de tous les développeurs (Mac, Windows, Linux) sans conflits de versions de Node.js, Python ou PostgreSQL.
 
 ---
 
@@ -58,7 +58,6 @@ timely/
 │   ├── bookings/               # App de gestion des RDV, facturation et créneaux horaires
 │   ├── interactions/           # App de gestion des avis clients et des favoris
 │   ├── messaging/              # App de gestion du chat en direct (messagerie)
-│   ├── core/                   # Utilitaires communs et application de base
 │   ├── media/                  # Dossier pour les fichiers uploadés (images, etc)
 │   ├── manage.py               # Script utilitaire Django
 │   ├── requirements.txt        # Dépendances Python (Django, DRF, psycopg2...)
