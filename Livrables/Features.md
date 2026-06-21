@@ -46,7 +46,6 @@ Le cœur interactif du système, gérant l'orchestration du calendrier des rende
 
 ### D. Module "Paiement Sécurisé & Facturation"
 *   **Intégration Stripe** : Lors de la finalisation d'un rendez-vous payant, le client est redirigé vers une page de paiement hébergée par Stripe assurant le chiffrement 3D Secure.
-*   **Webhooks Stripe** : Le backend écoute les événements Stripe (`checkout.session.completed`) pour valider la réservation dès que le débit bancaire est confirmé.
 *   **Facturation Automatique** : La validation du paiement déclenche instantanément la création d'un modèle [Facture](file:///c:/Users/sarah/Documents/B2/fil%20rouge%20dev/timely/backend/bookings/models.py#L27) en base de données. Le client peut visualiser et télécharger sa facture directement depuis son profil sous forme de reçu formalisé.
 
 ### E. Module "Engagement & Interactions"
@@ -163,6 +162,8 @@ Le cœur interactif du système, gérant l'orchestration du calendrier des rende
 
 ---
 
+
+
 ## 4. Exigences et Contraintes Non Fonctionnelles (Exemples)
 
 Les exigences non fonctionnelles définissent les critères de qualité, de sécurité et d'exploitabilité du système. Voici les principaux exemples applicables au projet Timely :
@@ -186,6 +187,5 @@ Les exigences non fonctionnelles définissent les critères de qualité, de séc
     *   La possibilité de naviguer sur l'ensemble de l'interface en utilisant uniquement le clavier (gestion du focus visible).
     *   L'intégration d'attributs ARIA explicites sur les éléments de formulaires et les modales de réservation.
 
-### D. Disponibilité, Résilience & Mode Dégradé
-*   **Résilience Réseau** : En cas de perte de connexion internet par le client, le frontend React doit passer en mode dégradé (lecture seule) grâce à un mécanisme de cache local. Le client doit pouvoir consulter ses rendez-vous déjà enregistrés et visualiser ses anciennes factures sans que l'application ne plante (affichage d'une alerte informant de l'état hors-ligne).
+### D. Disponibilité, Résilience
 *   **Robustesse de la base de données** : Le service de base de données PostgreSQL doit être configuré pour supporter des sauvegardes quotidiennes automatisées à chaud (sans interruption de service).
