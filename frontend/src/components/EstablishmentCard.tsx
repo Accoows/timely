@@ -1,3 +1,6 @@
+/**
+ * Propriétés requises pour afficher la carte de présentation d'un établissement.
+ */
 interface EstablishmentCardProps {
   name: string;
   image: string;
@@ -7,6 +10,10 @@ interface EstablishmentCardProps {
   onClick?: () => void;
 }
 
+/**
+ * Composant affichant un aperçu visuel d'un établissement (utilisé dans les listes et la recherche).
+ * Présente l'image, le nom, l'adresse, une note (rating) et un badge indiquant le secteur d'activité.
+ */
 export default function EstablishmentCard({ name, image, badge, address, rating, onClick }: EstablishmentCardProps) {
   return (
     <div className={`popular-card group ${onClick ? 'cursor-pointer' : ''}`} onClick={onClick}>

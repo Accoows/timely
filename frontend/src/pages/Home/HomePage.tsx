@@ -22,7 +22,9 @@ export default function HomePage({ onNavigate }: HomePageProps) {
   const [establishments, setEstablishments] = useState<Etablissement[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Tab indicator calculations
+  // --- ANIMATION DE L'INDICATEUR DES ONGLETS (TABS) ---
+  // Calcule dynamiquement la largeur et la position du bouton actif
+  // pour animer le fond noir (`bg-neutral-900`) qui glisse d'un onglet à l'autre.
   const [indicatorStyle, setIndicatorStyle] = useState({ left: 4, width: 68 });
   const tabsRef = useRef<(HTMLButtonElement | null)[]>([]);
 
@@ -37,13 +39,16 @@ export default function HomePage({ onNavigate }: HomePageProps) {
     }
   }, [activeCategory]);
 
+  // --- CHARGEMENT DES ÉTABLISSEMENTS "À DÉCOUVRIR" ---
+  // Cette fonction charge une liste d'établissements recommandés, potentiellement
+  // filtrés par secteur selon l'onglet cliqué dans la section "À Découvrir".
   const fetchEstablishments = (sectorNom?: string, queryVal?: string, locationVal?: string) => {
     Promise.resolve().then(() => setLoading(true));
     api.establishments.explore({
       sector: sectorNom || undefined,
       query: queryVal || undefined,
       location: locationVal || undefined,
-      sort: 'rating'
+      sort: 'rating' // Toujours afficher les mieux notés sur la page d'accueil
     })
       .then(data => {
         setEstablishments(data);
@@ -54,11 +59,18 @@ export default function HomePage({ onNavigate }: HomePageProps) {
       });
   };
 
+  // Déclencheur : se lance à chaque changement de l'onglet actif.
   useEffect(() => {
     const categoryObj = CATEGORIES.find(cat => cat.id === activeCategory);
     fetchEstablishments(categoryObj?.filterVal, '', '');
   }, [activeCategory]);
 
+  // --- REDIRECTIONS VERS LA PAGE DE RECHERCHE ---
+  
+  /**
+   * Capturée depuis la barre de recherche principale (Hero Section).
+   * Construit l'URL avec les paramètres (query string) et redirige vers la page Search.
+   */
   const handleSearch = (query: string, location: string) => {
     const url = 'search?';
     const params = [];
@@ -67,6 +79,9 @@ export default function HomePage({ onNavigate }: HomePageProps) {
     onNavigate(url + params.join('&'));
   };
 
+  /**
+   * Capturée lors d'un clic sur une carte de "Catégorie" visuelle.
+   */
   const handleCategoryClick = (categoryName: string) => {
     onNavigate(`search?category=${encodeURIComponent(categoryName)}`);
   };

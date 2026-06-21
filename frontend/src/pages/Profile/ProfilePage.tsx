@@ -19,6 +19,9 @@ interface ProfilePageProps {
 
 export default function ProfilePage({ onNavigate }: ProfilePageProps) {
   const { user, updateUser, logout } = useAuth();
+  // --- GESTION DES ONGLETS (TABS) ---
+  // Initialisation paresseuse (lazy initialization) qui lit l'URL au premier rendu
+  // pour voir si on doit ouvrir un onglet spécifique (ex: retour de Stripe -> ?tab=bookings)
   const [activeTab, setActiveTab] = useState<'profile' | 'bookings' | 'favorites' | 'messages' | 'invoices' | 'reviews' | 'establishment' | 'new-pro-account'>(() => {
     const params = new URLSearchParams(window.location.search);
     const tabParam = params.get('tab');
@@ -33,6 +36,11 @@ export default function ProfilePage({ onNavigate }: ProfilePageProps) {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [payLoadingId, setPayLoadingId] = useState<number | null>(null);
 
+  /**
+   * Initialise le processus de paiement Stripe.
+   * L'API génère une URL de "Checkout Session" temporaire et on redirige 
+   * directement le navigateur de l'utilisateur vers cette URL sécurisée.
+   */
   const handlePay = async (bookingId: number) => {
     try {
       setPayLoadingId(bookingId);
@@ -46,14 +54,18 @@ export default function ProfilePage({ onNavigate }: ProfilePageProps) {
     }
   };
 
-  // Redirect if not logged in
+  // --- SÉCURITÉ ---
+  // Si le composant est monté (ex: retour direct via URL) mais que l'utilisateur 
+  // n'est pas/plus authentifié, on force la redirection vers la page de connexion.
   useEffect(() => {
     if (!user) {
       onNavigate('login');
     }
   }, [user, onNavigate]);
 
-  // Fetch bookings unconditionally to monitor pending payments
+  // --- VÉRIFICATION GLOBALE DES PAIEMENTS EN ATTENTE ---
+  // S'exécute toujours, peu importe l'onglet, pour pouvoir afficher
+  // le bandeau jaune d'alerte si un RDV Stripe récent n'est pas encore payé.
   useEffect(() => {
     if (!user) return;
     api.bookings.list()
@@ -65,7 +77,8 @@ export default function ProfilePage({ onNavigate }: ProfilePageProps) {
       });
   }, [user]);
 
-  // Load real API bookings and favorites
+  // --- CHARGEMENT PARESSEUX DES DONNÉES (LAZY LOADING) ---
+  // On ne fait des requêtes réseau que si l'utilisateur visite effectivement l'onglet concerné.
   useEffect(() => {
     if (!user) return;
 

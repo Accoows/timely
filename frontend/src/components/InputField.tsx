@@ -1,10 +1,18 @@
 import type { InputHTMLAttributes } from 'react';
 
+/**
+ * Propriétés du composant InputField.
+ * Hérite de toutes les propriétés natives d'un <input> HTML (type, value, onChange, etc.).
+ */
 interface InputFieldProps extends InputHTMLAttributes<HTMLInputElement> {
   label?: string;
   error?: string;
 }
 
+/**
+ * Champ de saisie (input) standardisé pour les formulaires de l'application.
+ * Gère l'affichage cohérent des labels, des bordures de focus et des erreurs de validation.
+ */
 export default function InputField({
   label,
   error,

@@ -18,6 +18,12 @@ export default function RegisterPage({ onNavigate }: RegisterPageProps) {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
+  /**
+   * Soumission du formulaire d'inscription.
+   * 1. Empêche le comportement par défaut (rechargement).
+   * 2. Vérifie côté client que les mots de passe correspondent (double sécurité).
+   * 3. Appelle la méthode `register` du AuthContext.
+   */
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');

@@ -15,15 +15,17 @@ interface AdminDashboardProps {
 }
 
 export default function AdminDashboard({ onNavigate }: AdminDashboardProps) {
+  // État gérant l'onglet actuellement affiché (Utilisateurs, Établissements, Avis, Calendrier)
   const [activeTab, setActiveTab] = useState<TabType>('users');
   
-  // States
+  // -- Données principales chargées depuis l'API --
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [establishments, setEstablishments] = useState<Etablissement[]>([]);
   const [sectors, setSectors] = useState<Secteur[]>([]);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [calendarEvents, setCalendarEvents] = useState<CalendarEvent[]>([]);
   
+  // -- État global de chargement et d'erreurs --
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   
@@ -44,11 +46,13 @@ export default function AdminDashboard({ onNavigate }: AdminDashboardProps) {
   const [newPrestationDesc, setNewPrestationDesc] = useState('');
   const [editingPrestationId, setEditingPrestationId] = useState<number | null>(null);
 
-  // Load Data
+  // On utilise useCallback pour éviter que cette fonction ne soit recréée à chaque rendu,
+  // ce qui créerait des boucles infinies dans le useEffect.
   const fetchData = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
+      // On ne charge QUE les données nécessaires à l'onglet actif pour optimiser le réseau.
       if (activeTab === 'users') {
         const uList = await api.admin.users.list();
         setUsers(uList);
@@ -59,6 +63,7 @@ export default function AdminDashboard({ onNavigate }: AdminDashboardProps) {
         setEstablishments(eList);
         const sList = await api.sectors.list();
         setSectors(sList);
+        // On a besoin de la liste des utilisateurs pour potentiellement lier un gérant à un établissement
         const uList = await api.admin.users.list();
         setUsers(uList);
       } else if (activeTab === 'reviews') {
@@ -73,25 +78,33 @@ export default function AdminDashboard({ onNavigate }: AdminDashboardProps) {
     } catch (err: unknown) {
       setError(getErrorMessage(err, 'Une erreur est survenue lors du chargement des données.'));
     } finally {
-      setLoading(false);
+      setLoading(false); // Quoi qu'il arrive (succès ou erreur), on arrête le loader
     }
   }, [activeTab]);
 
+  // Déclencheur automatique : à chaque fois que `fetchData` change 
+  // (donc quand `activeTab` change, vu les dépendances de useCallback), on recharge.
   useEffect(() => {
-    let active = true;
+    let active = true; // Empêche la mise à jour de l'état si le composant est démonté avant la fin de la requête
     const load = async () => {
-      await Promise.resolve();
+      await Promise.resolve(); // Laisse le cycle de rendu React se terminer avant de lancer le fetch
       if (active) {
         fetchData();
       }
     };
     load();
     return () => {
-      active = false;
+      active = false; // Cleanup component unmount
     };
   }, [fetchData]);
 
-  // --- USER ACTIONS ---
+  // --- ACTIONS SUR LES UTILISATEURS ---
+  
+  /**
+   * Bloque ou débloque un utilisateur.
+   * L'interface se met à jour localement immédiatement via `setUsers` pour être réactive (optimistic UI),
+   * sans attendre de recharger toute la liste via l'API.
+   */
   const handleToggleUserStatus = async (user: AdminUser) => {
     try {
       await api.admin.users.update(user.id, { is_active: !user.is_active });
@@ -101,6 +114,10 @@ export default function AdminDashboard({ onNavigate }: AdminDashboardProps) {
     }
   };
 
+  /**
+   * Promeut ou rétrograde un utilisateur (ex: de client à gérant).
+   * Si c'est un rôle pro, on transmet aussi l'ID de l'établissement rattaché.
+   */
   const handleUpdateUserRole = async (userId: number, role: string, establishmentId?: number, poste?: string, description?: string) => {
     try {
       await api.admin.users.update(userId, { 
@@ -111,7 +128,7 @@ export default function AdminDashboard({ onNavigate }: AdminDashboardProps) {
       });
       alert('Rôle mis à jour avec succès.');
       setEditingUser(null);
-      fetchData();
+      fetchData(); // On recharge les données depuis le serveur pour être sûr de l'état
     } catch (err: unknown) {
       alert(getErrorMessage(err, 'Impossible de modifier le rôle.'));
     }
@@ -128,7 +145,13 @@ export default function AdminDashboard({ onNavigate }: AdminDashboardProps) {
     }
   };
 
-  // --- ESTABLISHMENT ACTIONS ---
+  // --- ACTIONS SUR LES ÉTABLISSEMENTS ---
+  
+  /**
+   * Ouvre la modale d'édition d'un établissement.
+   * Déclenche immédiatement un fetch annexe pour récupérer les prestations liées 
+   * à cet établissement spécifique afin de pouvoir les gérer dans la même modale.
+   */
   const handleOpenEditEstablishment = async (etab: Etablissement) => {
     setEditingEstablishment(etab);
     setLoading(true);
@@ -142,6 +165,11 @@ export default function AdminDashboard({ onNavigate }: AdminDashboardProps) {
     }
   };
 
+  /**
+   * Soumission du formulaire de mise à jour d'un établissement.
+   * On reconstruit un objet "data" propre pour s'assurer que le backend reçoive
+   * exactement les champs attendus, et on recharge la liste complète (`fetchData()`) en cas de succès.
+   */
   const handleUpdateEstablishment = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!editingEstablishment) return;
@@ -167,6 +195,10 @@ export default function AdminDashboard({ onNavigate }: AdminDashboardProps) {
     }
   };
 
+  /**
+   * Suppression définitive d'un établissement (et CASCADE potentielle côté backend).
+   * Mise à jour optimiste via `filter` pour ne pas recharger toute la liste.
+   */
   const handleDeleteEstablishment = async (id: number) => {
     if (!confirm('Êtes-vous sûr de vouloir supprimer cet établissement et toutes ses données rattachées ?')) return;
     try {
@@ -178,7 +210,13 @@ export default function AdminDashboard({ onNavigate }: AdminDashboardProps) {
     }
   };
 
-  // --- PRESTATIONS ACTIONS ---
+  // --- ACTIONS SUR LES PRESTATIONS (DEPUIS LA MODALE D'EDITION D'ETABLISSEMENT) ---
+  
+  /**
+   * Ajoute une prestation à la volée. 
+   * Au lieu de re-fetch, on ajoute la réponse du backend au state local `establishmentPrestations`
+   * et on vide les champs du formulaire.
+   */
   const handleAddPrestation = async () => {
     if (!editingEstablishment || !newPrestationNom || !newPrestationCout) return;
     try {
@@ -197,6 +235,9 @@ export default function AdminDashboard({ onNavigate }: AdminDashboardProps) {
     }
   };
 
+  /**
+   * Met à jour une prestation et remplace l'ancienne dans le tableau local via `.map()`.
+   */
   const handleUpdatePrestation = async (serviceId: number, nom: string, cout: number, description: string) => {
     try {
       const updated = await api.prestations.update(serviceId, { nom, cout, description });
@@ -208,6 +249,9 @@ export default function AdminDashboard({ onNavigate }: AdminDashboardProps) {
     }
   };
 
+  /**
+   * Supprime une prestation du tableau local via `.filter()`.
+   */
   const handleDeletePrestation = async (serviceId: number) => {
     if (!confirm('Supprimer cette prestation ?')) return;
     try {
@@ -219,7 +263,11 @@ export default function AdminDashboard({ onNavigate }: AdminDashboardProps) {
     }
   };
 
-  // --- REVIEW ACTIONS ---
+  // --- ACTIONS SUR LES AVIS (MODÉRATION) ---
+  
+  /**
+   * Modération d'un avis frauduleux ou injurieux.
+   */
   const handleDeleteReview = async (reviewId: number) => {
     if (!confirm('Supprimer définitivement cet avis ?')) return;
     try {

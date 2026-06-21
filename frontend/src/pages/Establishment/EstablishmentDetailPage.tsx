@@ -17,44 +17,44 @@ export default function EstablishmentDetailPage({ establishmentId, onNavigate }:
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Form states for booking
+  // États du formulaire de réservation
   const [selectedPrestation, setSelectedPrestation] = useState<Prestation | null>(null);
   const [prevSelectedPrestation, setPrevSelectedPrestation] = useState<Prestation | null>(null);
   const [selectedCollaborateur, setSelectedCollaborateur] = useState<Collaborateur | null>(null);
   
-  // Weekly slots calendar states
+  // États du calendrier hebdomadaire des créneaux
   const [weekOffset, setWeekOffset] = useState(0);
   const [weeklySlots, setWeeklySlots] = useState<{ [date: string]: { time: string; available: boolean }[] }>({});
   const [loadingSlots, setLoadingSlots] = useState(false);
 
-  // Selected date/time slot for validation
+  // Date/heure sélectionnée pour validation
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
   
-  // Booking action states
+  // États d'action de réservation
   const [bookingSuccess, setBookingSuccess] = useState(false);
   const [bookingError, setBookingError] = useState<string | null>(null);
   const [bookingLoading, setBookingLoading] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<'on_site' | 'stripe'>('on_site');
 
-  // Detail tabs state (prestations, infos, messages)
+  // État des onglets de détails (prestations, infos, messages)
   const [activeTab, setActiveTab] = useState<'prestations' | 'infos' | 'messages'>('prestations');
 
-  // Lightbox Modal state
+  // État de la modale de visionneuse (Lightbox)
   const [showGalleryModal, setShowGalleryModal] = useState(false);
   const [activePhotoIndex, setActivePhotoIndex] = useState(0);
 
-  // Favorite status state
+  // État du statut de favori
   const [isFavorite, setIsFavorite] = useState(false);
 
-  // Chat/Messaging states
+  // États de la messagerie / du chat
   const [discussion, setDiscussion] = useState<Discussion | null>(null);
   const [chatMessages, setChatMessages] = useState<Message[]>([]);
   const [chatInput, setChatInput] = useState("");
   const [chatLoading, setChatLoading] = useState(false);
   const [sendingMessage, setSendingMessage] = useState(false);
 
-  // Reviews states
+  // États des avis clients
   const [establishmentReviews, setEstablishmentReviews] = useState<Review[]>([]);
   const [reviewsLoading, setReviewsLoading] = useState(false);
   const [reviewFormMessage, setReviewFormMessage] = useState("");
@@ -64,7 +64,11 @@ export default function EstablishmentDetailPage({ establishmentId, onNavigate }:
   const [reviewErrorMsg, setReviewErrorMsg] = useState("");
   const [activeReviewsTab, setActiveReviewsTab] = useState<'notes' | 'reviews'>('notes');
 
-  // Generate 7 days based on weekOffset
+  /**
+   * Génère dynamiquement les 7 prochains jours pour le calendrier de réservation.
+   * La variable `weekOffset` permet de naviguer de semaine en semaine (ex: +1 = semaine pro).
+   * Retourne un tableau d'objets contenant le nom du jour, le numéro, le mois et la date au format YYYY-MM-DD.
+   */
   const getWeeklyDays = () => {
     const days = [];
     const locale = 'fr-FR';
@@ -88,9 +92,10 @@ export default function EstablishmentDetailPage({ establishmentId, onNavigate }:
 
   const weeklyDays = getWeeklyDays();
 
-  // Load establishment details on mount / ID change
+  // --- CHARGEMENT DES DÉTAILS DE L'ÉTABLISSEMENT ---
+  // S'exécute au montage du composant ou quand l'ID change dans l'URL.
   useEffect(() => {
-    let active = true;
+    let active = true; // Prévention de fuite de mémoire (memory leak) si le composant est démonté
     const fetchDetails = async () => {
       try {
         setLoading(true);
@@ -98,7 +103,7 @@ export default function EstablishmentDetailPage({ establishmentId, onNavigate }:
         const data = await api.establishments.getById(establishmentId);
         if (active) {
           setEstablishment(data);
-          // Auto-select first professional if available
+          // Sélection automatique du premier collaborateur disponible pour faciliter le flux utilisateur
           if (data.collaborateurs && data.collaborateurs.length > 0) {
             setSelectedCollaborateur(data.collaborateurs[0]);
           }
@@ -118,15 +123,20 @@ export default function EstablishmentDetailPage({ establishmentId, onNavigate }:
     };
   }, [establishmentId]);
 
-  // Auto-select first compatible professional when selectedPrestation changes
-  // We do this during render (instead of useEffect) to avoid cascading renders
+  // --- AUTO-SÉLECTION INTELLIGENTE DU COLLABORATEUR ---
+  // On compare selectedPrestation avec sa valeur précédente pendant la phase de rendu (render phase)
+  // plutôt que dans un useEffect. C'est une technique avancée (Derived State) qui évite les
+  // re-rendus "en cascade" (cascading renders) et améliore les performances.
   if (selectedPrestation !== prevSelectedPrestation) {
     setPrevSelectedPrestation(selectedPrestation);
     if (selectedPrestation && establishment?.collaborateurs) {
+      // On filtre les collaborateurs capables de réaliser cette prestation spécifique
       const compatible = establishment.collaborateurs.filter(col => 
         selectedPrestation.collaborateurs?.includes(col.id)
       );
       if (compatible.length > 0) {
+        // Si le collaborateur actuellement sélectionné ne fait pas cette prestation, 
+        // on bascule automatiquement sur le premier collaborateur compatible.
         if (!selectedCollaborateur || !compatible.some(c => c.id === selectedCollaborateur.id)) {
           setSelectedCollaborateur(compatible[0]);
         }
@@ -138,7 +148,7 @@ export default function EstablishmentDetailPage({ establishmentId, onNavigate }:
     }
   }
 
-  // Check if establishment is in user's favorites
+  // Vérifie si l'établissement est dans les favoris de l'utilisateur
   useEffect(() => {
     let active = true;
     const checkFavorite = async () => {
@@ -162,7 +172,7 @@ export default function EstablishmentDetailPage({ establishmentId, onNavigate }:
     };
   }, [establishmentId, user]);
 
-  // Load 7 days of slots in parallel
+  // Charge 7 jours de créneaux en parallèle
   useEffect(() => {
     if (!selectedCollaborateur || !selectedPrestation) {
       return;
@@ -207,7 +217,7 @@ export default function EstablishmentDetailPage({ establishmentId, onNavigate }:
     };
   }, [selectedCollaborateur, selectedPrestation, weekOffset]);
 
-  // Load messaging chat if the messages tab is active
+  // Charge le chat de messagerie si l'onglet messages est actif
   const loadChat = async () => {
     if (!user) return;
     try {
@@ -240,7 +250,7 @@ export default function EstablishmentDetailPage({ establishmentId, onNavigate }:
     }
   }, [activeTab, establishmentId, user]);
 
-  // Handle message sending
+  // Gère l'envoi de message
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!chatInput.trim() || !user) return;
@@ -268,7 +278,7 @@ export default function EstablishmentDetailPage({ establishmentId, onNavigate }:
     }
   };
 
-  // Load reviews for the establishment
+  // Charge les avis pour l'établissement
   const loadReviews = useCallback(async () => {
     try {
       setReviewsLoading(true);
@@ -288,7 +298,7 @@ export default function EstablishmentDetailPage({ establishmentId, onNavigate }:
     return () => clearTimeout(timer);
   }, [establishmentId, loadReviews]);
 
-  // Handle review submit
+  // Gère la soumission d'un avis
   const handleSendReview = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!reviewFormMessage.trim() || !user) return;
@@ -310,7 +320,7 @@ export default function EstablishmentDetailPage({ establishmentId, onNavigate }:
     }
   };
 
-  // Handle review deletion
+  // Gère la suppression d'un avis
   const handleDeleteReview = async (reviewId: number) => {
     if (!window.confirm("Êtes-vous sûr de vouloir supprimer cet avis ?")) return;
     try {
@@ -329,7 +339,7 @@ export default function EstablishmentDetailPage({ establishmentId, onNavigate }:
     }
   };
 
-  // Handle booking creation
+  // Gère la création de la réservation
   const handleBookSlot = async () => {
     if (!user) {
       onNavigate('login');
@@ -450,10 +460,10 @@ export default function EstablishmentDetailPage({ establishmentId, onNavigate }:
   return (
     <div className="w-full bg-[#FAF9F6] min-h-screen text-neutral-900 pb-16">
       
-      {/* Header section (pure white background, clean details) */}
+      {/* Section d'en-tête (fond blanc pur, détails épurés) */}
       <div className="w-full bg-white border-b border-neutral-200/60 py-6">
         <div className="max-w-6xl mx-auto px-6">
-          {/* Breadcrumb Back Button */}
+          {/* Bouton de retour (Fil d'Ariane) */}
           <button 
             onClick={() => onNavigate('search')}
             className="mb-4 inline-flex items-center gap-1.5 text-xs font-semibold text-neutral-500 hover:text-neutral-900 transition-colors cursor-pointer"
@@ -491,7 +501,7 @@ export default function EstablishmentDetailPage({ establishmentId, onNavigate }:
               </div>
             </div>
 
-            {/* Actions on the right */}
+            {/* Actions sur la droite */}
             <div className="flex items-center gap-3">
               <button 
                 onClick={handleToggleFavorite}
@@ -530,7 +540,7 @@ export default function EstablishmentDetailPage({ establishmentId, onNavigate }:
 
       <div className="max-w-6xl mx-auto px-6 py-8">
         
-        {/* Photo Grid Section (Exactly matching Planity layout) */}
+        {/* Section Grille de Photos (Correspondance exacte avec la maquette Planity) */}
         {photos && photos.length > 0 ? (
           photos.length === 1 ? (
             <div className="mb-8">
@@ -547,7 +557,7 @@ export default function EstablishmentDetailPage({ establishmentId, onNavigate }:
             </div>
           ) : photos.length === 2 ? (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-8">
-              {/* Main Photo (left) */}
+              {/* Photo Principale (gauche) */}
               <div 
                 onClick={() => handleOpenGallery(0)}
                 className="md:col-span-2 rounded-2xl overflow-hidden h-[250px] md:h-[360px] bg-neutral-100 relative group cursor-pointer"
@@ -558,7 +568,7 @@ export default function EstablishmentDetailPage({ establishmentId, onNavigate }:
                   className="w-full h-full object-cover group-hover:scale-[1.01] transition-transform duration-300"
                 />
               </div>
-              {/* Sub Photo (right) */}
+              {/* Photo Secondaire (droite) */}
               <div 
                 onClick={() => handleOpenGallery(1)}
                 className="rounded-2xl overflow-hidden h-[250px] md:h-[360px] bg-neutral-100 group cursor-pointer"
@@ -572,7 +582,7 @@ export default function EstablishmentDetailPage({ establishmentId, onNavigate }:
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-8">
-              {/* Main Photo (left) */}
+              {/* Photo Principale (gauche) */}
               <div 
                 onClick={() => handleOpenGallery(0)}
                 className="md:col-span-2 rounded-2xl overflow-hidden h-[250px] md:h-[360px] bg-neutral-100 relative group cursor-pointer"
@@ -584,7 +594,7 @@ export default function EstablishmentDetailPage({ establishmentId, onNavigate }:
                 />
               </div>
               
-              {/* Sub Photos Stack (right) */}
+              {/* Pile de Photos Secondaires (droite) */}
               <div className="grid grid-rows-2 gap-3 h-[250px] md:h-[360px]">
                 <div 
                   onClick={() => handleOpenGallery(1)}
@@ -625,7 +635,7 @@ export default function EstablishmentDetailPage({ establishmentId, onNavigate }:
           </div>
         )}
 
-        {/* Subtitle & Immediate confirmation */}
+        {/* Sous-titre et confirmation immédiate */}
         <div className="mb-8 border-b border-neutral-200 pb-5">
           <h2 className="text-xl md:text-2xl font-bold tracking-tight text-neutral-955">
             Réserver en ligne pour un RDV chez {establishment.nom || establishment.name}
@@ -635,13 +645,13 @@ export default function EstablishmentDetailPage({ establishmentId, onNavigate }:
           </p>
         </div>
 
-        {/* Main Grid: Left col = Prestations & Booking tunnel, Right col = Sidebar Info */}
+        {/* Grille principale : Colonne gauche = Prestations & Tunnel, Colonne droite = Infos latérales */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
           
-          {/* Column Left: Prestations List / Reservation Tunnel */}
+          {/* Colonne Gauche : Liste des prestations / Tunnel de réservation */}
           <div className="lg:col-span-2 space-y-8">
             
-            {/* Tabs for Navigation */}
+            {/* Onglets de navigation */}
             <div className="flex border-b border-neutral-200 overflow-x-auto no-scrollbar whitespace-nowrap gap-6 text-sm font-semibold mb-6">
               <button
                 onClick={() => setActiveTab('prestations')}
@@ -675,11 +685,11 @@ export default function EstablishmentDetailPage({ establishmentId, onNavigate }:
               </button>
             </div>
 
-            {/* TAB CONTENT: PRESTATIONS & BOOKING TUNNEL */}
+            {/* CONTENU DE L'ONGLET : PRESTATIONS ET TUNNEL DE RÉSERVATION */}
             {activeTab === 'prestations' && (
               <div className="space-y-8 animate-fadeIn" id="booking-tunnel-section">
                 
-                {/* 1. Selected Prestation Display or Prestations Chooser */}
+                {/* 1. Affichage de la prestation sélectionnée ou Sélecteur de prestations */}
                 {selectedPrestation ? (
                   <div className="space-y-6">
                     <h3 className="text-sm font-extrabold uppercase tracking-wider text-neutral-500 flex items-center gap-2">
@@ -687,7 +697,7 @@ export default function EstablishmentDetailPage({ establishmentId, onNavigate }:
                       Prestation sélectionnée
                     </h3>
 
-                    {/* Prestation selection card */}
+                    {/* Carte de sélection de la prestation */}
                     <div className="bg-white border border-neutral-200/60 p-5 rounded-2xl flex flex-col md:flex-row justify-between md:items-center gap-4 shadow-sm">
                       <div className="flex-1">
                         <h4 className="font-extrabold text-sm text-neutral-900">
@@ -699,7 +709,7 @@ export default function EstablishmentDetailPage({ establishmentId, onNavigate }:
                       </div>
 
                       <div className="flex items-center gap-4 shrink-0">
-                        {/* Selector Dropdown: "Choisir avec qui ?" */}
+                        {/* Menu déroulant du sélecteur : "Choisir avec qui ?" */}
                         {compatibleCollaborateurs.length > 0 ? (
                           <div className="relative">
                             <select
@@ -723,7 +733,7 @@ export default function EstablishmentDetailPage({ establishmentId, onNavigate }:
                           <span className="text-xs font-bold text-red-500 italic">Aucun professionnel disponible pour ce service</span>
                         )}
 
-                        {/* Supprimer button */}
+                        {/* Bouton de suppression */}
                         <button
                           onClick={() => {
                             setSelectedPrestation(null);
@@ -737,7 +747,7 @@ export default function EstablishmentDetailPage({ establishmentId, onNavigate }:
                       </div>
                     </div>
 
-                    {/* Button to add another (just visually matching the mockup for complete experience) */}
+                    {/* Bouton pour en ajouter une autre (correspondance visuelle avec la maquette) */}
                     <button 
                       onClick={() => {
                         setSelectedPrestation(null);
@@ -749,7 +759,7 @@ export default function EstablishmentDetailPage({ establishmentId, onNavigate }:
                       + Changer de prestation
                     </button>
 
-                    {/* 2. Choose Date & Time Calendar Grid */}
+                    {/* 2. Grille du Calendrier (Choix de la date et de l'heure) */}
                     <div className="pt-4 space-y-6">
                       <div className="flex justify-between items-center">
                         <h3 className="text-sm font-extrabold uppercase tracking-wider text-neutral-500 flex items-center gap-2">
@@ -775,7 +785,7 @@ export default function EstablishmentDetailPage({ establishmentId, onNavigate }:
                         </div>
                       </div>
 
-                      {/* 7 Columns Slots Calendar Grid */}
+                      {/* Grille de Calendrier à 7 Créneaux (Colonnes) */}
                       <div className="bg-white border border-neutral-200/60 rounded-2xl p-6 shadow-sm overflow-x-auto no-scrollbar relative min-h-[200px]">
                         {loadingSlots ? (
                           <div className="absolute inset-0 bg-white/70 backdrop-blur-[1px] flex justify-center items-center z-10">
@@ -792,13 +802,13 @@ export default function EstablishmentDetailPage({ establishmentId, onNavigate }:
                             
                             return (
                               <div key={day.fullDate} className="space-y-4">
-                                {/* Column day header */}
+                                {/* En-tête de jour (Colonne) */}
                                 <div className="border-b border-neutral-100 pb-3">
                                   <span className="text-[11px] font-bold text-neutral-400 block capitalize">{day.dayName.split(' ')[0]}</span>
                                   <span className="text-xs font-black text-neutral-800 block mt-0.5">{day.dayNum} {day.monthName.split(' ')[0]}</span>
                                 </div>
 
-                                {/* Vertical Slots List */}
+                                {/* Liste verticale des créneaux */}
                                 <div className="space-y-2 max-h-[350px] overflow-y-auto pr-0.5 scrollbar-thin">
                                   {isClosed ? (
                                     <span className="text-[10px] font-bold text-red-400 block py-4">Fermé</span>
@@ -833,7 +843,7 @@ export default function EstablishmentDetailPage({ establishmentId, onNavigate }:
                         </div>
                       </div>
 
-                      {/* Validation Card showing once date & time are selected */}
+                      {/* Carte de validation affichée une fois la date et l'heure sélectionnées */}
                       {selectedDate && selectedTime && (
                         <div className="bg-white border border-neutral-200/60 p-5 rounded-2xl shadow-sm animate-fadeIn space-y-4">
                           <h4 className="font-extrabold text-sm text-neutral-900">Confirmez votre horaire</h4>
@@ -963,7 +973,7 @@ export default function EstablishmentDetailPage({ establishmentId, onNavigate }:
               </div>
             )}
 
-            {/* TAB CONTENT: INFOS */}
+            {/* CONTENU DE L'ONGLET : INFOS */}
             {activeTab === 'infos' && (
               <div className="bg-white border border-neutral-200/60 rounded-2xl p-6 shadow-sm animate-fadeIn space-y-6">
                 <div>
@@ -996,7 +1006,7 @@ export default function EstablishmentDetailPage({ establishmentId, onNavigate }:
               </div>
             )}
 
-            {/* TAB CONTENT: MESSAGING */}
+            {/* CONTENU DE L'ONGLET : MESSAGERIE */}
             {activeTab === 'messages' && (
               <div className="bg-white border border-neutral-200/60 rounded-2xl p-6 shadow-sm animate-fadeIn">
                 <div className="mb-4">
@@ -1069,10 +1079,10 @@ export default function EstablishmentDetailPage({ establishmentId, onNavigate }:
 
           </div>
 
-          {/* Column Right: Sidebar Rating & Hours */}
+          {/* Colonne Droite : Notes latérales et Horaires */}
           <div className="space-y-6">
             
-            {/* Note globale & Avis Tab Card */}
+            {/* Carte Note globale et Avis */}
             <div className="bg-white border border-neutral-200/60 rounded-2xl overflow-hidden shadow-sm">
               <div className="flex border-b border-neutral-100 text-xs font-bold text-center">
                 <button
@@ -1173,7 +1183,7 @@ export default function EstablishmentDetailPage({ establishmentId, onNavigate }:
                     </div>
                   )}
 
-                  {/* Add review form */}
+                  {/* Formulaire d'ajout d'avis */}
                   {user ? (
                     <form onSubmit={handleSendReview} className="p-4 space-y-2 text-left bg-neutral-50">
                       <label className="block text-[10px] font-bold text-neutral-500 uppercase tracking-wider">Publier un avis</label>
@@ -1217,7 +1227,7 @@ export default function EstablishmentDetailPage({ establishmentId, onNavigate }:
               )}
             </div>
 
-            {/* Opening hours widget */}
+            {/* Widget des horaires d'ouverture */}
             <div className="bg-white border border-neutral-200/60 rounded-2xl p-5 shadow-sm space-y-4">
               <h3 className="font-extrabold text-sm text-neutral-850 pb-2 border-b border-neutral-100">
                 Horaires d'ouverture
@@ -1241,10 +1251,10 @@ export default function EstablishmentDetailPage({ establishmentId, onNavigate }:
         </div>
       </div>
 
-      {/* Lightbox / Gallery Modal */}
+      {/* Modale de Galerie / Visionneuse (Lightbox) */}
       {showGalleryModal && (
         <div className="fixed inset-0 z-[100] bg-black/95 flex flex-col justify-between p-6">
-          {/* Top bar */}
+          {/* Barre supérieure */}
           <div className="flex justify-between items-center text-white select-none">
             <span className="font-bold text-sm">
               {activePhotoIndex + 1} / {photos.length}
@@ -1257,7 +1267,7 @@ export default function EstablishmentDetailPage({ establishmentId, onNavigate }:
             </button>
           </div>
 
-          {/* Center Area: Image & Nav buttons */}
+          {/* Zone Centrale : Image et Boutons de navigation */}
           <div className="flex-1 flex items-center justify-center relative">
             <button 
               onClick={() => setActivePhotoIndex((prev) => (prev === 0 ? photos.length - 1 : prev - 1))}
@@ -1280,7 +1290,7 @@ export default function EstablishmentDetailPage({ establishmentId, onNavigate }:
             </button>
           </div>
 
-          {/* Thumbnails strip at the bottom */}
+          {/* Bandeau des miniatures en bas */}
           <div className="flex justify-center gap-2 overflow-x-auto py-4 select-none">
             {photos.map((url, idx) => (
               <button

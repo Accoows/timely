@@ -1,6 +1,10 @@
 import React from 'react';
 import Button from './Button';
 
+/**
+ * Propriétés requises pour afficher un état vide (EmptyState).
+ * Permet de configurer le texte, l'icône, et l'action optionnelle associée.
+ */
 interface EmptyStateProps {
   title: string;
   description: string;
@@ -11,6 +15,11 @@ interface EmptyStateProps {
   className?: string;
 }
 
+/**
+ * Composant d'interface standardisé pour les zones sans données (listes vides, etc).
+ * Il s'intègre au design system (bordures pointillées, icône stylisée) et propose
+ * en option un bouton d'action pour inviter l'utilisateur à créer une donnée.
+ */
 export default function EmptyState({
   title,
   description,

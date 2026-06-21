@@ -13,6 +13,8 @@ type CategoryType = 'beauty' | 'restaurant' | 'hotel' | 'travel' | 'hair' | 'bar
 export default function RegisterEstablishmentPage({ onNavigate }: RegisterEstablishmentPageProps) {
   const { user, updateUser } = useAuth();
 
+  // --- SÉCURITÉ ---
+  // On s'assure que l'utilisateur est bien connecté avant d'afficher le formulaire.
   useEffect(() => {
     if (!user) {
       onNavigate('login');
@@ -34,6 +36,14 @@ export default function RegisterEstablishmentPage({ onNavigate }: RegisterEstabl
   const [newEstablishmentId, setNewEstablishmentId] = useState<number | null>(null);
   const [error, setError] = useState('');
 
+  /**
+   * Soumission du formulaire d'inscription d'établissement.
+   * 1. On vérifie qu'une catégorie est sélectionnée.
+   * 2. On appelle le endpoint d'enregistrement.
+   * 3. Si l'API retourne un succès, on met à jour le contexte global `user` 
+   *    pour lui attribuer le rôle 'gerant' et lier l'établissement créé.
+   * 4. On passe `submitted` à true pour afficher l'écran de succès.
+   */
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!category) return;
@@ -185,7 +195,7 @@ export default function RegisterEstablishmentPage({ onNavigate }: RegisterEstabl
           </div>
         ) : (
           <div className="bg-white border border-neutral-200/80 p-8 md:p-12 rounded-2xl shadow-sm">
-            {/* Header */}
+            {/* En-tête du formulaire */}
             <div className="mb-10 text-center md:text-left">
               <h2 className="text-3xl md:text-4xl font-extrabold text-neutral-900 tracking-tight">
                 Inscrire mon établissement
@@ -202,7 +212,7 @@ export default function RegisterEstablishmentPage({ onNavigate }: RegisterEstabl
                   {error}
                 </div>
               )}
-              {/* Category Chooser */}
+              {/* Sélecteur de Catégorie */}
               <div>
                 <label className="block text-xs font-bold text-neutral-700 uppercase tracking-wider mb-4">
                   1. Choisissez la catégorie de votre établissement *
@@ -244,7 +254,7 @@ export default function RegisterEstablishmentPage({ onNavigate }: RegisterEstabl
 
               <hr className="border-neutral-100" />
 
-              {/* General Info */}
+              {/* Informations Générales */}
               <div>
                 <label className="block text-xs font-bold text-neutral-700 uppercase tracking-wider mb-4">
                   2. Informations de l'établissement
@@ -331,7 +341,7 @@ export default function RegisterEstablishmentPage({ onNavigate }: RegisterEstabl
                 </div>
               </div>
 
-              {/* Submit Button */}
+              {/* Bouton de Soumission */}
               <div className="pt-4">
                 <Button
                   type="submit"

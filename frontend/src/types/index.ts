@@ -1,3 +1,7 @@
+/** 
+ * Rôles possibles pour un utilisateur de l'application. 
+ * Détermine les permissions d'accès et les vues disponibles (Dashboard vs Admin vs Client).
+ */
 export type UserRole = 'client' | 'gerant' | 'professionnel' | 'admin';
 
 export interface UserEstablishment {
@@ -5,6 +9,10 @@ export interface UserEstablishment {
   nom: string;
 }
 
+/**
+ * Structure de base d'un utilisateur connecté (Session en cours).
+ * Contient les informations essentielles nécessaires dans toute l'application (Header, Réservations).
+ */
 export interface User {
   id: number;
   username: string;
@@ -17,11 +25,18 @@ export interface User {
   telephone?: string | null;
 }
 
+/**
+ * Représente un secteur d'activité (ex: Coiffure, Restauration).
+ * Utilisé pour filtrer les établissements et afficher les bonnes catégories.
+ */
 export interface Secteur {
   id: number;
   nom: string;
 }
 
+/**
+ * Informations géographiques rattachées à un établissement.
+ */
 export interface Lieu {
   id: number;
   adresse: string;
@@ -29,6 +44,9 @@ export interface Lieu {
   code_postal?: string | null;
 }
 
+/**
+ * Un service proposé par un établissement (ex: Coupe homme, Massage 30min).
+ */
 export interface Prestation {
   id: number;
   nom: string;
@@ -37,6 +55,10 @@ export interface Prestation {
   collaborateurs?: number[];
 }
 
+/**
+ * Membre du personnel (Professionnel) travaillant dans un établissement.
+ * C'est avec lui qu'un client prend rendez-vous.
+ */
 export interface Collaborateur {
   id: number;
   nom: string;
@@ -52,6 +74,12 @@ export interface EtablissementGerant {
   email: string;
 }
 
+/**
+ * L'entité centrale de l'application : l'établissement commercial.
+ * Regroupe toutes les informations publiques, les collaborateurs, et les prestations.
+ * Certaines propriétés (name, category, badge...) sont optionnelles car elles sont calculées 
+ * dynamiquement par le Frontend (voir mapBackendEtablissement dans api.ts).
+ */
 export interface Etablissement {
   id: number;
   nom?: string;
@@ -81,6 +109,10 @@ export interface Etablissement {
   badge?: string;
 }
 
+/**
+ * Représente un rendez-vous (réservation) tel qu'affiché côté Frontend.
+ * Contient toutes les informations croisées : l'établissement, le client, le pro et la prestation.
+ */
 export interface Booking {
   id: number;
   establishment_name: string;
@@ -110,6 +142,9 @@ export interface Booking {
   };
 }
 
+/**
+ * Format de données envoyé au Backend pour créer une nouvelle réservation.
+ */
 export interface BookingInput {
   professionnel_id: number;
   prestation_id: number;
@@ -126,6 +161,9 @@ export interface MessageSender {
   last_name?: string;
 }
 
+/**
+ * Un message unitaire au sein d'une discussion.
+ */
 export interface Message {
   id: number;
   content: string;
@@ -133,6 +171,10 @@ export interface Message {
   sender: MessageSender;
 }
 
+/**
+ * Une conversation entre un client et un établissement.
+ * Regroupe les messages et permet d'afficher la liste des chats récents.
+ */
 export interface Discussion {
   id: number;
   etablissement: {
@@ -155,6 +197,10 @@ export interface Discussion {
   date_creation: string;
 }
 
+/**
+ * Un avis laissé par un client suite à une prestation.
+ * Inclut une note sur 5 et un message textuel.
+ */
 export interface Review {
   id: number;
   etablissement?: {
@@ -172,6 +218,9 @@ export interface Review {
   date_envoie: string;
 }
 
+/**
+ * Facture simplifiée générée pour l'historique client ou le dashboard pro.
+ */
 export interface Invoice {
   id: number;
   reference: string;
@@ -181,6 +230,10 @@ export interface Invoice {
   status: 'success' | 'pending' | 'refunded';
 }
 
+/**
+ * Vue détaillée d'un utilisateur, spécifique au panneau d'administration (SuperAdmin).
+ * Contient des détails privés comme l'état d'activation, ou les détails métier (pro/gerant).
+ */
 export interface AdminUser {
   id: number;
   username: string;
@@ -208,6 +261,9 @@ export interface AdminUser {
   reset_code?: string | null;
 }
 
+/**
+ * Événement formaté spécifiquement pour le composant Calendrier (FullCalendar).
+ */
 export interface CalendarEvent {
   id: number;
   title: string;

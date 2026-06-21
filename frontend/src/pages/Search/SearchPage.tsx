@@ -52,7 +52,10 @@ export default function SearchPage({ onNavigate, initialCategory, initialQuery, 
   // State for categories available in results (faceted search)
   const [availableSubCategories, setAvailableSubCategories] = useState<string[]>([]);
 
-  // Step 1: Load sectors on mount
+  // --- ÉTAPE 1 DE L'ENTONNOIR (FUNNEL) : CHARGEMENT DES SECTEURS ---
+  // Se déclenche au montage du composant. 
+  // Si une catégorie est passée en paramètre depuis l'accueil (initialCategory), 
+  // on la présélectionne automatiquement après le chargement.
   useEffect(() => {
     async function loadSectors() {
       setLoading(true);
@@ -81,7 +84,9 @@ export default function SearchPage({ onNavigate, initialCategory, initialQuery, 
     loadSectors();
   }, [initialCategory]);
 
-  // Step 2: Load locations when a sector is selected (and direct search is not active)
+  // --- ÉTAPE 2 DE L'ENTONNOIR : CHARGEMENT DES ZONES GÉOGRAPHIQUES ---
+  // Déclenché automatiquement dès qu'un secteur est sélectionné (selectedSector).
+  // Ne s'exécute pas si l'utilisateur est en mode "Recherche Directe" via la barre (isDirectSearch).
   useEffect(() => {
     if (!selectedSector || isDirectSearch) {
       return;
@@ -105,7 +110,10 @@ export default function SearchPage({ onNavigate, initialCategory, initialQuery, 
     loadLocations();
   }, [selectedSector, isDirectSearch]);
 
-  // Unified effect to load establishments when any query or filter parameter changes
+  // --- ÉTAPE 3 : RECHERCHE UNIFIÉE DES ÉTABLISSEMENTS ---
+  // Cet effet est le moteur de recherche principal. Il se déclenche à la fois pour le mode 
+  // Entonnoir (Secteur -> Lieu) ET pour le mode Barre de recherche (Texte libre).
+  // Il gère aussi les filtres locaux (minRating, selectedSubCategory).
   useEffect(() => {
     const hasFunnelParams = selectedSector && selectedLocation && !isDirectSearch;
     const hasDirectParams = isDirectSearch;
@@ -138,7 +146,9 @@ export default function SearchPage({ onNavigate, initialCategory, initialQuery, 
         const estList = await api.establishments.explore(params);
         setEstablishments(estList);
 
-        // Calculate available categories/facets only when rating and subcategory filters are not applied
+        // Si aucun filtre local (note/catégorie) n'est actif, on recalcule les "Facettes"
+        // (les catégories disponibles dans les résultats actuels) en utilisant un `Set` 
+        // pour extraire les valeurs uniques et éviter les doublons.
         if (minRating === null && selectedSubCategory === null) {
           const badges = new Set<string>();
           estList.forEach(est => {
@@ -168,7 +178,9 @@ export default function SearchPage({ onNavigate, initialCategory, initialQuery, 
     selectedSubCategory
   ]);
 
-  // Trigger search from global search bar
+  // --- GESTION DE LA BARRE DE RECHERCHE GLOBALE ---
+  // Si l'utilisateur tape quelque chose dans la barre en haut, on court-circuite le "Funnel"
+  // et on bascule en mode `isDirectSearch = true`.
   const handleBarSearch = (query: string, location: string) => {
     if (!query.trim() && !location.trim()) {
       handleClearDirectSearch();

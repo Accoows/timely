@@ -15,6 +15,11 @@ export default function ForgotPasswordPage({ onNavigate }: ForgotPasswordPagePro
   const [newPassword, setNewPassword] = useState('');
   const [error, setError] = useState('');
 
+  /**
+   * L'utilisateur soumet son email. L'API vérifie si le compte existe,
+   * génère un code sécurisé en base de données, et simule l'envoi d'un mail (code dans le Dashboard Admin).
+   * On passe ensuite `submitted` à true pour afficher la seconde étape du formulaire.
+   */
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email) return;
@@ -32,6 +37,11 @@ export default function ForgotPasswordPage({ onNavigate }: ForgotPasswordPagePro
     }
   };
 
+  /**
+   * L'utilisateur soumet le code reçu (via l'Admin) avec son nouveau mot de passe.
+   * L'API vérifie la validité du code et met à jour le compte.
+   * Si succès, on alerte l'utilisateur et on le redirige vers la page de connexion.
+   */
   const handleResetSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || !code || !newPassword) return;

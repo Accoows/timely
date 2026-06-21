@@ -15,6 +15,12 @@ export default function LoginPage({ onNavigate }: LoginPageProps) {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
+  /**
+   * Gestion de la soumission du formulaire de connexion.
+   * Intercepte l'événement de base (e.preventDefault) pour éviter le rechargement de page.
+   * Fait appel à la fonction `login` du AuthContext qui gère le fetch API + l'enregistrement du token.
+   * En cas de succès, redirige l'utilisateur vers l'accueil (`onNavigate('home')`).
+   */
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');

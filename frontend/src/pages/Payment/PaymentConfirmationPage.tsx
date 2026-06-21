@@ -9,6 +9,9 @@ interface PaymentConfirmationPageProps {
 }
 
 export default function PaymentConfirmationPage({ onNavigate }: PaymentConfirmationPageProps) {
+  // --- RÉCUPÉRATION DES PARAMÈTRES DE REDIRECTION (STRIPE) ---
+  // Stripe redirige l'utilisateur vers cette page après la transaction.
+  // On lit l'URL (?status=success&booking_id=123) pour adapter l'affichage.
   const [status] = useState<'success' | 'cancelled' | 'loading'>(() => {
     const params = new URLSearchParams(window.location.search);
     const statusParam = params.get('status');
@@ -16,6 +19,7 @@ export default function PaymentConfirmationPage({ onNavigate }: PaymentConfirmat
     if (statusParam === 'cancelled') return 'cancelled';
     return 'success';
   });
+
   const [bookingId] = useState<string | null>(() => {
     const params = new URLSearchParams(window.location.search);
     return params.get('booking_id');
@@ -24,6 +28,9 @@ export default function PaymentConfirmationPage({ onNavigate }: PaymentConfirmat
   const [showInvoiceModal, setShowInvoiceModal] = useState(false);
   const [error, setError] = useState<string | null>(null);
   
+  // --- CHARGEMENT DE LA FACTURE ---
+  // Si le paiement est réussi, on va chercher l'historique des factures de l'utilisateur
+  // pour retrouver celle associée à cette réservation spécifique, afin de proposer son téléchargement.
   useEffect(() => {
     if (status === 'success') {
       api.bookings.getInvoices()
@@ -32,8 +39,10 @@ export default function PaymentConfirmationPage({ onNavigate }: PaymentConfirmat
     }
   }, [status]);
 
+  // On extrait la facture correspondante depuis la liste téléchargée
   const currentInvoice = invoices.find(inv => String(inv.id) === bookingId);
 
+  // Ouvre la fenêtre modale (Lightbox) de visualisation/impression de la facture
   const handlePrint = () => {
     setShowInvoiceModal(true);
   };

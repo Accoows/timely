@@ -1,11 +1,18 @@
 import { useState } from 'react';
 import type { Invoice } from '../types';
 
+/**
+ * Propriétés du modal de facture.
+ */
 interface InvoiceModalProps {
   invoice: Invoice;
   onClose: () => void;
 }
 
+/**
+ * Composant d'affichage d'une facture sous forme de modale (fenêtre superposée).
+ * Permet de visualiser les détails de la transaction, d'imprimer ou de télécharger la facture en PDF.
+ */
 export default function InvoiceModal({ invoice, onClose }: InvoiceModalProps) {
   const [isGenerating, setIsGenerating] = useState(false);
 
@@ -24,7 +31,7 @@ export default function InvoiceModal({ invoice, onClose }: InvoiceModalProps) {
         return;
       }
 
-      // Create a hidden iframe to isolate rendering from the main Tailwind v4 styles
+      // Création d'une iframe invisible (fenêtre encapsulée) pour isoler le rendu de la facture.
       iframe = document.createElement('iframe');
       iframe.style.position = 'absolute';
       iframe.style.width = '800px';
@@ -38,7 +45,7 @@ export default function InvoiceModal({ invoice, onClose }: InvoiceModalProps) {
         throw new Error("Impossible d'accéder au document de l'iframe.");
       }
 
-      // Write basic, standard CSS matching the layout that html2canvas can easily parse
+      // Écriture d'un CSS standard, basique et sans framework (vanilla CSS).
       doc.write(`
         <html>
           <head>
@@ -138,7 +145,7 @@ export default function InvoiceModal({ invoice, onClose }: InvoiceModalProps) {
         throw new Error("Impossible d'accéder à la fenêtre de l'iframe.");
       }
 
-      // Load html2pdf script inside the iframe dynamically
+      // Injection asynchrone du script html2pdf directement dans le contexte de l'iframe.
       await new Promise<void>((resolve, reject) => {
         const script = doc.createElement('script');
         script.src = "https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js";
@@ -165,7 +172,8 @@ export default function InvoiceModal({ invoice, onClose }: InvoiceModalProps) {
         throw new Error("La bibliothèque de génération PDF n'a pas pu être initialisée.");
       }
 
-      // Configure html2pdf options
+      // Configuration précise de la librairie html2pdf :
+      // - format A4, pas de bordures, qualité d'image maximale.
       const opt = {
         margin:       0.3,
         filename:     `Facture-${invoice.reference}.pdf`,
@@ -174,10 +182,13 @@ export default function InvoiceModal({ invoice, onClose }: InvoiceModalProps) {
         jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
       };
 
-      // Generate PDF in iframe context as a Blob to bypass iframe download restrictions
+      // On génère d'abord le PDF sous forme de fichier binaire brut (Blob).
+      // Si on essayait de le télécharger directement depuis l'iframe, le navigateur
+      // bloquerait l'action pour des raisons de sécurité.
       const pdfBlob = await iframeHtml2pdf().set(opt).from(pdfContent).output('blob');
 
-      // Trigger the file download from the parent window context
+      // On crée un lien virtuel dans la fenêtre parente (qui a les droits),
+      // on l'associe au fichier Blob généré, et on simule un clic pour lancer le téléchargement.
       const blobUrl = window.URL.createObjectURL(pdfBlob);
       const link = document.createElement('a');
       link.href = blobUrl;

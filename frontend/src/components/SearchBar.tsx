@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
 import Button from './Button';
 
+/**
+ * Propriétés du composant SearchBar.
+ */
 interface SearchBarProps {
   initialQuery?: string;
   initialLocation?: string;
@@ -14,6 +17,10 @@ interface SearchBarProps {
   invertInputs?: boolean;
 }
 
+/**
+ * Composant de barre de recherche double (quoi / où).
+ * Utilisé sur la page d'accueil (Hero) et dans l'en-tête (Header) pour rechercher des établissements.
+ */
 export default function SearchBar({
   initialQuery = '',
   initialLocation = '',
@@ -29,6 +36,8 @@ export default function SearchBar({
   const [prevInitialQuery, setPrevInitialQuery] = useState(initialQuery);
   const [query, setQuery] = useState(initialQuery);
 
+  // Synchronisation de l'état local avec la prop "initialQuery".
+  // Si la valeur initiale venant du parent change, on force la mise à jour de la valeur locale.
   if (initialQuery !== prevInitialQuery) {
     setPrevInitialQuery(initialQuery);
     setQuery(initialQuery);
@@ -37,6 +46,8 @@ export default function SearchBar({
   const [prevInitialLocation, setPrevInitialLocation] = useState(initialLocation);
   const [location, setLocation] = useState(initialLocation);
 
+  // Synchronisation similaire pour la localisation.
+  // Remplace useEffect() pour réagir immédiatement aux changements de props.
   if (initialLocation !== prevInitialLocation) {
     setPrevInitialLocation(initialLocation);
     setLocation(initialLocation);
@@ -59,6 +70,8 @@ export default function SearchBar({
     if (onClear) onClear();
   };
 
+  // Helper : Génère le champ "Quoi" (recherche par nom ou prestation)
+  // Gère deux designs : "hero" (page d'accueil) ou "brutalist" (entête/résultats)
   const renderQueryInput = (isHero: boolean, hasBorder: boolean) => {
     if (isHero) {
       return (
@@ -94,6 +107,7 @@ export default function SearchBar({
     );
   };
 
+  // Helper : Génère le champ "Où" (recherche par ville ou code postal)
   const renderLocationInput = (isHero: boolean, hasBorder: boolean) => {
     if (isHero) {
       return (

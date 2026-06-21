@@ -16,8 +16,15 @@ import PaymentConfirmationPage from './pages/Payment/PaymentConfirmationPage';
 
 
 
+/**
+ * Composant racine de l'application.
+ * Timely utilise un "Custom Router" (Routeur sur-mesure) basé sur l'état local (React State)
+ * plutôt que d'utiliser une librairie externe comme react-router-dom.
+ */
 export default function App() {
   const { user } = useAuth();
+  
+  // État stockant l'ID de l'établissement en cours de consultation (pour la page de détail)
   const [selectedEstablishmentId, setSelectedEstablishmentId] = useState<number | null>(() => {
     const path = window.location.pathname;
     if (path.startsWith('/establishment/')) {
@@ -28,7 +35,7 @@ export default function App() {
     return null;
   });
 
-  // Initialiser la page en fonction de l'URL actuelle du navigateur
+  // État gérant la "route" actuelle. On l'initialise en lisant l'URL courante au 1er chargement.
   const [currentPage, setCurrentPage] = useState<string>(() => {
     const path = window.location.pathname;
     if (path === '/' || path === '') return 'home';
@@ -52,7 +59,11 @@ export default function App() {
     return '404';
   });
 
-  // Gérer la navigation et mettre à jour la barre d'adresse du navigateur
+  /**
+   * Fonction principale de navigation. Elle est passée en prop à tous les enfants (via `onNavigate`).
+   * Elle met à jour l'état React pour forcer un re-rendu, et utilise `window.history.pushState`
+   * pour changer l'URL dans la barre du navigateur sans recharger la page.
+   */
   const handleNavigate = (page: string) => {
     if (page.startsWith('establishment/')) {
       const parts = page.split('/');
@@ -68,17 +79,18 @@ export default function App() {
     }
   };
 
-  // Remonter en haut de la page lors d'un changement de route
+  // Effet pour forcer le scroll en haut de page à chaque changement de route.
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
-    // setTimeout fallback for when the new DOM takes a split second to stretch the page
     const timer = setTimeout(() => {
       window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
     }, 50);
     return () => clearTimeout(timer);
   }, [currentPage, selectedEstablishmentId]);
 
-  // Écouter les boutons "Précédent" / "Suivant" du navigateur
+  // Écouteur de l'événement "popstate".
+  // Déclenché par le navigateur quand l'utilisateur clique sur "Précédent" ou "Suivant".
+  // Permet de synchroniser l'état React (currentPage) avec l'URL réellement présente dans la barre.
   useEffect(() => {
     const handlePopState = () => {
       const path = window.location.pathname;
@@ -121,6 +133,11 @@ export default function App() {
     return () => window.removeEventListener('popstate', handlePopState);
   }, []);
 
+  /**
+   * Fonction de rendu agissant comme un "Switch/Router".
+   * Retourne le bon composant de page en fonction de la route (`currentPage`) et vérifie
+   * les permissions (ex: redirige vers LoginPage si accès à '/profile' sans être connecté).
+   */
   const renderPage = () => {
     const pageType = currentPage.split('?')[0];
     switch (pageType) {

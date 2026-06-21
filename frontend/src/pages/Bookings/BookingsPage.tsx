@@ -1,46 +1,46 @@
 import { useState, useEffect } from 'react';
-
-interface Booking {
-  id: number;
-  establishment_name: string;
-  booking_date: string;
-  status: string;
-}
+import { api } from '../../services/api';
+import type { Booking } from '../../types';
+import Alert from '../../components/Alert';
 
 export default function BookingsPage() {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
+  /**
+   * Exécute le montage du composant pour récupérer la liste des réservations via le service API officiel.
+   * On utilise la variable `active` pour éviter de mettre à jour le composant s'il a été démonté (memory leak).
+   * En cas d'échec (ex: backend injoignable), on intercepte l'erreur dans le bloc `catch` 
+   * et on affiche proprement l'Alert à l'utilisateur au lieu de bloquer l'interface.
+   */
   useEffect(() => {
-    // In dev mode, we'll try fetching from backend, with local fallbacks if offline.
-    fetch('/api/bookings/')
-      .then(res => {
-        if (!res.ok) throw new Error('API server offline');
-        return res.json();
-      })
-      .then((data: Booking[]) => {
-        setBookings(data);
-        setLoading(false);
-      })
-      .catch(err => {
-        console.warn('Backend bookings API offline, using fallback mock data.', err);
-        // Fallback simulated list of bookings
-        setBookings([
-          {
-            id: 1,
-            establishment_name: 'Le Bistrot Gourmet',
-            booking_date: '12/06/2026 à 20:00',
-            status: 'success'
-          },
-          {
-            id: 2,
-            establishment_name: "L'Atelier Coiffure & Barbe",
-            booking_date: '15/06/2026 à 14:30',
-            status: 'pending'
-          }
-        ]);
-        setLoading(false);
-      });
+    let active = true;
+    const fetchBookings = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const data = await api.bookings.list();
+        if (active) {
+          setBookings(data);
+        }
+      } catch (err) {
+        if (active) {
+          console.error('Erreur lors du chargement des réservations:', err);
+          setError('Impossible de charger vos réservations. Veuillez réessayer plus tard.');
+        }
+      } finally {
+        if (active) {
+          setLoading(false);
+        }
+      }
+    };
+
+    fetchBookings();
+
+    return () => {
+      active = false;
+    };
   }, []);
 
   if (loading) {
@@ -57,6 +57,8 @@ export default function BookingsPage() {
         <h1 className="text-3xl font-extrabold text-neutral-900">Mes Réservations</h1>
         <p className="text-neutral-500 text-sm mt-1">Retrouvez et suivez l'état de tous vos rendez-vous.</p>
       </div>
+
+      {error && <Alert type="error" message={error} className="mb-8" />}
 
       {bookings.length === 0 ? (
         <div className="text-center py-12 bg-neutral-50 border border-neutral-200 border-dashed rounded-3xl">

@@ -20,20 +20,20 @@ export default function EstablishmentDashboard({ onNavigate }: EstablishmentDash
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<TabType>('team');
 
-  // Core details state
+  // État des détails principaux de l'établissement
   const [establishment, setEstablishment] = useState<Etablissement | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Calendar state
+  // État du calendrier
   const [calendarEvents, setCalendarEvents] = useState<CalendarEvent[]>([]);
   const [selectedProId, setSelectedProId] = useState<number | null>(null);
   const [calendarSearch, setCalendarSearch] = useState('');
 
-  // Reviews state
+  // État des avis clients
   const [reviews, setReviews] = useState<Review[]>([]);
 
-  // Messages state
+  // État de la messagerie
   const [discussions, setDiscussions] = useState<Discussion[]>([]);
   const [selectedDiscussion, setSelectedDiscussion] = useState<Discussion | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -41,9 +41,11 @@ export default function EstablishmentDashboard({ onNavigate }: EstablishmentDash
   const [messagesLoading, setMessagesLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  // ID de l'établissement auquel le pro ou gérant connecté est rattaché
   const establishmentId = user?.establishment_id || user?.establishments?.[0]?.id;
 
-  // Fetch core establishment details
+  // --- LOGIQUE DE CHARGEMENT PRINCIPAL ---
+  // On récupère les détails fondamentaux de l'établissement au premier chargement.
   useEffect(() => {
     if (!establishmentId) {
       Promise.resolve().then(() => {
@@ -67,14 +69,16 @@ export default function EstablishmentDashboard({ onNavigate }: EstablishmentDash
     loadEstablishment();
   }, [establishmentId]);
 
-  // Fetch specific tab data
+  // --- GESTION DES ONGLETS (TABS) ---
+  // Fonction appelée à chaque changement d'onglet pour charger uniquement les données nécessaires.
+  // Optimisation réseau : on ne charge les messages ou avis que si on clique dessus.
   const fetchTabData = async () => {
     if (!establishmentId) return;
 
     try {
       if (activeTab === 'calendar') {
-        // Fetch all calendar events for this establishment
-        // Under the hood, api.admin.calendar.list calls /api/bookings/dashboard/calendar/
+        // Récupère tous les événements du calendrier pour cet établissement
+        // Sous le capot, api.admin.calendar.list appelle /api/bookings/dashboard/calendar/
         const eventsList = await api.admin.calendar.list();
         setCalendarEvents(eventsList);
       } else if (activeTab === 'reviews' && user?.role === 'gerant') {
@@ -95,12 +99,14 @@ export default function EstablishmentDashboard({ onNavigate }: EstablishmentDash
     });
   }, [activeTab, establishmentId]);
 
-  // Scroll to bottom of chat messages
+  // Effet d'autoscroll : descend automatiquement en bas de la fenêtre de chat
+  // quand la liste des messages s'allonge (nouvel envoi ou réception).
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  // Load chat messages when a discussion is selected
+  // --- LOGIQUE DU CHAT EN TEMPS RÉEL (POLLING) ---
+  // Se déclenche uniquement quand l'utilisateur sélectionne une discussion active.
   useEffect(() => {
     if (!selectedDiscussion) {
       Promise.resolve().then(() => {
@@ -123,12 +129,19 @@ export default function EstablishmentDashboard({ onNavigate }: EstablishmentDash
 
     loadMessages();
 
-    // Auto-poll messages every 6 seconds for live chat feeling
+    loadMessages();
+
+    // Polling : requête automatique toutes les 6 secondes vers le backend 
+    // pour simuler un "Live Chat" en l'absence de WebSockets.
     const interval = setInterval(loadMessages, 6000);
     return () => clearInterval(interval);
   }, [selectedDiscussion]);
 
-  // Actions
+  // --- ACTIONS GLOBALES (Mise à jour locale immédiate de l'UI) ---
+  
+  /**
+   * Annule un rendez-vous depuis le dashboard.
+   */
   const handleCancelBooking = async (bookingId: number) => {
     if (!confirm('Êtes-vous sûr de vouloir supprimer définitivement ce rendez-vous ? Un message d\'explication automatique sera envoyé au client.')) return;
     try {
@@ -140,6 +153,9 @@ export default function EstablishmentDashboard({ onNavigate }: EstablishmentDash
     }
   };
 
+  /**
+   * Suppression d'un avis client (Modération Gérant).
+   */
   const handleDeleteReview = async (reviewId: number) => {
     if (!confirm('Êtes-vous sûr de vouloir supprimer définitivement cet avis ?')) return;
     try {
@@ -177,13 +193,13 @@ export default function EstablishmentDashboard({ onNavigate }: EstablishmentDash
     }
   };
 
-  // Filters
+  // Filtres
   const filteredEvents = calendarEvents.filter(e => {
-    // Filter by selected professional
+    // Filtre par professionnel sélectionné
     if (selectedProId !== null && e.professionnel.id !== selectedProId) {
       return false;
     }
-    // Filter by query search
+    // Filtre par recherche textuelle
     const term = calendarSearch.toLowerCase();
     const clientName = e.client ? e.client.nom_complet.toLowerCase() : '';
     const proName = e.professionnel ? e.professionnel.nom_complet.toLowerCase() : '';
@@ -216,7 +232,7 @@ export default function EstablishmentDashboard({ onNavigate }: EstablishmentDash
 
   return (
     <div className="flex-1 w-full max-w-none mx-auto py-12 px-6 lg:px-12">
-      {/* Header Panel */}
+      {/* Panneau d'En-tête */}
       <div className="mb-10 text-left bg-gradient-to-r from-violet-100 to-indigo-50 border-2 border-neutral-900 p-6 rounded-2xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
         <div>
           <span className="inline-block bg-neutral-900 text-white text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md mb-2">
@@ -243,7 +259,7 @@ export default function EstablishmentDashboard({ onNavigate }: EstablishmentDash
       </div>
 
       <div className="flex flex-col lg:flex-row gap-8 items-start">
-        {/* Navigation Sidebar */}
+        {/* Barre de navigation latérale */}
         <aside className="w-full lg:w-[250px] shrink-0 flex flex-col gap-2">
           <button
             onClick={() => setActiveTab('team')}
@@ -302,10 +318,10 @@ export default function EstablishmentDashboard({ onNavigate }: EstablishmentDash
           )}
         </aside>
 
-        {/* Content Box */}
+        {/* Boîte de contenu */}
         <main className="flex-1 w-full bg-white border-2 border-neutral-900 p-6 sm:p-8 rounded-2xl shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] min-h-[500px]">
 
-          {/* TAB 1: TEAM */}
+          {/* ONGLET 1 : ÉQUIPE */}
           {activeTab === 'team' && (
             <section className="space-y-8 animate-fadeIn">
               <div>
@@ -313,7 +329,7 @@ export default function EstablishmentDashboard({ onNavigate }: EstablishmentDash
                 <p className="text-sm text-neutral-500">Coordonnées du gérant et profil des professionnels actifs.</p>
               </div>
 
-              {/* Manager Card */}
+              {/* Carte du Gérant */}
               {establishment.gerant && (
                 <div className="bg-violet-50/50 border-2 border-neutral-900 rounded-2xl p-6 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
                   <div className="flex items-center gap-4 mb-4">
@@ -333,7 +349,7 @@ export default function EstablishmentDashboard({ onNavigate }: EstablishmentDash
                 </div>
               )}
 
-              {/* Collaborateurs/Professionnels list */}
+              {/* Liste des Collaborateurs/Professionnels */}
               <div className="space-y-4">
                 <h3 className="text-sm font-black text-neutral-900 uppercase tracking-wider border-b-2 border-neutral-900 pb-2">
                   Professionnels ({establishment.collaborateurs?.length || 0})
@@ -371,7 +387,7 @@ export default function EstablishmentDashboard({ onNavigate }: EstablishmentDash
             </section>
           )}
 
-          {/* TAB 2: CALENDAR */}
+          {/* ONGLET 2 : CALENDRIER */}
           {activeTab === 'calendar' && (
             <section className="space-y-6 animate-fadeIn">
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -380,7 +396,7 @@ export default function EstablishmentDashboard({ onNavigate }: EstablishmentDash
                   <p className="text-sm text-neutral-500">Visualisez les réservations par professionnel de votre établissement.</p>
                 </div>
 
-                {/* Pro Filter Selector */}
+                {/* Sélecteur de filtre de Pro */}
                 <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
                   <span className="text-xs font-black uppercase text-neutral-500 tracking-wider">Filtrer par Pro :</span>
                   <select
@@ -396,7 +412,7 @@ export default function EstablishmentDashboard({ onNavigate }: EstablishmentDash
                 </div>
               </div>
 
-              {/* Search Bar for appointments */}
+              {/* Barre de recherche pour les rendez-vous */}
               <div className="relative w-full">
                 <span className="absolute inset-y-0 left-0 flex items-center pl-3">
                   <svg className="h-4 w-4 text-neutral-400" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
@@ -412,7 +428,7 @@ export default function EstablishmentDashboard({ onNavigate }: EstablishmentDash
                 />
               </div>
 
-              {/* Booking List Table */}
+              {/* Tableau de liste des réservations */}
               <div className="border-2 border-neutral-900 rounded-xl overflow-hidden shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
                 <div className="overflow-x-auto">
                   <table className="table w-full text-left border-collapse bg-white">
@@ -480,7 +496,7 @@ export default function EstablishmentDashboard({ onNavigate }: EstablishmentDash
             </section>
           )}
 
-          {/* TAB 3: REVIEWS (MANAGER ONLY) */}
+          {/* ONGLET 3 : AVIS (GÉRANT UNIQUEMENT) */}
           {activeTab === 'reviews' && user?.role === 'gerant' && (
             <section className="space-y-6 animate-fadeIn">
               <div className="flex justify-between items-center mb-6">
@@ -538,7 +554,7 @@ export default function EstablishmentDashboard({ onNavigate }: EstablishmentDash
             </section>
           )}
 
-          {/* TAB 4: MESSAGING (MANAGER ONLY) */}
+          {/* ONGLET 4 : MESSAGERIE (GÉRANT UNIQUEMENT) */}
           {activeTab === 'messages' && user?.role === 'gerant' && (
             <section className="space-y-6 animate-fadeIn h-[600px] flex flex-col">
               <div>
@@ -548,7 +564,7 @@ export default function EstablishmentDashboard({ onNavigate }: EstablishmentDash
 
               <div className="flex-1 flex gap-4 min-h-0 border-2 border-neutral-900 rounded-2xl overflow-hidden shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
 
-                {/* Discussion Sidebar */}
+                {/* Barre latérale des discussions */}
                 <div className="w-1/3 border-r-2 border-neutral-900 flex flex-col bg-neutral-50 overflow-y-auto">
                   <div className="p-3 bg-neutral-950 text-white text-[10px] font-black uppercase tracking-wider">
                     Conversations ({discussions.length})
@@ -584,11 +600,11 @@ export default function EstablishmentDashboard({ onNavigate }: EstablishmentDash
                   </div>
                 </div>
 
-                {/* Message Thread Panel */}
+                {/* Panneau du fil de messages */}
                 <div className="flex-1 flex flex-col bg-white overflow-hidden">
                   {selectedDiscussion ? (
                     <>
-                      {/* Active Chat Header */}
+                      {/* En-tête du chat actif */}
                       <div className="p-4 border-b-2 border-neutral-900 flex items-center bg-neutral-950 text-white justify-between">
                         <div>
                           <h4 className="text-xs font-black uppercase tracking-wider leading-none">
@@ -600,7 +616,7 @@ export default function EstablishmentDashboard({ onNavigate }: EstablishmentDash
                         </div>
                       </div>
 
-                      {/* Chat Messages viewport */}
+                      {/* Zone d'affichage des messages du chat */}
                       <div className="flex-1 p-4 overflow-y-auto space-y-4 bg-[#f8f6f2] flex flex-col">
                         {messagesLoading && messages.length === 0 ? (
                           <div className="flex-1 flex items-center justify-center">
@@ -640,7 +656,7 @@ export default function EstablishmentDashboard({ onNavigate }: EstablishmentDash
                         <div ref={messagesEndRef} />
                       </div>
 
-                      {/* Input send bar */}
+                      {/* Barre de saisie et d'envoi */}
                       <form onSubmit={handleSendMessage} className="p-3 border-t-2 border-neutral-900 bg-neutral-50 flex gap-2">
                         <input
                           type="text"
