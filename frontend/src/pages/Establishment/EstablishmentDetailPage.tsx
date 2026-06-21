@@ -765,7 +765,7 @@ export default function EstablishmentDetailPage({ establishmentId, onNavigate }:
                           >
                             &lt;
                           </button>
-                          <span>Semaine {weekOffset + 1}</span>
+                          <span className="min-w-[140px] text-center">{weeklyDays[0].dayNum} {weeklyDays[0].monthName} - {weeklyDays[6].dayNum} {weeklyDays[6].monthName}</span>
                           <button
                             onClick={() => setWeekOffset(prev => prev + 1)}
                             className="w-7 h-7 border border-neutral-200 rounded-lg bg-white flex items-center justify-center hover:bg-neutral-50 cursor-pointer text-xs"
