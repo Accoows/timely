@@ -376,6 +376,12 @@ export const api = {
         body: JSON.stringify({ email })
       });
     },
+    resetPassword: async (email: string, code: string, new_password: string): Promise<{ status: string; message: string }> => {
+      return await request<{ status: string; message: string }>('/api/auth/reset-password/', {
+        method: 'POST',
+        body: JSON.stringify({ email, code, new_password })
+      });
+    },
     register: async (email: string, password_raw: string, firstname: string, lastname: string): Promise<{ status: string; message: string }> => {
       return await request<{ status: string; message: string }>('/api/auth/register/', {
         method: 'POST',

@@ -5,8 +5,10 @@ from django.contrib.auth import authenticate, login, logout, update_session_auth
 from django.contrib.auth.models import User
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.utils.decorators import method_decorator
-from .models import Professionnel, Gerant, Client
+from .models import Professionnel, Gerant, Client, PasswordResetToken
 from django.utils import timezone
+import random
+import string
 
 
 class LoginView(View):
@@ -136,10 +138,62 @@ class StaffListView(View):
 
 class ForgotPasswordView(View):
     def post(self, request):
-        return JsonResponse({
-            "status": "success", 
-            "message": "Si l'adresse email existe, un lien de réinitialisation a été envoyé."
-        }, status=200)
+        try:
+            data = json.loads(request.body)
+            email = data.get('email')
+            if not email:
+                return JsonResponse({"error": "L'email est requis"}, status=400)
+            
+            try:
+                user = User.objects.get(email=email)
+                code = ''.join(random.choices(string.digits, k=6))
+                
+                PasswordResetToken.objects.update_or_create(
+                    user=user,
+                    defaults={'code': code}
+                )
+            except User.DoesNotExist:
+                pass
+
+            return JsonResponse({
+                "status": "success", 
+                "message": "Si l'adresse email existe, un code de réinitialisation a été généré."
+            }, status=200)
+        except Exception as e:
+            return JsonResponse({"error": str(e)}, status=400)
+
+class ResetPasswordView(View):
+    def post(self, request):
+        try:
+            data = json.loads(request.body)
+            email = data.get('email')
+            code = data.get('code')
+            new_password = data.get('new_password')
+            
+            if not all([email, code, new_password]):
+                return JsonResponse({"error": "Tous les champs sont requis."}, status=400)
+                
+            try:
+                user = User.objects.get(email=email)
+            except User.DoesNotExist:
+                return JsonResponse({"error": "Code ou email invalide."}, status=400)
+                
+            try:
+                token = PasswordResetToken.objects.get(user=user, code=code)
+            except PasswordResetToken.DoesNotExist:
+                return JsonResponse({"error": "Code invalide."}, status=400)
+                
+            if len(new_password) < 6:
+                return JsonResponse({"error": "Le nouveau mot de passe doit faire au moins 6 caractères."}, status=400)
+                
+            user.set_password(new_password)
+            user.save()
+            token.delete()
+            
+            return JsonResponse({"status": "success", "message": "Votre mot de passe a été réinitialisé avec succès !"}, status=200)
+            
+        except Exception as e:
+            return JsonResponse({"error": str(e)}, status=400)
 
 @method_decorator(ensure_csrf_cookie, name='dispatch')
 class UserView(View):
@@ -285,6 +339,10 @@ class AdminUserManagementView(View):
                     "date_inscription": u.profil_client.date_inscription.isoformat() if u.profil_client.date_inscription else None
                 }
 
+            reset_code = None
+            if hasattr(u, 'reset_token'):
+                reset_code = u.reset_token.code
+
             data.append({
                 "id": u.id,
                 "username": u.username,
@@ -298,7 +356,8 @@ class AdminUserManagementView(View):
                 "role": role,
                 "pro_details": pro_details,
                 "gerant_details": gerant_details,
-                "client_details": client_details
+                "client_details": client_details,
+                "reset_code": reset_code
             })
             
         return JsonResponse({"status": "success", "users": data}, status=200)

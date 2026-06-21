@@ -29,3 +29,11 @@ class Professionnel(models.Model):
 
     def __str__(self):
         return f"Pro : {self.utilisateur.first_name} ({self.poste})"
+
+class PasswordResetToken(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='reset_token')
+    code = models.CharField(max_length=6)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Reset Token for {self.user.username}"

@@ -197,6 +197,7 @@ export interface AdminUser {
     telephone: string;
     date_inscription: string | null;
   } | null;
+  reset_code?: string | null;
 }
 
 export interface CalendarEvent {
