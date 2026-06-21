@@ -12,14 +12,34 @@ import string
 
 
 class LoginView(View):
+    """
+    Vue Django pour l'authentification unifiée des utilisateurs (Clients, Gérants, Professionnels, Admins).
+    """
+
     def post(self, request):
+        """
+        Gère la demande de connexion de l'utilisateur.
+
+        Données JSON attendues :
+        - email : Adresse e-mail de l'utilisateur.
+        - password : Mot de passe associé.
+
+        Comportement :
+        - Tente d'authentifier en utilisant l'adresse e-mail comme identifiant.
+        - En cas d'échec, tente de rechercher le nom d'utilisateur associé à l'e-mail pour s'authentifier.
+        - Vérifie si le compte est actif (non bloqué).
+        - Enregistre la session utilisateur (login) et détermine le rôle correspondant.
+
+        Retourne :
+        - JsonResponse contenant le statut de succès et les informations de profil de l'utilisateur connecté.
+        """
         try:
             data = json.loads(request.body)
             email = data.get('email')
             password = data.get('password')
             user = authenticate(username=email, password=password)
             
-            # Fallback: if username auth fails, try finding the user by email
+            # Système de fallback : si l'authentification directe échoue, on tente de retrouver l'utilisateur par e-mail
             if user is None:
                 try:
                     user_obj = User.objects.get(email=email)
@@ -28,10 +48,13 @@ class LoginView(View):
                     pass
 
             if user is not None:
+                # Connexion de l'utilisateur (initialisation de la session)
                 login(request, user) 
                 role = "client"
                 establishment_id = None
                 establishments = []
+                
+                # Détermination du rôle en fonction des profils liés
                 if user.is_superuser:
                     role = "admin"
                 elif hasattr(user, 'profil_gerant'):
@@ -59,7 +82,7 @@ class LoginView(View):
                     }
                 })
             else:
-                # Check if the account exists, is inactive (blocked), and the password is correct
+                # Si l'authentification a échoué, on vérifie si le compte existe et s'il est bloqué (inactif)
                 try:
                     target_user = User.objects.get(email=email)
                 except User.DoesNotExist:
@@ -79,13 +102,32 @@ class LoginView(View):
 
 
 class RegisterView(View):
+    """
+    Vue Django pour l'auto-inscription publique des nouveaux comptes clients.
+    """
+
     def post(self, request):
+        """
+        Enregistre un nouvel utilisateur et lui associe un profil Client.
+
+        Données JSON attendues :
+        - email : Adresse e-mail (sert d'identifiant unique).
+        - password : Mot de passe de l'utilisateur.
+        - firstname : Prénom.
+        - lastname : Nom de famille.
+        - phone : (Optionnel) Numéro de téléphone.
+
+        Retourne :
+        - JsonResponse confirmant le succès de l'inscription et connecte automatiquement l'utilisateur.
+        """
         try:
             data = json.loads(request.body)
             
+            # Unicité de l'e-mail
             if User.objects.filter(username=data.get('email')).exists():
                 return JsonResponse({"status": "error", "message": "Cet email est déjà utilisé"}, status=400)
 
+            # Création de l'utilisateur Django standard
             nouvel_user = User.objects.create_user(
                 username=data.get('email'),
                 email=data.get('email'),
@@ -94,9 +136,11 @@ class RegisterView(View):
                 last_name=data.get('lastname')
             )
 
+            # Création du profil Client associé
             from .models import Client
             Client.objects.create(utilisateur=nouvel_user, telephone=data.get('phone', ''))
 
+            # Authentification de la session immédiate après inscription
             login(request, nouvel_user)
 
             return JsonResponse({"status": "success", "message": "Compte créé avec succès !"}, status=201)
@@ -106,7 +150,14 @@ class RegisterView(View):
         
 
 class LogoutView(View):
+    """
+    Vue Django pour la déconnexion et la destruction de la session courante.
+    """
+
     def post(self, request):
+        """
+        Invalide la session de l'utilisateur connecté.
+        """
         try:
             logout(request) 
             return JsonResponse({"status": "success", "message": "Déconnexion réussie"})
@@ -114,8 +165,22 @@ class LogoutView(View):
         except Exception as e:
             return JsonResponse({"status": "error", "message": str(e)}, status=400)
 
+
 class StaffListView(View):
+    """
+    Vue Django permettant de récupérer les employés (professionnels) rattachés à un établissement.
+    """
+
     def get(self, request):
+        """
+        Renvoie la liste des professionnels d'un établissement.
+
+        Paramètres de requête (GET) :
+        - etablissement_id : Identifiant numérique de l'établissement.
+
+        Retourne :
+        - JsonResponse contenant le tableau descriptif de l'équipe (id, prenom, nom, poste, email).
+        """
         id_etablissement = request.GET.get('etablissement_id')
 
         if not id_etablissement:
@@ -137,7 +202,20 @@ class StaffListView(View):
 
 
 class ForgotPasswordView(View):
+    """
+    Vue Django pour générer un code temporaire de réinitialisation de mot de passe.
+    """
+
     def post(self, request):
+        """
+        Génère un code numérique à 6 chiffres pour un email existant.
+
+        Données JSON attendues :
+        - email : L'adresse de l'utilisateur ayant perdu son mot de passe.
+
+        Retourne :
+        - JsonResponse confirmant l'action (par sécurité, le message est générique même si l'e-mail n'existe pas).
+        """
         try:
             data = json.loads(request.body)
             email = data.get('email')
@@ -146,13 +224,16 @@ class ForgotPasswordView(View):
             
             try:
                 user = User.objects.get(email=email)
+                # Génération d'un jeton à 6 chiffres aléatoires
                 code = ''.join(random.choices(string.digits, k=6))
                 
+                # Enregistrement ou mise à jour du token en base de données
                 PasswordResetToken.objects.update_or_create(
                     user=user,
                     defaults={'code': code}
                 )
             except User.DoesNotExist:
+                # On ignore silencieusement pour éviter d'exposer l'existence des adresses e-mail
                 pass
 
             return JsonResponse({
@@ -162,8 +243,21 @@ class ForgotPasswordView(View):
         except Exception as e:
             return JsonResponse({"error": str(e)}, status=400)
 
+
 class ResetPasswordView(View):
+    """
+    Vue Django pour modifier le mot de passe suite à la saisie du code temporaire.
+    """
+
     def post(self, request):
+        """
+        Applique le nouveau mot de passe si l'adresse e-mail et le code à 6 chiffres concordent.
+
+        Données JSON attendues :
+        - email : L'adresse de l'utilisateur.
+        - code : Le code de vérification à 6 chiffres.
+        - new_password : Le nouveau mot de passe choisi (minimum 6 caractères).
+        """
         try:
             data = json.loads(request.body)
             email = data.get('email')
@@ -179,6 +273,7 @@ class ResetPasswordView(View):
                 return JsonResponse({"error": "Code ou email invalide."}, status=400)
                 
             try:
+                # Validation de la présence et de la justesse du jeton
                 token = PasswordResetToken.objects.get(user=user, code=code)
             except PasswordResetToken.DoesNotExist:
                 return JsonResponse({"error": "Code invalide."}, status=400)
@@ -186,8 +281,11 @@ class ResetPasswordView(View):
             if len(new_password) < 6:
                 return JsonResponse({"error": "Le nouveau mot de passe doit faire au moins 6 caractères."}, status=400)
                 
+            # Mise à jour du mot de passe de l'utilisateur
             user.set_password(new_password)
             user.save()
+            
+            # Destruction du jeton à usage unique
             token.delete()
             
             return JsonResponse({"status": "success", "message": "Votre mot de passe a été réinitialisé avec succès !"}, status=200)
@@ -195,9 +293,19 @@ class ResetPasswordView(View):
         except Exception as e:
             return JsonResponse({"error": str(e)}, status=400)
 
+
 @method_decorator(ensure_csrf_cookie, name='dispatch')
 class UserView(View):
+    """
+    Vue Django pour consulter ou modifier les informations personnelles de l'utilisateur connecté.
+    
+    Elle injecte le cookie CSRF (ensure_csrf_cookie) lors du GET pour sécuriser les soumissions suivantes.
+    """
+
     def get(self, request):
+        """
+        Renvoie les informations de l'utilisateur connecté actuellement.
+        """
         if request.user.is_authenticated:
             role = "client"
             establishment_id = None
@@ -235,6 +343,16 @@ class UserView(View):
             return JsonResponse({"error": "Non authentifié"}, status=401)
 
     def put(self, request):
+        """
+        Modifie les données du profil de l'utilisateur en cours.
+
+        Données JSON autorisées :
+        - first_name : Prénom.
+        - last_name : Nom.
+        - email : Adresse email (modifie également le login).
+        - telephone : (Uniquement pour Client) Numéro de téléphone à 10 chiffres.
+        - old_password / new_password : Pour modifier de façon sécurisée le mot de passe.
+        """
         if not request.user.is_authenticated:
             return JsonResponse({"error": "Non authentifié"}, status=401)
         try:
@@ -250,19 +368,20 @@ class UserView(View):
             if last_name is not None:
                 user.last_name = last_name
             if email is not None:
-                # Check uniqueness if email changed
+                # Validation de l'unicité de l'e-mail s'il y a changement
                 if email != user.email and User.objects.filter(email=email).exists():
                     return JsonResponse({"error": "Cet email est déjà utilisé"}, status=400)
                 user.email = email
                 user.username = email
             
+            # Validation spécifique du numéro de téléphone client
             if telephone is not None and hasattr(user, 'profil_client'):
                 if telephone != '' and (not telephone.isdigit() or len(telephone) != 10):
                     return JsonResponse({"error": "Le numéro de téléphone doit contenir exactement 10 chiffres"}, status=400)
                 user.profil_client.telephone = telephone
                 user.profil_client.save()
 
-            # Password change logic
+            # Processus de changement de mot de passe sécurisé
             old_password = data.get('old_password')
             new_password = data.get('new_password')
             if new_password:
@@ -276,6 +395,7 @@ class UserView(View):
                 
             user.save()
             if new_password:
+                # Conserver la validité de la session après changement de mot de passe
                 update_session_auth_hash(request, user)
 
             role = "client"
@@ -315,7 +435,16 @@ class UserView(View):
 
 
 class AdminUserManagementView(View):
+    """
+    Vue Django d'administration globale pour répertorier l'ensemble des comptes utilisateurs.
+    
+    Réservée aux administrateurs ou membres du staff.
+    """
+
     def get(self, request):
+        """
+        Renvoie la liste détaillée de tous les comptes enregistrés sur la plateforme.
+        """
         if not request.user.is_authenticated or not (request.user.is_staff or request.user.is_superuser):
             return JsonResponse({"error": "Accès interdit"}, status=403)
             
@@ -381,7 +510,16 @@ class AdminUserManagementView(View):
 
 
 class AdminUserDetailView(View):
+    """
+    Vue Django permettant de modifier ou de supprimer un compte utilisateur de manière administrative.
+    
+    Réservée aux administrateurs ou membres du staff.
+    """
+
     def put(self, request, user_id):
+        """
+        Modifie les informations et les droits/rôles d'un utilisateur ciblé.
+        """
         if not request.user.is_authenticated or not (request.user.is_staff or request.user.is_superuser):
             return JsonResponse({"error": "Accès interdit"}, status=403)
             
@@ -411,12 +549,12 @@ class AdminUserDetailView(View):
                 user.is_active = bool(is_active)
                 
             if role is not None:
+                # Synchronisation des rôles et des profils un-à-un Django
                 if role == 'admin':
                     user.is_superuser = True
                     user.is_staff = True
                 else:
                     user.is_superuser = False
-                    # We can keep user.is_staff as False unless they are a pro or manager, but standard django is False
                     user.is_staff = False
                     
                 if role == 'client':
@@ -459,6 +597,11 @@ class AdminUserDetailView(View):
             return JsonResponse({"error": str(e)}, status=400)
 
     def delete(self, request, user_id):
+        """
+        Supprime un compte utilisateur.
+        
+        Empêche un administrateur connecté de se supprimer lui-même par erreur.
+        """
         if not request.user.is_authenticated or not (request.user.is_staff or request.user.is_superuser):
             return JsonResponse({"error": "Accès interdit"}, status=403)
             
@@ -475,7 +618,30 @@ class AdminUserDetailView(View):
 
 
 class CreateProAccountView(View):
+    """
+    Vue Django permettant à un Gérant de créer des comptes Professionnels (collaborateurs).
+    """
+
     def post(self, request):
+        """
+        Crée un nouvel utilisateur et l'affilie à l'établissement du gérant en tant que Professionnel.
+
+        Requiert :
+        - Gérant connecté (`profil_gerant`).
+
+        Données JSON attendues :
+        - email : Adresse e-mail du collaborateur.
+        - password : Mot de passe initial du collaborateur.
+        - firstname : Prénom.
+        - lastname : Nom.
+        - etablissement_id : ID de l'établissement (doit appartenir au gérant connecté).
+        - poste : Intitulé du poste (défaut : 'Coiffeur / Esthéticienne').
+        - description : Biographie.
+        - date_embauche : (Optionnel) Date d'embauche au format YYYY-MM-DD.
+
+        Retourne :
+        - JsonResponse de succès avec statut 201.
+        """
         if not request.user.is_authenticated:
             return JsonResponse({"error": "Non authentifié"}, status=401)
             
@@ -500,7 +666,7 @@ class CreateProAccountView(View):
             if User.objects.filter(username=email).exists():
                 return JsonResponse({"error": "Cet email est déjà utilisé"}, status=400)
                 
-            # Verify the etablissement belongs to the gérant
+            # Vérification de sécurité : l'établissement ciblé doit appartenir au gérant connecté
             from establishments.models import Etablissement
             try:
                 etablissement = Etablissement.objects.get(id=etablissement_id)
@@ -510,7 +676,7 @@ class CreateProAccountView(View):
             if etablissement.gerant != request.user.profil_gerant:
                 return JsonResponse({"error": "Cet établissement ne vous appartient pas"}, status=403)
                 
-            # Create user
+            # Création de l'utilisateur
             nouvel_user = User.objects.create_user(
                 username=email,
                 email=email,
@@ -519,7 +685,7 @@ class CreateProAccountView(View):
                 last_name=lastname
             )
             
-            # Create pro profile
+            # Initialisation de la date d'embauche (défaut : date du jour)
             embauche_date = timezone.now().date()
             if date_embauche:
                 try:
@@ -528,6 +694,7 @@ class CreateProAccountView(View):
                 except ValueError:
                     pass
                     
+            # Création physique du profil professionnel lié
             Professionnel.objects.create(
                 utilisateur=nouvel_user,
                 etablissement=etablissement,
@@ -541,8 +708,20 @@ class CreateProAccountView(View):
         except Exception as e:
             return JsonResponse({"error": str(e)}, status=400)
 
+
 class RemoveProAccountView(View):
+    """
+    Vue Django permettant à un Gérant de supprimer la qualification de Professionnel d'un de ses collaborateurs.
+    """
+
     def delete(self, request, user_id):
+        """
+        Supprime le profil professionnel lié et rétablit le compte ciblé comme simple Client.
+
+        Requiert :
+        - Gérant connecté.
+        - Le professionnel ciblé doit appartenir à l'un des établissements du gérant.
+        """
         if not request.user.is_authenticated:
             return JsonResponse({"error": "Non authentifié"}, status=401)
             
@@ -557,15 +736,15 @@ class RemoveProAccountView(View):
         if not hasattr(target_user, 'profil_pro'):
             return JsonResponse({"error": "Cet utilisateur n'est pas un professionnel"}, status=400)
             
-        # Verify the pro belongs to one of the manager's establishments
+        # Vérification d'affiliation : le professionnel doit faire partie de l'équipe du gérant
         if target_user.profil_pro.etablissement.gerant != request.user.profil_gerant:
             return JsonResponse({"error": "Ce professionnel n'appartient pas à votre établissement"}, status=403)
             
         try:
-            # Delete the pro profile
+            # Suppression du profil professionnel lié (l'utilisateur Django reste en vie)
             target_user.profil_pro.delete()
             
-            # Revert to a normal client account if not already a client
+            # Rétablissement d'un profil Client pour le compte afin qu'il puisse réutiliser la plateforme
             Client.objects.get_or_create(utilisateur=target_user)
             
             return JsonResponse({"status": "success", "message": "Le professionnel a été supprimé et basculé en client."}, status=200)

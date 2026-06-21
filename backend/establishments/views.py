@@ -9,20 +9,47 @@ from .models import Etablissement, Secteur, Lieu, Photo, Prestation
 from authentication.models import Gerant, Client, Professionnel
 
 class SectorListView(View):
+    """
+    Vue Django pour lister l'ensemble des secteurs d'activité enregistrés sur la plateforme.
+    """
+
     def get(self, request):
+        """
+        Récupère tous les secteurs d'activité (Beauté, Restauration, etc.).
+
+        Retourne :
+        - JsonResponse contenant le tableau de secteurs (id, nom).
+        """
         sectors = Secteur.objects.all()
         data = [{"id": s.id, "nom": s.nom} for s in sectors]
         return JsonResponse({"status": "success", "sectors": data}, status=200)
 
+
 class LocationListView(View):
+    """
+    Vue Django pour lister les localités (villes et codes postaux) disponibles.
+    
+    Permet de lister les villes contenant des établissements, éventuellement filtrées par secteur.
+    """
+
     def get(self, request):
+        """
+        Récupère les villes et codes postaux uniques associés à des établissements actifs.
+
+        Paramètres de requête (GET) :
+        - sector_id (ou secteur) : ID du secteur pour filtrer les localités correspondantes.
+
+        Retourne :
+        - JsonResponse contenant le tableau des localités distinctes triées par ville.
+        """
         sector_id = request.GET.get('sector_id') or request.GET.get('secteur')
         
         queryset = Lieu.objects.all()
         if sector_id:
+            # Filtrer les lieux qui possèdent au moins un établissement dans le secteur spécifié
             queryset = queryset.filter(etablissements__secteur_id=sector_id)
             
-        # Group by city (ville) and postal code (code_postal) to return unique zones
+        # Groupement par ville et code postal pour renvoyer des zones de recherche uniques
         unique_locations = queryset.values('ville', 'code_postal').distinct().order_by('ville')
         
         data = []
@@ -32,7 +59,7 @@ class LocationListView(View):
             if not ville:
                 continue
                 
-            # Use code_postal (if valid 5 digit) or ville as the ID to trigger zip/city wide filtering
+            # Détermination de l'identifiant pour la recherche (code postal si valide à 5 chiffres, sinon nom de la ville)
             loc_id = code_postal if (code_postal and len(code_postal) == 5) else ville
             
             data.append({
@@ -43,8 +70,25 @@ class LocationListView(View):
             })
         return JsonResponse({"status": "success", "locations": data}, status=200)
 
+
 class ExploreListView(View):
+    """
+    Vue Django principale de recherche et d'exploration multicritère pour les établissements.
+    """
+
     def get(self, request):
+        """
+        Recherche des établissements en appliquant des filtres optionnels.
+
+        Paramètres de requête (GET) :
+        - query (ou q) : Texte libre pour recherche sur le nom de l'établissement.
+        - location (ou lieu) : Code postal, ville ou identifiant de lieu pour filtrer géographiquement.
+        - sector (ou secteur) : ID du secteur ou identifiant textuel de catégorie ('beauty', 'restaurant', etc.).
+        - min_rating : Note minimale requise (float).
+
+        Retourne :
+        - JsonResponse contenant le tableau d'établissements triés par note globale puis par nom.
+        """
         query = request.GET.get('query') or request.GET.get('q')
         location = request.GET.get('location') or request.GET.get('lieu')
         sector_id = request.GET.get('sector') or request.GET.get('secteur')
@@ -52,10 +96,12 @@ class ExploreListView(View):
 
         queryset = Etablissement.objects.all()
 
+        # Filtrage par secteur d'activité
         if sector_id:
             if sector_id.isdigit():
                 queryset = queryset.filter(secteur_id=sector_id)
             else:
+                # Mapping pour les recherches textuelles
                 sector_lower = sector_id.lower()
                 if sector_lower in ['beauty', 'beauté']:
                     queryset = queryset.filter(secteur__nom__in=["Coiffure", "Beauté & Soins", "Massage & Bien-être", "Barbier"])
@@ -68,16 +114,16 @@ class ExploreListView(View):
                 else:
                     queryset = queryset.filter(secteur__nom__icontains=sector_id)
 
+        # Filtrage par mot-clé sur le nom
         if query:
             queryset = queryset.filter(nom__icontains=query)
 
+        # Filtrage géographique
         if location:
-            # If location query parameter is a numeric ID, search by ID. Else search by city/address/zip code text.
             if location.isdigit():
                 if len(location) == 5:
                     queryset = queryset.filter(lieu__code_postal__icontains=location)
                 else:
-                    # Si l'ID de Lieu existe en base, on filtre par ID, sinon on traite comme un code postal/ville
                     if Lieu.objects.filter(id=int(location)).exists():
                         queryset = queryset.filter(lieu_id=location)
                     else:
@@ -92,12 +138,15 @@ class ExploreListView(View):
                     Q(lieu__adresse__icontains=location) |
                     Q(lieu__code_postal__icontains=location)
                 )
+
+        # Filtrage par note minimale
         if min_rating:
             try:
                 queryset = queryset.filter(note_globale__gte=float(min_rating))
             except (ValueError, TypeError):
                 pass
 
+        # Ordonner par meilleure note, puis par ordre alphabétique
         queryset = queryset.order_by('-note_globale', 'nom')
 
         data = []
@@ -129,11 +178,23 @@ class ExploreListView(View):
 
         return JsonResponse({"status": "success", "establishments": data}, status=200)
 
+
 class EstablishmentDetailView(View):
+    """
+    Vue Django pour gérer le détail, la mise à jour et la suppression d'un établissement spécifique.
+    """
+
     def get(self, request, id):
+        """
+        Récupère les détails complets d'un établissement (prestations, collaborateurs, horaires, avis).
+
+        Paramètres :
+        - id : Identifiant numérique de l'établissement (dans l'URL).
+        """
         try:
             etablissement = Etablissement.objects.get(id=id)
             
+            # Préparation du tableau des prestations et de leurs collaborateurs éligibles
             prestations = []
             for prest in etablissement.prestations.all():
                 prestations.append({
@@ -144,6 +205,7 @@ class EstablishmentDetailView(View):
                     "collaborateurs": [c.id for c in prest.collaborateurs.all()]
                 })
 
+            # Préparation du tableau de l'équipe (professionnels)
             collaborateurs = []
             for col in etablissement.collaborateurs.all():
                 collaborateurs.append({
@@ -195,6 +257,16 @@ class EstablishmentDetailView(View):
             return JsonResponse({"status": "error", "message": "Établissement non trouvé"}, status=404)
 
     def put(self, request, id):
+        """
+        Met à jour les informations d'un établissement.
+
+        Requiert :
+        - Authentification de l'utilisateur.
+        - Rôle Gérant propriétaire de l'établissement OU rôle Administrateur.
+
+        Données JSON attendues :
+        - nom, description, telephone, mail, site_web, secteur_id, horaires, photos (liste d'URLs), lieu (dict).
+        """
         if not request.user.is_authenticated:
             return JsonResponse({"error": "Non authentifié"}, status=401)
             
@@ -203,7 +275,7 @@ class EstablishmentDetailView(View):
         except Etablissement.DoesNotExist:
             return JsonResponse({"error": "Établissement non trouvé"}, status=404)
             
-        # Permission check: admin or owner (gérant)
+        # Contrôle des droits d'accès
         is_admin = request.user.is_superuser or request.user.is_staff
         is_owner = hasattr(request.user, 'profil_gerant') and etablissement.gerant == request.user.profil_gerant
         
@@ -251,6 +323,7 @@ class EstablishmentDetailView(View):
                 ville = lieu_data.get('ville')
                 code_postal = lieu_data.get('code_postal')
                 
+                # Mise à jour ou instanciation d'un nouveau modèle Lieu
                 if etablissement.lieu:
                     lieu = etablissement.lieu
                 else:
@@ -270,7 +343,7 @@ class EstablishmentDetailView(View):
                 
             etablissement.save()
             
-            # Photos update
+            # Mise à jour de la liste d'URLs des photos de l'établissement
             if photos is not None:
                 etablissement.photos.all().delete()
                 for p_url in photos:
@@ -282,6 +355,13 @@ class EstablishmentDetailView(View):
             return JsonResponse({"error": str(e)}, status=400)
 
     def delete(self, request, id):
+        """
+        Supprime définitivement un établissement.
+
+        Requiert :
+        - Authentification.
+        - Droits d'administrateur ou d'être le gérant propriétaire.
+        """
         if not request.user.is_authenticated:
             return JsonResponse({"error": "Non authentifié"}, status=401)
             
@@ -290,7 +370,6 @@ class EstablishmentDetailView(View):
         except Etablissement.DoesNotExist:
             return JsonResponse({"error": "Établissement non trouvé"}, status=404)
             
-        # Permission check: admin or owner (gérant)
         is_admin = request.user.is_superuser or request.user.is_staff
         is_owner = hasattr(request.user, 'profil_gerant') and etablissement.gerant == request.user.profil_gerant
         
@@ -301,7 +380,7 @@ class EstablishmentDetailView(View):
             gerant = etablissement.gerant
             etablissement.delete()
             
-            # Reconvert gerant to client if they have no establishments left
+            # Si le gérant n'a plus aucun établissement rattaché, on supprime son profil gérant et le bascule en simple client
             if gerant and not gerant.etablissements.exists():
                 Client.objects.get_or_create(utilisateur=gerant.utilisateur)
                 gerant.delete()
@@ -312,7 +391,14 @@ class EstablishmentDetailView(View):
 
 
 class ServiceListView(View):
+    """
+    Vue Django pour lister et ajouter des prestations au sein d'un établissement.
+    """
+
     def get(self, request, id):
+        """
+        Renvoie l'ensemble des prestations (services) proposées par l'établissement.
+        """
         try:
             etablissement = Etablissement.objects.get(id=id)
         except Etablissement.DoesNotExist:
@@ -331,6 +417,18 @@ class ServiceListView(View):
         return JsonResponse({"status": "success", "services": data}, status=200)
 
     def post(self, request, id):
+        """
+        Ajoute une nouvelle prestation au catalogue de l'établissement.
+
+        Requiert :
+        - Être Administrateur ou Gérant propriétaire de l'établissement.
+
+        Données JSON attendues :
+        - nom : Nom du service.
+        - cout : Tarif décimal.
+        - description : Descriptif.
+        - collaborateurs : Liste d'identifiants de professionnels habilités.
+        """
         if not request.user.is_authenticated:
             return JsonResponse({"error": "Non authentifié"}, status=401)
             
@@ -339,7 +437,6 @@ class ServiceListView(View):
         except Etablissement.DoesNotExist:
             return JsonResponse({"error": "Établissement non trouvé"}, status=404)
             
-        # Permission check: admin or owner (gérant)
         is_admin = request.user.is_superuser or request.user.is_staff
         is_owner = hasattr(request.user, 'profil_gerant') and etablissement.gerant == request.user.profil_gerant
         
@@ -381,7 +478,20 @@ class ServiceListView(View):
 
 
 class RegisterEstablishmentView(View):
+    """
+    Vue Django permettant à un professionnel de déclarer un nouvel établissement et d'obtenir le rôle Gérant.
+    """
+
     def post(self, request):
+        """
+        Inscrit un établissement et associe le créateur comme Gérant.
+
+        Requiert :
+        - Utilisateur connecté.
+
+        Données JSON attendues :
+        - nom, siret, adresse, ville, code_postal, telephone, mail, description, category.
+        """
         if not request.user.is_authenticated:
             return JsonResponse({"error": "Non authentifié"}, status=401)
             
@@ -395,11 +505,12 @@ class RegisterEstablishmentView(View):
             telephone = data.get('telephone')
             mail = data.get('mail')
             description = data.get('description', '')
-            category = data.get('category')  # 'beauty', 'restaurant', 'hotel', 'travel'
+            category = data.get('category')
             
             if not nom or not siret or not adresse or not ville or not code_postal or not category:
                 return JsonResponse({"error": "Champs nom, siret, adresse, ville, code_postal et category requis"}, status=400)
                 
+            # Dictionnaire de correspondance catégorie frontend -> Secteur d'activité en DB
             secteur_mapping = {
                 'beauty': 'Beauté & Soins',
                 'restaurant': 'Restauration',
@@ -413,20 +524,18 @@ class RegisterEstablishmentView(View):
             if not secteur_nom:
                 return JsonResponse({"error": "Catégorie inconnue"}, status=400)
                 
-            # Récupérer ou créer le secteur
             secteur, _ = Secteur.objects.get_or_create(nom=secteur_nom)
             
-            # Récupérer ou créer le lieu pour éviter les doublons d'adresse exacte en base
+            # get_or_create pour le Lieu pour éviter les doublons géographiques
             lieu, _ = Lieu.objects.get_or_create(
                 adresse=adresse,
                 ville=ville,
                 code_postal=code_postal
             )
             
-            # Récupérer ou créer le profil Gérant pour l'utilisateur connecté
+            # Mutation / Attribution du rôle de Gérant à l'utilisateur
             gerant, _ = Gerant.objects.get_or_create(utilisateur=request.user)
             
-            # Créer l'établissement
             etablissement = Etablissement.objects.create(
                 nom=nom,
                 secteur=secteur,
@@ -437,7 +546,7 @@ class RegisterEstablishmentView(View):
                 mail=mail
             )
             
-            # Créer automatiquement un professionnel par défaut pour le gérant de l'établissement s'il n'en a pas déjà un
+            # Par défaut, le gérant est aussi créé comme premier collaborateur (Professionnel) de l'établissement
             if not hasattr(request.user, 'profil_pro'):
                 Professionnel.objects.get_or_create(
                     utilisateur=request.user,
@@ -460,7 +569,17 @@ class RegisterEstablishmentView(View):
 
 
 class ServiceDetailView(View):
+    """
+    Vue Django de détail pour modifier ou supprimer une prestation existante.
+    """
+
     def put(self, request, service_id):
+        """
+        Modifie une prestation.
+
+        Requiert :
+        - Rôle Gérant propriétaire de l'établissement de la prestation OU Administrateur.
+        """
         if not request.user.is_authenticated:
             return JsonResponse({"error": "Non authentifié"}, status=401)
             
@@ -490,6 +609,7 @@ class ServiceDetailView(View):
             if description is not None:
                 prestation.description = description
             if collaborateur_ids is not None:
+                # Association des identifiants d'employés affectés
                 prestation.collaborateurs.set(collaborateur_ids)
                 
             prestation.save()
@@ -508,6 +628,12 @@ class ServiceDetailView(View):
             return JsonResponse({"error": str(e)}, status=400)
 
     def delete(self, request, service_id):
+        """
+        Supprime définitivement une prestation.
+
+        Requiert :
+        - Droits d'administrateur ou de gérant de l'établissement.
+        """
         if not request.user.is_authenticated:
             return JsonResponse({"error": "Non authentifié"}, status=401)
             
@@ -531,7 +657,18 @@ class ServiceDetailView(View):
 
 
 class EstablishmentPhotoUploadView(View):
+    """
+    Vue Django pour gérer le téléversement (upload) et la suppression de fichiers photos pour un établissement.
+    """
+
     def post(self, request, id):
+        """
+        Téléverse et enregistre un fichier image pour l'établissement.
+
+        Requiert :
+        - Fichier transmis dans les données multipart (FILES) sous la clé 'image' ou 'file'.
+        - Extensions autorisées : png, jpg, jpeg, gif, webp.
+        """
         if not request.user.is_authenticated:
             return JsonResponse({"error": "Non authentifié"}, status=401)
             
@@ -555,6 +692,7 @@ class EstablishmentPhotoUploadView(View):
             return JsonResponse({"error": f"Extension non autorisée. Extensions valides : {', '.join(allowed_extensions)}"}, status=400)
             
         try:
+            # Création du dossier de stockage dans MEDIA_ROOT
             os.makedirs(os.path.join(settings.MEDIA_ROOT, 'establishments'), exist_ok=True)
             fs = FileSystemStorage(location=os.path.join(settings.MEDIA_ROOT, 'establishments'))
             clean_name = f"estab_{id}_{uploaded_file.name}"
@@ -568,6 +706,7 @@ class EstablishmentPhotoUploadView(View):
             
             url_photo = f"{media_url}establishments/{filename}"
             
+            # Enregistrement du modèle photo lié en base de données
             Photo.objects.create(etablissement=etablissement, url_photo=url_photo)
             
             photos = [p.url_photo for p in etablissement.photos.all()]
@@ -580,6 +719,12 @@ class EstablishmentPhotoUploadView(View):
             return JsonResponse({"error": str(e)}, status=500)
 
     def delete(self, request, id):
+        """
+        Supprime une photo de l'établissement (en base et sur le disque).
+
+        Données JSON attendues :
+        - url : L'URL de la photo à supprimer.
+        """
         if not request.user.is_authenticated:
             return JsonResponse({"error": "Non authentifié"}, status=401)
             
@@ -603,6 +748,7 @@ class EstablishmentPhotoUploadView(View):
             if not photo_obj:
                 return JsonResponse({"error": "Photo non trouvée pour cet établissement"}, status=404)
                 
+            # Nettoyage physique du fichier sur le disque s'il se trouve dans notre répertoire MEDIA_ROOT
             media_url = settings.MEDIA_URL
             if not media_url.startswith('/'):
                 media_url = '/' + media_url
@@ -626,6 +772,3 @@ class EstablishmentPhotoUploadView(View):
             }, status=200)
         except Exception as e:
             return JsonResponse({"error": str(e)}, status=400)
-
-
-

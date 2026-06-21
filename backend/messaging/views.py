@@ -6,13 +6,35 @@ from .models import Discussion, Message
 from establishments.models import Etablissement
 
 class DiscussionListView(View):
+    """
+    Vue Django pour lister les discussions actives et en ouvrir de nouvelles.
+
+    Les clients et les gérants peuvent utiliser cette vue pour suivre
+    leurs conversations de support/renseignements.
+    """
+
     def get(self, request):
+        """
+        Récupère l'ensemble des discussions de l'utilisateur connecté selon son rôle.
+
+        Requiert :
+        - Utilisateur connecté.
+
+        Comportement selon le rôle :
+        - Client : retourne les discussions initiées par lui.
+        - Gérant : retourne les discussions liées aux établissements qu'il administre.
+        - Admin/Staff : retourne toutes les discussions de la plateforme.
+
+        Retourne :
+        - JsonResponse contenant la liste des discussions et leur dernier message respectif.
+        """
         if not request.user.is_authenticated:
             return JsonResponse({"error": "Non authentifié"}, status=401)
         
         user = request.user
         discussions = Discussion.objects.none()
         
+        # Sélection du filtre en fonction du profil utilisateur
         if hasattr(user, 'profil_client'):
             discussions = Discussion.objects.filter(client=user.profil_client)
         elif hasattr(user, 'profil_gerant'):
@@ -22,6 +44,7 @@ class DiscussionListView(View):
         else:
             return JsonResponse({"error": "Rôle utilisateur non identifié pour la messagerie"}, status=403)
             
+        # Préchargement optimisé des clés étrangères pour éviter le problème des requêtes N+1
         discussions = discussions.select_related('client', 'client__utilisateur', 'etablissement').prefetch_related('messages')
         
         data = []
@@ -52,6 +75,19 @@ class DiscussionListView(View):
         return JsonResponse({"status": "success", "discussions": data}, status=200)
 
     def post(self, request):
+        """
+        Ouvre un nouveau fil de discussion (ou récupère un fil existant) avec un établissement.
+
+        Requiert :
+        - Profil Client pour l'utilisateur connecté.
+
+        Données JSON attendues :
+        - etablissement_id : Identifiant de l'établissement cible.
+        - nom_discussion : Nom d'affichage de la discussion.
+
+        Retourne :
+        - JsonResponse contenant les détails de la discussion créée ou récupérée.
+        """
         if not request.user.is_authenticated:
             return JsonResponse({"error": "Non authentifié"}, status=401)
             
@@ -72,6 +108,7 @@ class DiscussionListView(View):
             except Etablissement.DoesNotExist:
                 return JsonResponse({"error": "Établissement non trouvé"}, status=404)
                 
+            # get_or_create garantit l'unicité de la discussion entre un client et un établissement donné
             discussion, created = Discussion.objects.get_or_create(
                 client=client,
                 etablissement=etablissement,
@@ -94,8 +131,19 @@ class DiscussionListView(View):
 
 
 class MessageCreateView(View):
+    """
+    Vue Django pour lister les messages d'une discussion et envoyer de nouveaux messages.
+    """
+
     def _is_authorized(self, user, discussion):
-        # Vérifie si l'utilisateur est le client de la discussion, ou le gérant de l'établissement
+        """
+        Méthode interne d'autorisation d'accès à la discussion.
+
+        Vérifie si l'utilisateur connecté est :
+        - Le Client ayant ouvert la discussion.
+        - Le Gérant de l'établissement ciblé par la discussion.
+        - Un membre de l'équipe d'administration (Staff/Superuser).
+        """
         if hasattr(user, 'profil_client') and discussion.client == user.profil_client:
             return True
         if hasattr(user, 'profil_gerant') and discussion.etablissement.gerant == user.profil_gerant:
@@ -105,6 +153,15 @@ class MessageCreateView(View):
         return False
 
     def get(self, request, disc_id):
+        """
+        Récupère chronologiquement la liste des messages d'une discussion spécifique.
+
+        Paramètres :
+        - disc_id : Identifiant numérique de la discussion.
+
+        Retourne :
+        - JsonResponse contenant le tableau de messages ordonnés par date de création.
+        """
         if not request.user.is_authenticated:
             return JsonResponse({"error": "Non authentifié"}, status=401)
             
@@ -113,9 +170,11 @@ class MessageCreateView(View):
         except Discussion.DoesNotExist:
             return JsonResponse({"error": "Discussion non trouvée"}, status=404)
             
+        # Contrôle des droits d'accès
         if not self._is_authorized(request.user, discussion):
             return JsonResponse({"error": "Accès non autorisé à cette discussion"}, status=403)
             
+        # Ordonner chronologiquement (created_at) et précharger l'expéditeur
         messages = Message.objects.filter(discussion=discussion).select_related('expediteur').order_by('created_at')
         data = []
         for msg in messages:
@@ -134,6 +193,18 @@ class MessageCreateView(View):
         return JsonResponse({"status": "success", "messages": data}, status=200)
 
     def post(self, request, disc_id):
+        """
+        Ajoute un nouveau message dans une discussion.
+
+        Paramètres :
+        - disc_id : Identifiant numérique de la discussion.
+
+        Données JSON attendues :
+        - content : Le contenu texte du message.
+
+        Retourne :
+        - JsonResponse contenant le message enregistré.
+        """
         if not request.user.is_authenticated:
             return JsonResponse({"error": "Non authentifié"}, status=401)
             
@@ -142,6 +213,7 @@ class MessageCreateView(View):
         except Discussion.DoesNotExist:
             return JsonResponse({"error": "Discussion non trouvée"}, status=404)
             
+        # Contrôle des droits d'accès avant envoi
         if not self._is_authorized(request.user, discussion):
             return JsonResponse({"error": "Accès non autorisé à cette discussion"}, status=403)
             
@@ -151,6 +223,7 @@ class MessageCreateView(View):
             if not content:
                 return JsonResponse({"error": "Le contenu du message ne peut pas être vide"}, status=400)
                 
+            # Création physique du message rattaché à l'expéditeur (request.user)
             msg = Message.objects.create(
                 discussion=discussion,
                 expediteur=request.user,
@@ -170,4 +243,3 @@ class MessageCreateView(View):
             
         except Exception as e:
             return JsonResponse({"error": str(e)}, status=400)
-

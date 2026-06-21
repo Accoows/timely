@@ -7,14 +7,35 @@ from establishments.models import Etablissement
 from bookings.models import Reservation
 
 class FavoritesView(View):
+    """
+    Vue Django pour la gestion des établissements favoris des clients.
+
+    Cette vue permet aux utilisateurs authentifiés avec le rôle 'Client' de :
+    - Consulter leur liste de favoris (GET)
+    - Ajouter un établissement à leurs favoris (POST)
+    - Retirer un établissement de leurs favoris (DELETE)
+    """
+
     def get(self, request):
+        """
+        Récupère la liste des établissements favoris du client connecté.
+
+        Requiert :
+        - Authentification active de l'utilisateur.
+        - Profil Client rattaché à l'utilisateur.
+
+        Retourne :
+        - JsonResponse contenant la liste des favoris avec les détails de chaque établissement.
+        """
         if not request.user.is_authenticated:
             return JsonResponse({"error": "Non authentifié"}, status=401)
         
+        # Vérification du profil client de l'utilisateur connecté
         client = getattr(request.user, 'profil_client', None)
         if not client:
             return JsonResponse({"error": "Seuls les clients ont des favoris"}, status=403)
             
+        # Récupération des favoris avec préchargement (select_related) des relations pour optimiser les requêtes SQL
         favorites = Favoris.objects.filter(client=client).select_related('etablissement', 'etablissement__secteur', 'etablissement__lieu')
         data = []
         for f in favorites:
@@ -32,7 +53,7 @@ class FavoritesView(View):
                     "ville": est.lieu.ville,
                     "code_postal": est.lieu.code_postal
                 } if est.lieu else None,
-                # Propriétés mappées pour l'affichage de l'interface
+                # Propriétés supplémentaires mappées pour faciliter l'affichage dans le frontend React
                 "name": est.nom,
                 "category": est.secteur.nom if est.secteur else "",
                 "badge": est.secteur.nom if est.secteur else "",
@@ -44,9 +65,19 @@ class FavoritesView(View):
         return JsonResponse({"status": "success", "favorites": data}, status=200)
 
     def post(self, request):
+        """
+        Ajoute un établissement à la liste des favoris du client connecté.
+
+        Attends dans le corps de la requête (JSON) :
+        - etablissement_id : Identifiant de l'établissement à ajouter.
+
+        Retourne :
+        - JsonResponse confirmant l'ajout ou signalant que l'élément est déjà présent.
+        """
         if not request.user.is_authenticated:
             return JsonResponse({"error": "Non authentifié"}, status=401)
         
+        # Vérification du rôle client
         client = getattr(request.user, 'profil_client', None)
         if not client:
             return JsonResponse({"error": "Seuls les clients peuvent ajouter des favoris"}, status=403)
@@ -62,6 +93,7 @@ class FavoritesView(View):
             except Etablissement.DoesNotExist:
                 return JsonResponse({"error": "Établissement non trouvé"}, status=404)
                 
+            # Création du favori s'il n'existe pas déjà (get_or_create)
             favori, created = Favoris.objects.get_or_create(client=client, etablissement=etablissement)
             if created:
                 return JsonResponse({"status": "success", "message": "Ajouté aux favoris"}, status=201)
@@ -72,14 +104,25 @@ class FavoritesView(View):
             return JsonResponse({"error": str(e)}, status=400)
 
     def delete(self, request):
+        """
+        Retire un établissement de la liste des favoris du client connecté.
+
+        Le paramètre 'etablissement_id' peut être transmis via :
+        - Les paramètres d'URL (query parameters / GET)
+        - Le corps de la requête (JSON)
+
+        Retourne :
+        - JsonResponse confirmant le retrait ou signalant l'absence du favori.
+        """
         if not request.user.is_authenticated:
             return JsonResponse({"error": "Non authentifié"}, status=401)
             
+        # Seuls les clients gèrent les favoris
         client = getattr(request.user, 'profil_client', None)
         if not client:
             return JsonResponse({"error": "Seuls les clients peuvent gérer les favoris"}, status=403)
             
-        # Check query params or body
+        # Extraction de l'ID de l'établissement (depuis GET ou body JSON)
         etablissement_id = request.GET.get('etablissement_id')
         if not etablissement_id:
             try:
@@ -91,6 +134,7 @@ class FavoritesView(View):
         if not etablissement_id:
             return JsonResponse({"error": "Paramètre etablissement_id manquant"}, status=400)
             
+        # Suppression de l'entrée correspondante en base de données
         deleted, _ = Favoris.objects.filter(client=client, etablissement_id=etablissement_id).delete()
         if deleted:
             return JsonResponse({"status": "success", "message": "Retiré des favoris"}, status=200)
@@ -99,9 +143,24 @@ class FavoritesView(View):
 
 
 class LeaveReviewView(View):
+    """
+    Vue Django permettant de consulter, de publier ou de supprimer des avis clients sur les établissements.
+    """
+
     def get(self, request):
+        """
+        Récupère les avis pour un établissement donné OU les avis laissés par l'utilisateur connecté.
+
+        Paramètres de requête (Query params) :
+        - etablissement_id : Identifiant de l'établissement pour lister ses avis.
+        Si manquant et que l'utilisateur est un client connecté, liste ses propres avis.
+
+        Retourne :
+        - JsonResponse contenant la liste des avis.
+        """
         etablissement_id = request.GET.get('etablissement_id')
         if not etablissement_id:
+            # Si aucun établissement spécifié, renvoyer les avis rédigés par l'utilisateur connecté (si client)
             if request.user.is_authenticated:
                 client = getattr(request.user, 'profil_client', None)
                 if client:
@@ -121,6 +180,7 @@ class LeaveReviewView(View):
                     return JsonResponse({"status": "success", "reviews": data}, status=200)
             return JsonResponse({"error": "Paramètre etablissement_id manquant"}, status=400)
             
+        # Récupération des avis associés à un établissement spécifique
         reviews = Avis.objects.filter(etablissement_id=etablissement_id).select_related('client', 'client__utilisateur')
         data = []
         for r in reviews:
@@ -139,6 +199,21 @@ class LeaveReviewView(View):
         return JsonResponse({"status": "success", "reviews": data}, status=200)
 
     def post(self, request):
+        """
+        Publie un nouvel avis sur un établissement.
+
+        Requiert :
+        - Profil Client pour l'utilisateur connecté.
+        - Avoir effectué au moins une réservation (active ou passée) dans l'établissement concerné.
+
+        Données JSON attendues :
+        - etablissement_id : ID de l'établissement évalué.
+        - message : Commentaire rédigé.
+        - note : Note entière entre 1 et 5 (défaut: 5).
+
+        Retourne :
+        - JsonResponse contenant l'avis créé avec statut 201.
+        """
         if not request.user.is_authenticated:
             return JsonResponse({"error": "Non authentifié"}, status=401)
             
@@ -207,6 +282,16 @@ class LeaveReviewView(View):
             return JsonResponse({"error": str(e)}, status=400)
 
     def delete(self, request):
+        """
+        Supprime un avis existant.
+
+        Requiert l'une des conditions suivantes (contrôle d'autorisation) :
+        - Être Administrateur ou membre du staff Django.
+        - Être l'auteur de l'avis (le Client associé).
+        - Être le Gérant de l'établissement sur lequel l'avis a été rédigé.
+
+        Le paramètre d'identification est 'review_id' passé en GET ou JSON body.
+        """
         if not request.user.is_authenticated:
             return JsonResponse({"error": "Non authentifié"}, status=401)
             
@@ -226,7 +311,7 @@ class LeaveReviewView(View):
         except Avis.DoesNotExist:
             return JsonResponse({"error": "Avis non trouvé"}, status=404)
             
-        # Check permissions: is the user an admin, the author of the review (client), or the gérant of the establishment of the review?
+        # Évaluation des autorisations
         is_admin = request.user.is_superuser or request.user.is_staff
         is_author = hasattr(request.user, 'profil_client') and avis.client == request.user.profil_client
         is_owner = hasattr(request.user, 'profil_gerant') and avis.etablissement.gerant == request.user.profil_gerant
@@ -239,8 +324,17 @@ class LeaveReviewView(View):
 
 
 class AdminReviewModerationView(View):
+    """
+    Vue réservée aux administrateurs pour la modération des avis de la plateforme.
+    """
+
     def get(self, request):
-        # Restriction aux superutilisateurs ou staff
+        """
+        Récupère l'intégralité des avis publiés sur la plateforme.
+
+        Requiert :
+        - Utilisateur membre du staff (`is_staff` ou superuser).
+        """
         if not request.user.is_authenticated or not request.user.is_staff:
             return JsonResponse({"error": "Accès interdit"}, status=403)
             
@@ -266,6 +360,12 @@ class AdminReviewModerationView(View):
         return JsonResponse({"status": "success", "reviews": data}, status=200)
 
     def delete(self, request):
+        """
+        Supprime de force un avis (action de modération).
+
+        Requiert :
+        - Utilisateur membre du staff (`is_staff`).
+        """
         if not request.user.is_authenticated or not request.user.is_staff:
             return JsonResponse({"error": "Accès interdit"}, status=403)
             
@@ -286,4 +386,3 @@ class AdminReviewModerationView(View):
             return JsonResponse({"status": "success", "message": "Avis supprimé par le modérateur"}, status=200)
         except Avis.DoesNotExist:
             return JsonResponse({"error": "Avis non trouvé"}, status=404)
-
