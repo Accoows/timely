@@ -30,26 +30,55 @@ Le projet est divisé en deux parties autonomes :
 
 ---
 
+## Choix Techniques et Justifications
+
+*   **Django & Django REST Framework (Backend)** :
+    *   *Rapidité de développement* : Permet de concevoir rapidement une API REST propre et sécurisée grâce aux vues et routeurs intégrés.
+    *   *Back-office intégré* : La console d'administration par défaut de Django (`/backoffice/`) fait gagner un temps précieux pour gérer les données brutes (utilisateurs, établissements, réservations).
+    *   *Sécurité* : Gestion native de l'authentification et des jetons CSRF pour sécuriser les requêtes du frontend.
+*   **React + TypeScript + Vite (Frontend)** :
+    *   *Typecheck statique* : TypeScript évite la majorité des erreurs d'incompatibilité de données entre l'API et le client.
+    *   *Vitesse (Vite)* : Démarrage instantané et rechargement à chaud (Hot Module Replacement) ultrarapide en développement.
+*   **Tailwind CSS v4 & DaisyUI v5 (Style)** :
+    *   *Style sur-mesure* : Tailwind permet de réaliser l'esthétique néo-brutaliste propre à l'application sans écrire de CSS verbeux.
+    *   *Composants DaisyUI* : Accélère le maquettage des formulaires, boutons et menus grâce à des composants accessibles et pré-stylisés.
+*   **Docker & Docker Compose (Orchestration)** :
+    *   *Portabilité* : Garantit que l'application s'exécute exactement de la même manière sur les machines de tous les développeurs (Mac, Windows, Linux) sans conflits de versions de Node.js, Python ou PostgreSQL.
+
+---
+
 ## Structure du Workspace
 
 ```text
 timely/
-├── backend/                  # Partie Backend (Django API)
-│   ├── core/                 # Application métier de base (Modèles, API)
-│   ├── timely_app/           # Fichiers de configuration globale Django
-│   ├── manage.py             # Script utilitaire Django
-│   ├── requirements.txt      # Dépendances Python
-│   ├── Dockerfile            # Recette Docker pour l'API
-│   └── start.sh              # Script de démarrage du container API
+├── backend/                    # Partie Backend (Django API)
+│   ├── timely_app/             # Fichiers de configuration globale Django (settings, urls)
+│   ├── authentication/         # App de gestion des profils (Client, Gérant, Professionnel)
+│   ├── establishments/         # App de gestion des salons, prestations, photos et personnel
+│   ├── bookings/               # App de gestion des RDV, facturation et créneaux horaires
+│   ├── interactions/           # App de gestion des avis clients et des favoris
+│   ├── messaging/              # App de gestion du chat en direct (messagerie)
+│   ├── core/                   # Utilitaires communs et application de base
+│   ├── manage.py               # Script utilitaire Django
+│   ├── requirements.txt        # Dépendances Python (Django, DRF, psycopg2...)
+│   └── Dockerfile              # Recette Docker pour l'API
 │
-├── frontend/                 # Partie Frontend (React Client)
-│   ├── src/                  # Composants, styles, et pages React
-│   ├── public/               # Ressources statiques accessibles au front
-│   ├── package.json          # Dépendances Node.js (Vite, React, Tailwind)
-│   ├── Dockerfile            # Recette Docker pour le client
-│   └── vite.config.ts        # Configuration du bundler Vite
+├── frontend/                   # Partie Frontend (React Client)
+│   ├── src/
+│   │   ├── components/         # Composants réutilisables (InputField, Button, Alert...)
+│   │   ├── context/            # Contexte global (AuthContext pour la session utilisateur)
+│   │   ├── pages/              # Vues de l'application (Home, Search, Profile, Admin...)
+│   │   ├── services/           # Services API client (api.ts pour fetch les routes Django)
+│   │   ├── types/              # Déclarations des interfaces TypeScript (index.ts)
+│   │   ├── App.tsx             # Composant racine et gestionnaire de routes
+│   │   └── main.tsx            # Point d'entrée de l'application
+│   │
+│   ├── public/                 # Ressources statiques accessibles au front
+│   ├── package.json            # Dépendances Node.js (Vite, React, Tailwind)
+│   ├── Dockerfile              # Recette Docker pour le client
+│   └── vite.config.ts          # Configuration du bundler Vite (avec proxy API local)
 │
-└── docker-compose.yml        # Orchestration locale
+└── docker-compose.yml          # Orchestration locale multiconteneur (API, Client, DB)
 ```
 
 ---
@@ -78,7 +107,7 @@ timely/
 Lancez tous les services en arrière-plan via Docker Compose :
 
 ```bash
-docker-compose up --build -d
+docker compose up --build -d
 ```
 
 _Cette commande télécharge les images, installe les dépendances Python et Node.js, applique les migrations de base de données PostgreSQL, puis démarre les serveurs._
@@ -90,7 +119,7 @@ _Cette commande télécharge les images, installe les dépendances Python et Nod
 
 ---
 
-## 💻 Workflow de Développement Quotidien
+## Workflow de Développement Quotidien
 
 Puisque le code est scindé, chaque développeur peut se focaliser sur sa partie :
 
@@ -109,13 +138,13 @@ Puisque le code est scindé, chaque développeur peut se focaliser sur sa partie
 1. Tout votre code se trouve dans `/backend`.
 2. Pour ajouter des dépendances Python (requirements) :
    - Ajoutez le package dans `backend/requirements.txt`.
-   - Redémarrez le container avec `--build` : `docker-compose up --build -d`.
+   - Redémarrez le container avec `--build` : `docker compose up --build -d`.
 3. Pour créer des tables en base de données ou faire des migrations :
 
    ```bash
    # Créer les fichiers de migration après modification d'un models.py
-   docker-compose exec backend python manage.py makemigrations
+   docker compose exec backend python manage.py makemigrations
 
    # Appliquer les migrations
-   docker-compose exec backend python manage.py migrate
+   docker compose exec backend python manage.py migrate
    ```
