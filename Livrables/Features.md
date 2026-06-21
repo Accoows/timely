@@ -17,12 +17,14 @@ Ce module s'appuie sur le système d'authentification natif de Django couplé à
 ### B. Module "Recherche & Découverte d'Établissements"
 Permet aux clients de trouver facilement des prestations correspondant à leurs besoins.
 *   **Recherche par Mots-clés** : Recherche textuelle indexée sur le nom de l'établissement ou les prestations offertes.
-*   **Sélection de Secteur** : Filtrage natif par secteur d'activité :
-    *   *Beauté* (Salons de coiffure, instituts de beauté, barbiers, etc.).
-    *   *Restauration* (Bistrots, restaurants gastronomiques, cafés).
-    *   *Hôtellerie* (Hôtels, chambres d'hôtes, spas).
-    *   *Voyage* (Navettes, transports touristiques, activités).
-    *   *Administrations* (Démarches en mairie, services publics).
+*   **Sélection de Secteur** : Filtrage natif par secteur d'activité basé sur les données réelles de la plateforme :
+    *   *Coiffure* (Salons de coiffure, coupe de cheveux, brushings).
+    *   *Beauté & Soins* (Soins esthétiques, instituts de beauté, manucure).
+    *   *Massage & Bien-être* (Plénitude, massages relaxants, spas).
+    *   *Barbier* (Taille de barbe, rasage traditionnel).
+    *   *Restauration* (Bistrots gourmets, restaurants, cafés).
+    *   *Hébergement* (Hôtels, chambres d'hôtes, gîtes).
+    *   *Voyages & Transports* (Navettes, transports touristiques, activités).
 *   **Filtrage Géographique** : Liste déroulante dynamique filtrant les établissements par ville.
 *   **Fiches Établissements** : Chaque établissement dispose d'une page publique dédiée présentant :
     *   Le nom, la description et les coordonnées de l'établissement.
@@ -100,11 +102,11 @@ Le cœur interactif du système, gérant l'orchestration du calendrier des rende
 
 ## 3. Cas d'Utilisation (Use Cases) Détaillés
 
-### Cas d'Utilisation 1 : Réservation d'une prestation beauté avec paiement en ligne
+### Cas d'Utilisation 1 : Réservation d'une prestation coiffure ou barbe avec paiement en ligne
 *   **Acteurs** : Client (principal), Système (secondaire), Stripe (secondaire).
 *   **Prérequis** : Le client possède un compte actif et s'est authentifié avec succès sur la plateforme.
 *   **Scénario Nominal** :
-    1.  Le **Client** effectue une recherche pour le secteur "Beauté" dans la ville de "Paris".
+    1.  Le **Client** effectue une recherche pour le secteur "Barbier" dans la ville de "Paris".
     2.  Le **Système** affiche la liste des salons partenaires correspondants.
     3.  Le **Client** clique sur l'établissement "The Barber Corner".
     4.  Le **Client** sélectionne la prestation "Taille de Barbe Premium" (durée : 30 min, tarif : 20 €) et choisit le professionnel "Jean".
