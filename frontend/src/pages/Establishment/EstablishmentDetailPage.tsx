@@ -289,6 +289,25 @@ export default function EstablishmentDetailPage({ establishmentId, onNavigate }:
     }
   };
 
+  // Handle review deletion
+  const handleDeleteReview = async (reviewId: number) => {
+    if (!window.confirm("Êtes-vous sûr de vouloir supprimer cet avis ?")) return;
+    try {
+      setReviewsLoading(true);
+      setReviewErrorMsg("");
+      setReviewSuccessMsg("");
+      await api.reviews.delete(reviewId);
+      setReviewSuccessMsg("L'avis a bien été supprimé !");
+      loadReviews();
+    } catch (err: unknown) {
+      console.error("Erreur lors de la suppression de l'avis :", err);
+      const msg = err instanceof Error ? err.message : "Impossible de supprimer cet avis.";
+      setReviewErrorMsg(msg);
+    } finally {
+      setReviewsLoading(false);
+    }
+  };
+
   // Handle booking creation
   const handleBookSlot = async () => {
     if (!user) {
@@ -1044,18 +1063,36 @@ export default function EstablishmentDetailPage({ establishmentId, onNavigate }:
                     </div>
                   ) : establishmentReviews.length > 0 ? (
                     <div className="p-4 space-y-3 max-h-[200px] overflow-y-auto border-b border-neutral-100 text-left">
-                      {establishmentReviews.map((rev) => (
-                        <div key={rev.id} className="border-b border-neutral-50 pb-2 last:border-b-0">
-                          <div className="flex justify-between items-center text-[10px] font-bold text-neutral-800">
-                            <span>{rev.client?.first_name || "Client"}</span>
-                            <span className="text-neutral-400">{new Date(rev.date_envoie).toLocaleDateString('fr-FR')}</span>
+                      {establishmentReviews.map((rev) => {
+                        const canDelete = user && (
+                          user.role === 'admin' ||
+                          user.email === rev.client?.email ||
+                          (user.role === 'gerant' && (user.establishment_id === establishmentId || user.establishments?.some(e => e.id === establishmentId)))
+                        );
+                        return (
+                          <div key={rev.id} className="border-b border-neutral-50 pb-2 last:border-b-0">
+                            <div className="flex justify-between items-center text-[10px] font-bold text-neutral-800">
+                              <span>{rev.client?.first_name || "Client"}</span>
+                              <div className="flex items-center gap-2">
+                                <span className="text-neutral-400">{new Date(rev.date_envoie).toLocaleDateString('fr-FR')}</span>
+                                {canDelete && (
+                                  <button
+                                    onClick={() => handleDeleteReview(rev.id)}
+                                    className="text-red-500 hover:text-red-700 font-extrabold cursor-pointer transition-colors"
+                                    title="Supprimer l'avis"
+                                  >
+                                    ✕
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+                            <div className="text-[10px] text-amber-500 tracking-widest mt-0.5">
+                              {"★".repeat(rev.note || 5)}{"☆".repeat(5 - (rev.note || 5))}
+                            </div>
+                            <p className="text-[11px] text-neutral-600 mt-1 font-medium italic">"{rev.message}"</p>
                           </div>
-                          <div className="text-[10px] text-amber-500 tracking-widest mt-0.5">
-                            {"★".repeat(rev.note || 5)}{"☆".repeat(5 - (rev.note || 5))}
-                          </div>
-                          <p className="text-[11px] text-neutral-600 mt-1 font-medium italic">"{rev.message}"</p>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   ) : (
                     <div className="p-6 text-center text-xs text-neutral-450 border-b border-neutral-100 font-medium">

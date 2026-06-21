@@ -33,6 +33,18 @@ export default function ReviewsTab({ onNavigate }: ReviewsTabProps) {
     return () => clearTimeout(timer);
   }, []);
 
+  const handleDeleteReview = async (reviewId: number) => {
+    if (!window.confirm("Êtes-vous sûr de vouloir supprimer cet avis ?")) return;
+    try {
+      setError(null);
+      await api.reviews.delete(reviewId);
+      setReviews(prev => prev.filter(r => r.id !== reviewId));
+    } catch (err) {
+      console.error("Erreur de suppression de l'avis :", err);
+      setError("Impossible de supprimer cet avis.");
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center items-center py-12">
@@ -76,6 +88,12 @@ export default function ReviewsTab({ onNavigate }: ReviewsTabProps) {
                     </span>
                   </div>
                 </div>
+                <button
+                  onClick={() => handleDeleteReview(rev.id)}
+                  className="px-2.5 py-1 text-[10px] font-black uppercase text-red-600 border-2 border-red-600 bg-white hover:bg-red-50 rounded-lg shadow-[2px_2px_0px_0px_rgba(220,38,38,0.2)] hover:translate-y-[-1px] hover:translate-x-[-1px] active:translate-y-0 active:translate-x-0 cursor-pointer transition-all"
+                >
+                  Supprimer
+                </button>
               </div>
               
               <div className="mt-3 text-xs text-neutral-700 font-medium leading-relaxed bg-neutral-50 border border-neutral-100 rounded-xl p-3.5">

@@ -160,18 +160,30 @@ class LeaveReviewView(View):
             except Etablissement.DoesNotExist:
                 return JsonResponse({"error": "Établissement non trouvé"}, status=404)
                 
-            # Vérifier si le client a une réservation confirmée et passée dans cet établissement
-            has_visited = Reservation.objects.filter(
+            # Vérifier si le client a une réservation (ancienne version requérant visite passée commentée pour la démo)
+            # has_visited = Reservation.objects.filter(
+            #     client=client,
+            #     professionnel__etablissement=etablissement,
+            #     status="confirme",
+            #     date_heure__lte=timezone.now()
+            # ).exists()
+            # 
+            # if not has_visited:
+            #     return JsonResponse({
+            #         "error": "Vous devez avoir effectué et honoré une réservation dans cet établissement pour laisser un avis."
+            #     }, status=403)
+
+            # Version démo : Autoriser à partir du moment où une réservation existe (même future)
+            has_reservation = Reservation.objects.filter(
                 client=client,
-                professionnel__etablissement=etablissement,
-                status="confirme",
-                date_heure__lte=timezone.now()
+                professionnel__etablissement=etablissement
             ).exists()
-            
-            if not has_visited:
+
+            if not has_reservation:
                 return JsonResponse({
-                    "error": "Vous devez avoir effectué et honoré une réservation dans cet établissement pour laisser un avis."
+                    "error": "Vous devez avoir réservé une prestation dans cet établissement pour laisser un avis."
                 }, status=403)
+            # Version démo
                 
             avis = Avis.objects.create(
                 client=client,
@@ -214,12 +226,13 @@ class LeaveReviewView(View):
         except Avis.DoesNotExist:
             return JsonResponse({"error": "Avis non trouvé"}, status=404)
             
-        # Check permissions: is the user an admin, or the gérant of the establishment of the review?
+        # Check permissions: is the user an admin, the author of the review (client), or the gérant of the establishment of the review?
         is_admin = request.user.is_superuser or request.user.is_staff
+        is_author = hasattr(request.user, 'profil_client') and avis.client == request.user.profil_client
         is_owner = hasattr(request.user, 'profil_gerant') and avis.etablissement.gerant == request.user.profil_gerant
         
-        if not (is_admin or is_owner):
-            return JsonResponse({"error": "Accès interdit : vous devez être le gérant de cet établissement pour supprimer cet avis."}, status=403)
+        if not (is_admin or is_author or is_owner):
+            return JsonResponse({"error": "Accès interdit : vous devez être l'auteur de cet avis, le gérant ou un administrateur pour le supprimer."}, status=403)
             
         avis.delete()
         return JsonResponse({"status": "success", "message": "Avis supprimé avec succès"}, status=200)
