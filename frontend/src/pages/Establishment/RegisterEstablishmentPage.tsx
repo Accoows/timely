@@ -31,6 +31,7 @@ export default function RegisterEstablishmentPage({ onNavigate }: RegisterEstabl
   
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [newEstablishmentId, setNewEstablishmentId] = useState<number | null>(null);
   const [error, setError] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -52,6 +53,7 @@ export default function RegisterEstablishmentPage({ onNavigate }: RegisterEstabl
         category
       });
       if (user && res.establishment) {
+        setNewEstablishmentId(res.establishment.id);
         const newEstab = { id: res.establishment.id, nom: res.establishment.nom };
         const updatedEstabs = user.establishments 
           ? [...user.establishments, newEstab] 
@@ -62,6 +64,8 @@ export default function RegisterEstablishmentPage({ onNavigate }: RegisterEstabl
           establishment_id: res.establishment.id,
           establishments: updatedEstabs
         });
+      } else if (res.establishment) {
+        setNewEstablishmentId(res.establishment.id);
       }
       setSubmitted(true);
     } catch (err) {
@@ -164,8 +168,17 @@ export default function RegisterEstablishmentPage({ onNavigate }: RegisterEstabl
             <p className="text-neutral-600 text-base max-w-xl mx-auto leading-relaxed">
               Votre établissement <strong>{name}</strong> a été créé avec succès et est maintenant en ligne sur Timely. Vous pouvez dès à présent le gérer depuis votre tableau de bord.
             </p>
-            <div className="pt-4 max-w-xs mx-auto">
-              <Button onClick={() => onNavigate('profile')} fullWidth>
+            <div className="pt-4 max-w-xs mx-auto flex flex-col gap-3">
+              {newEstablishmentId && (
+                <Button onClick={() => onNavigate(`establishment/${newEstablishmentId}`)} fullWidth>
+                  Voir mon établissement
+                </Button>
+              )}
+              <Button 
+                onClick={() => onNavigate('profile')} 
+                variant={newEstablishmentId ? "outline" : "primary"} 
+                fullWidth
+              >
                 Accéder à mon tableau de bord
               </Button>
             </div>
