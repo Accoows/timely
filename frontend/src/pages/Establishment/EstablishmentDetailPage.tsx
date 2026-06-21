@@ -19,6 +19,7 @@ export default function EstablishmentDetailPage({ establishmentId, onNavigate }:
 
   // Form states for booking
   const [selectedPrestation, setSelectedPrestation] = useState<Prestation | null>(null);
+  const [prevSelectedPrestation, setPrevSelectedPrestation] = useState<Prestation | null>(null);
   const [selectedCollaborateur, setSelectedCollaborateur] = useState<Collaborateur | null>(null);
   
   // Weekly slots calendar states
@@ -118,7 +119,9 @@ export default function EstablishmentDetailPage({ establishmentId, onNavigate }:
   }, [establishmentId]);
 
   // Auto-select first compatible professional when selectedPrestation changes
-  useEffect(() => {
+  // We do this during render (instead of useEffect) to avoid cascading renders
+  if (selectedPrestation !== prevSelectedPrestation) {
+    setPrevSelectedPrestation(selectedPrestation);
     if (selectedPrestation && establishment?.collaborateurs) {
       const compatible = establishment.collaborateurs.filter(col => 
         selectedPrestation.collaborateurs?.includes(col.id)
@@ -133,7 +136,7 @@ export default function EstablishmentDetailPage({ establishmentId, onNavigate }:
     } else {
       setSelectedCollaborateur(null);
     }
-  }, [selectedPrestation, establishment?.collaborateurs]);
+  }
 
   // Check if establishment is in user's favorites
   useEffect(() => {
