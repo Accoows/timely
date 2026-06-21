@@ -430,15 +430,36 @@ class AvailableSlotsView(View):
         except ValueError:
             return JsonResponse({"error": "Format de date invalide (attendu: YYYY-MM-DD)"}, status=400)
             
-        # Créneaux d'ouverture standard : 09:00 à 18:00, toutes les 30 minutes
-        slots = []
-        base_time = datetime.combine(target_date, datetime.min.time())
+        etablissement = professionnel.etablissement
+        horaires = etablissement.horaires or {}
         
-        # Définir les heures de début des créneaux
-        start_hour = 9
-        end_hour = 18
-        current_time = base_time + timedelta(hours=start_hour)
-        end_time = base_time + timedelta(hours=end_hour)
+        # Target day name in French
+        days_mapping = {
+            0: "Lundi",
+            1: "Mardi",
+            2: "Mercredi",
+            3: "Jeudi",
+            4: "Vendredi",
+            5: "Samedi",
+            6: "Dimanche"
+        }
+        day_name = days_mapping[target_date.weekday()]
+        day_schedule = horaires.get(day_name, "Fermé")
+        
+        # Check if closed
+        if "fermé" in day_schedule.lower():
+            return JsonResponse({"status": "success", "date": date_str, "slots": []}, status=200)
+            
+        # Parse hours: e.g. "09:00 - 19:00" or "9h00 - 18h30"
+        import re
+        match = re.search(r'(\d{1,2})[:h](\d{2})\s*-\s*(\d{1,2})[:h](\d{2})', day_schedule.lower())
+        if not match:
+            return JsonResponse({"status": "success", "date": date_str, "slots": []}, status=200)
+            
+        sh, sm, eh, em = map(int, match.groups())
+        base_time = datetime.combine(target_date, datetime.min.time())
+        start_time = base_time + timedelta(hours=sh, minutes=sm)
+        end_time = base_time + timedelta(hours=eh, minutes=em)
         
         # Récupérer les réservations du jour pour ce professionnel
         tz = timezone.get_default_timezone()
@@ -453,7 +474,6 @@ class AvailableSlotsView(View):
             except ValueError:
                 pass
         
-        # Convertir les réservations existantes en datetime timezone-aware pour comparaison
         bookings_range = []
         for eb in existing_bookings:
             eb_start = eb.date_heure
@@ -462,8 +482,9 @@ class AvailableSlotsView(View):
             eb_end = eb_start + timedelta(minutes=eb.duree)
             bookings_range.append((eb_start, eb_end))
             
-        while current_time < end_time:
-            # Slot de 30 minutes
+        slots = []
+        current_time = start_time
+        while current_time + timedelta(minutes=30) <= end_time:
             slot_start = timezone.make_aware(current_time, tz)
             slot_end = slot_start + timedelta(minutes=30)
             

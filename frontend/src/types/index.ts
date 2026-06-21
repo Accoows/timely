@@ -14,6 +14,7 @@ export interface User {
   role: UserRole;
   establishment_id?: number | null;
   establishments?: UserEstablishment[];
+  telephone?: string | null;
 }
 
 export interface Secteur {
@@ -33,6 +34,7 @@ export interface Prestation {
   nom: string;
   cout: number;
   description?: string;
+  collaborateurs?: number[];
 }
 
 export interface Collaborateur {
@@ -98,6 +100,13 @@ export interface Booking {
     nom: string;
     cout: number;
     description?: string;
+  };
+  client?: {
+    id: number;
+    nom: string;
+    prenom: string;
+    email: string;
+    telephone?: string | null;
   };
 }
 
@@ -196,6 +205,7 @@ export interface AdminUser {
     telephone: string;
     date_inscription: string | null;
   } | null;
+  reset_code?: string | null;
 }
 
 export interface CalendarEvent {

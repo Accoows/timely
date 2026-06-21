@@ -423,6 +423,11 @@ export default function AdminDashboard({ onNavigate }: AdminDashboardProps) {
                                     Établissements : {u.gerant_details.establishments.map(e => e.nom).join(', ')}
                                   </div>
                                 )}
+                                {u.reset_code && (
+                                  <div className="text-xs text-red-600 mt-1 font-bold">
+                                    Code de réinitialisation: {u.reset_code}
+                                  </div>
+                                )}
                               </td>
                               <td className="py-4 px-6 text-sm text-neutral-700 font-semibold">
                                 {u.date_joined ? new Date(u.date_joined).toLocaleDateString('fr-FR') : 'Date inconnue'}

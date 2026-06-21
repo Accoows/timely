@@ -5,8 +5,10 @@ from django.contrib.auth import authenticate, login, logout, update_session_auth
 from django.contrib.auth.models import User
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.utils.decorators import method_decorator
-from .models import Professionnel, Gerant, Client
+from .models import Professionnel, Gerant, Client, PasswordResetToken
 from django.utils import timezone
+import random
+import string
 
 
 class LoginView(View):
@@ -136,10 +138,62 @@ class StaffListView(View):
 
 class ForgotPasswordView(View):
     def post(self, request):
-        return JsonResponse({
-            "status": "success", 
-            "message": "Si l'adresse email existe, un lien de réinitialisation a été envoyé."
-        }, status=200)
+        try:
+            data = json.loads(request.body)
+            email = data.get('email')
+            if not email:
+                return JsonResponse({"error": "L'email est requis"}, status=400)
+            
+            try:
+                user = User.objects.get(email=email)
+                code = ''.join(random.choices(string.digits, k=6))
+                
+                PasswordResetToken.objects.update_or_create(
+                    user=user,
+                    defaults={'code': code}
+                )
+            except User.DoesNotExist:
+                pass
+
+            return JsonResponse({
+                "status": "success", 
+                "message": "Si l'adresse email existe, un code de réinitialisation a été généré."
+            }, status=200)
+        except Exception as e:
+            return JsonResponse({"error": str(e)}, status=400)
+
+class ResetPasswordView(View):
+    def post(self, request):
+        try:
+            data = json.loads(request.body)
+            email = data.get('email')
+            code = data.get('code')
+            new_password = data.get('new_password')
+            
+            if not all([email, code, new_password]):
+                return JsonResponse({"error": "Tous les champs sont requis."}, status=400)
+                
+            try:
+                user = User.objects.get(email=email)
+            except User.DoesNotExist:
+                return JsonResponse({"error": "Code ou email invalide."}, status=400)
+                
+            try:
+                token = PasswordResetToken.objects.get(user=user, code=code)
+            except PasswordResetToken.DoesNotExist:
+                return JsonResponse({"error": "Code invalide."}, status=400)
+                
+            if len(new_password) < 6:
+                return JsonResponse({"error": "Le nouveau mot de passe doit faire au moins 6 caractères."}, status=400)
+                
+            user.set_password(new_password)
+            user.save()
+            token.delete()
+            
+            return JsonResponse({"status": "success", "message": "Votre mot de passe a été réinitialisé avec succès !"}, status=200)
+            
+        except Exception as e:
+            return JsonResponse({"error": str(e)}, status=400)
 
 @method_decorator(ensure_csrf_cookie, name='dispatch')
 class UserView(View):
@@ -148,6 +202,10 @@ class UserView(View):
             role = "client"
             establishment_id = None
             establishments = []
+            telephone = None
+            if hasattr(request.user, 'profil_client'):
+                telephone = request.user.profil_client.telephone
+
             if request.user.is_superuser:
                 role = "admin"
             elif hasattr(request.user, 'profil_gerant'):
@@ -170,7 +228,8 @@ class UserView(View):
                 "last_name": request.user.last_name,
                 "role": role,
                 "establishment_id": establishment_id,
-                "establishments": establishments
+                "establishments": establishments,
+                "telephone": telephone
             })
         else:
             return JsonResponse({"error": "Non authentifié"}, status=401)
@@ -183,6 +242,7 @@ class UserView(View):
             first_name = data.get('first_name')
             last_name = data.get('last_name')
             email = data.get('email')
+            telephone = data.get('telephone')
 
             user = request.user
             if first_name is not None:
@@ -195,6 +255,12 @@ class UserView(View):
                     return JsonResponse({"error": "Cet email est déjà utilisé"}, status=400)
                 user.email = email
                 user.username = email
+            
+            if telephone is not None and hasattr(user, 'profil_client'):
+                if telephone != '' and (not telephone.isdigit() or len(telephone) != 10):
+                    return JsonResponse({"error": "Le numéro de téléphone doit contenir exactement 10 chiffres"}, status=400)
+                user.profil_client.telephone = telephone
+                user.profil_client.save()
 
             # Password change logic
             old_password = data.get('old_password')
@@ -229,6 +295,10 @@ class UserView(View):
                     establishment_id = user.profil_pro.etablissement.id
                     establishments = [{"id": user.profil_pro.etablissement.id, "nom": user.profil_pro.etablissement.nom}]
 
+            telephone = None
+            if hasattr(user, 'profil_client'):
+                telephone = user.profil_client.telephone
+
             return JsonResponse({
                 "id": user.id,
                 "username": user.username,
@@ -237,7 +307,8 @@ class UserView(View):
                 "last_name": user.last_name,
                 "role": role,
                 "establishment_id": establishment_id,
-                "establishments": establishments
+                "establishments": establishments,
+                "telephone": telephone
             })
         except Exception as e:
             return JsonResponse({"error": str(e)}, status=400)
@@ -285,6 +356,10 @@ class AdminUserManagementView(View):
                     "date_inscription": u.profil_client.date_inscription.isoformat() if u.profil_client.date_inscription else None
                 }
 
+            reset_code = None
+            if hasattr(u, 'reset_token'):
+                reset_code = u.reset_token.code
+
             data.append({
                 "id": u.id,
                 "username": u.username,
@@ -298,7 +373,8 @@ class AdminUserManagementView(View):
                 "role": role,
                 "pro_details": pro_details,
                 "gerant_details": gerant_details,
-                "client_details": client_details
+                "client_details": client_details,
+                "reset_code": reset_code
             })
             
         return JsonResponse({"status": "success", "users": data}, status=200)
@@ -462,5 +538,36 @@ class CreateProAccountView(View):
             
             return JsonResponse({"status": "success", "message": "Compte professionnel créé avec succès !"}, status=201)
             
+        except Exception as e:
+            return JsonResponse({"error": str(e)}, status=400)
+
+class RemoveProAccountView(View):
+    def delete(self, request, user_id):
+        if not request.user.is_authenticated:
+            return JsonResponse({"error": "Non authentifié"}, status=401)
+            
+        if not hasattr(request.user, 'profil_gerant'):
+            return JsonResponse({"error": "Seul un gérant peut supprimer un compte professionnel"}, status=403)
+            
+        try:
+            target_user = User.objects.get(id=user_id)
+        except User.DoesNotExist:
+            return JsonResponse({"error": "Utilisateur introuvable"}, status=404)
+            
+        if not hasattr(target_user, 'profil_pro'):
+            return JsonResponse({"error": "Cet utilisateur n'est pas un professionnel"}, status=400)
+            
+        # Verify the pro belongs to one of the manager's establishments
+        if target_user.profil_pro.etablissement.gerant != request.user.profil_gerant:
+            return JsonResponse({"error": "Ce professionnel n'appartient pas à votre établissement"}, status=403)
+            
+        try:
+            # Delete the pro profile
+            target_user.profil_pro.delete()
+            
+            # Revert to a normal client account if not already a client
+            Client.objects.get_or_create(utilisateur=target_user)
+            
+            return JsonResponse({"status": "success", "message": "Le professionnel a été supprimé et basculé en client."}, status=200)
         except Exception as e:
             return JsonResponse({"error": str(e)}, status=400)

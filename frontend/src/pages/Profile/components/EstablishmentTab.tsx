@@ -38,6 +38,12 @@ export default function EstablishmentTab({ user, updateUser, onNavigate }: Estab
   const [uploading, setUploading] = useState(false);
   const [photoError, setPhotoError] = useState<string | null>(null);
 
+  // Prestation states
+  const [newPrestationNom, setNewPrestationNom] = useState('');
+  const [newPrestationCout, setNewPrestationCout] = useState('');
+  const [newPrestationDesc, setNewPrestationDesc] = useState('');
+  const [selectedNewPrestationPros, setSelectedNewPrestationPros] = useState<number[]>([]);
+
   const fetchEstablishmentDetails = useCallback(async () => {
     if (!resolvedId) {
       setLoading(false);
@@ -87,25 +93,30 @@ export default function EstablishmentTab({ user, updateUser, onNavigate }: Estab
   }, [fetchEstablishmentDetails]);
 
   const handleUploadPhoto = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
 
     setUploading(true);
     setPhotoError(null);
     try {
-      const res = await api.establishments.uploadPhoto(resolvedId!, file);
+      let finalPhotos = establishment?.photos || [];
+      for (let i = 0; i < files.length; i++) {
+        const res = await api.establishments.uploadPhoto(resolvedId!, files[i]);
+        finalPhotos = res.photos;
+      }
       if (establishment) {
         setEstablishment({
           ...establishment,
-          photos: res.photos
+          photos: finalPhotos
         });
       }
-      alert("Photo ajoutée avec succès.");
+      alert(`${files.length} photo(s) ajoutée(s) avec succès.`);
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Erreur lors de l'upload de la photo.";
+      const msg = err instanceof Error ? err.message : "Erreur lors de l'upload d'une ou plusieurs photos.";
       setPhotoError(msg);
     } finally {
       setUploading(false);
+      e.target.value = '';
     }
   };
 
@@ -124,6 +135,76 @@ export default function EstablishmentTab({ user, updateUser, onNavigate }: Estab
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Erreur lors de la suppression de la photo.";
       setPhotoError(msg);
+    }
+  };
+
+  const handleAddPrestation = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (!resolvedId || !newPrestationNom || !newPrestationCout) {
+      alert("Veuillez remplir au moins le nom et le tarif.");
+      return;
+    }
+    try {
+      setError(null);
+      const newPrest = await api.prestations.create(resolvedId, {
+        nom: newPrestationNom,
+        cout: parseFloat(newPrestationCout),
+        description: newPrestationDesc,
+        collaborateurs: selectedNewPrestationPros
+      });
+      if (establishment) {
+        setEstablishment({
+          ...establishment,
+          prestations: [...(establishment.prestations || []), newPrest]
+        });
+      }
+      setNewPrestationNom('');
+      setNewPrestationCout('');
+      setNewPrestationDesc('');
+      setSelectedNewPrestationPros([]);
+      alert("Prestation ajoutée avec succès !");
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Erreur lors de l'ajout de la prestation.";
+      setError(msg);
+      alert(msg);
+    }
+  };
+
+  const handleDeletePrestation = async (prestId: number) => {
+    if (!confirm("Voulez-vous vraiment supprimer cette prestation ?")) return;
+    try {
+      setError(null);
+      await api.prestations.delete(prestId);
+      if (establishment) {
+        setEstablishment({
+          ...establishment,
+          prestations: (establishment.prestations || []).filter(p => p.id !== prestId)
+        });
+      }
+      alert("Prestation supprimée.");
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Erreur lors de la suppression de la prestation.";
+      setError(msg);
+      alert(msg);
+    }
+  };
+
+  const handleDeletePro = async (proId: number) => {
+    if (!confirm("Voulez-vous vraiment supprimer ce professionnel ? Il perdra son accès professionnel et redeviendra un client simple.")) return;
+    try {
+      setError(null);
+      await api.auth.removePro(proId);
+      if (establishment) {
+        setEstablishment({
+          ...establishment,
+          collaborateurs: (establishment.collaborateurs || []).filter(c => c.id !== proId)
+        });
+      }
+      alert("Professionnel supprimé avec succès.");
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Erreur lors de la suppression du professionnel.";
+      setError(msg);
+      alert(msg);
     }
   };
 
@@ -299,6 +380,13 @@ export default function EstablishmentTab({ user, updateUser, onNavigate }: Estab
             Page établissement
           </Button>
           <Button
+            onClick={() => onNavigate('establishment-dashboard')}
+            variant="outline"
+            size="sm"
+          >
+            Dashboard
+          </Button>
+          <Button
             onClick={() => setIsEditing(true)}
             variant="outline"
             size="sm"
@@ -456,6 +544,139 @@ export default function EstablishmentTab({ user, updateUser, onNavigate }: Estab
                 ))}
               </div>
 
+              <h4 className="font-bold text-xs text-neutral-500 uppercase tracking-wider border-b border-neutral-250 pb-1 mt-6">Prestations / Services</h4>
+              
+              {/* List of existing prestations */}
+              <div className="space-y-2 max-h-48 overflow-y-auto border-2 border-neutral-900 rounded-xl p-3 bg-neutral-50">
+                {(!establishment?.prestations || establishment.prestations.length === 0) ? (
+                  <p className="text-xs text-neutral-500 italic text-center py-2">Aucune prestation pour le moment.</p>
+                ) : (
+                  establishment.prestations.map(prest => (
+                    <div key={prest.id} className="flex justify-between items-center bg-white p-2 border border-neutral-200 rounded-lg shadow-sm">
+                      <div className="text-left">
+                        <span className="text-xs font-bold text-neutral-900">{prest.nom}</span>
+                        <span className="text-xs text-neutral-500 ml-2">({prest.cout} €)</span>
+                        {prest.description && <p className="text-[10px] text-neutral-400 mt-0.5">{prest.description}</p>}
+                        {prest.collaborateurs && prest.collaborateurs.length > 0 && (
+                          <p className="text-[9px] text-violet-750 font-bold mt-1">
+                            Professionnels compatibles : {prest.collaborateurs.map(pid => {
+                              const colObj = establishment.collaborateurs?.find(c => c.id === pid);
+                              return colObj ? `${colObj.prenom}` : null;
+                            }).filter(Boolean).join(', ')}
+                          </p>
+                        )}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleDeletePrestation(prest.id)}
+                        className="text-red-600 hover:text-red-800 font-bold text-xs px-2 py-1 cursor-pointer focus:outline-none"
+                      >
+                        Supprimer
+                      </button>
+                    </div>
+                  ))
+                )}
+              </div>
+
+              {/* Form to add a new prestation */}
+              <div className="border-2 border-dashed border-neutral-900 rounded-xl p-4 bg-violet-50/20 space-y-3 text-left">
+                <p className="text-xs font-black uppercase text-neutral-900">Ajouter une prestation</p>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="form-control">
+                    <label className="label text-[10px] font-bold text-neutral-500 uppercase py-0.5">Nom</label>
+                    <input
+                      type="text"
+                      placeholder="ex: Coupe Homme"
+                      value={newPrestationNom}
+                      onChange={(e) => setNewPrestationNom(e.target.value)}
+                      className="input w-full bg-white border border-neutral-900 rounded-lg focus:outline-none text-xs text-neutral-900 font-bold p-2"
+                    />
+                  </div>
+                  <div className="form-control">
+                    <label className="label text-[10px] font-bold text-neutral-500 uppercase py-0.5">Tarif (€)</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      placeholder="ex: 25.00"
+                      value={newPrestationCout}
+                      onChange={(e) => setNewPrestationCout(e.target.value)}
+                      className="input w-full bg-white border border-neutral-900 rounded-lg focus:outline-none text-xs text-neutral-900 font-bold p-2"
+                    />
+                  </div>
+                </div>
+                <div className="form-control">
+                  <label className="label text-[10px] font-bold text-neutral-500 uppercase py-0.5">Description (Optionnel)</label>
+                  <input
+                    type="text"
+                    placeholder="Description courte"
+                    value={newPrestationDesc}
+                    onChange={(e) => setNewPrestationDesc(e.target.value)}
+                    className="input w-full bg-white border border-neutral-900 rounded-lg focus:outline-none text-xs text-neutral-900 font-bold p-2"
+                  />
+                </div>
+
+                {/* Checklist of professionals */}
+                {establishment.collaborateurs && establishment.collaborateurs.length > 0 && (
+                  <div className="form-control">
+                    <label className="label text-[10px] font-bold text-neutral-500 uppercase py-0.5">Professionnels affectés</label>
+                    <div className="flex flex-wrap gap-2 mt-1">
+                      {establishment.collaborateurs.map(col => {
+                        const isChecked = selectedNewPrestationPros.includes(col.id);
+                        return (
+                          <label key={col.id} className="flex items-center gap-1.5 bg-white border border-neutral-300 rounded-lg px-2.5 py-1 text-xs font-bold text-neutral-800 cursor-pointer select-none">
+                            <input
+                              type="checkbox"
+                              checked={isChecked}
+                              onChange={() => {
+                                if (isChecked) {
+                                  setSelectedNewPrestationPros(prev => prev.filter(id => id !== col.id));
+                                } else {
+                                  setSelectedNewPrestationPros(prev => [...prev, col.id]);
+                                }
+                              }}
+                              className="checkbox checkbox-xs rounded-full border-2 border-neutral-900 checked:bg-neutral-900 checked:text-white"
+                              style={{ '--chkbg': '#171717', '--chkfg': '#ffffff' } as React.CSSProperties}
+                            />
+                            <span>{col.prenom}</span>
+                          </label>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                <button
+                  type="button"
+                  onClick={handleAddPrestation}
+                  className="w-full border-2 border-neutral-900 bg-neutral-900 hover:bg-neutral-800 text-white font-black rounded-lg py-2 cursor-pointer text-xs"
+                >
+                  Ajouter la prestation
+                </button>
+              </div>
+
+              <h4 className="font-bold text-xs text-neutral-500 uppercase tracking-wider border-b border-neutral-250 pb-1 mt-6">Équipe / Professionnels</h4>
+              <div className="space-y-2 max-h-48 overflow-y-auto border-2 border-neutral-900 rounded-xl p-3 bg-neutral-50">
+                {(!establishment?.collaborateurs || establishment.collaborateurs.length === 0) ? (
+                  <p className="text-xs text-neutral-500 italic text-center py-2">Aucun professionnel dans l'équipe.</p>
+                ) : (
+                  establishment.collaborateurs.map(col => (
+                    <div key={col.id} className="flex justify-between items-center bg-white p-2 border border-neutral-200 rounded-lg shadow-sm">
+                      <div className="text-left">
+                        <span className="text-xs font-bold text-neutral-900">{col.prenom}</span>
+                        {col.description && <p className="text-[10px] text-neutral-400 mt-0.5">{col.description}</p>}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleDeletePro(col.id)}
+                        className="text-red-600 hover:text-red-800 font-bold text-xs px-2 py-1 cursor-pointer focus:outline-none"
+                      >
+                        Supprimer
+                      </button>
+                    </div>
+                  ))
+                )}
+              </div>
+
               <div className="flex gap-2 justify-end pt-6 border-t-2 border-neutral-900">
                 <button type="button" onClick={() => setIsEditing(false)} className="border-2 border-neutral-900 bg-white hover:bg-neutral-50 text-neutral-800 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all font-black rounded-xl px-4 py-2 cursor-pointer text-xs">Annuler</button>
                 <button type="submit" className="border-2 border-neutral-900 bg-neutral-900 hover:bg-neutral-800 text-white shadow-[2px_2px_0px_0px_rgba(0,0,0,0.15)] transition-all font-black rounded-xl px-4 py-2 cursor-pointer text-xs">Enregistrer</button>
@@ -525,6 +746,7 @@ export default function EstablishmentTab({ user, updateUser, onNavigate }: Estab
                   <input
                     type="file"
                     accept="image/*"
+                    multiple
                     onChange={handleUploadPhoto}
                     className="hidden"
                     disabled={uploading}

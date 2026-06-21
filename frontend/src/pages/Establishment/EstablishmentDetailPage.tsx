@@ -19,6 +19,7 @@ export default function EstablishmentDetailPage({ establishmentId, onNavigate }:
 
   // Form states for booking
   const [selectedPrestation, setSelectedPrestation] = useState<Prestation | null>(null);
+  const [prevSelectedPrestation, setPrevSelectedPrestation] = useState<Prestation | null>(null);
   const [selectedCollaborateur, setSelectedCollaborateur] = useState<Collaborateur | null>(null);
   
   // Weekly slots calendar states
@@ -116,6 +117,26 @@ export default function EstablishmentDetailPage({ establishmentId, onNavigate }:
       active = false;
     };
   }, [establishmentId]);
+
+  // Auto-select first compatible professional when selectedPrestation changes
+  // We do this during render (instead of useEffect) to avoid cascading renders
+  if (selectedPrestation !== prevSelectedPrestation) {
+    setPrevSelectedPrestation(selectedPrestation);
+    if (selectedPrestation && establishment?.collaborateurs) {
+      const compatible = establishment.collaborateurs.filter(col => 
+        selectedPrestation.collaborateurs?.includes(col.id)
+      );
+      if (compatible.length > 0) {
+        if (!selectedCollaborateur || !compatible.some(c => c.id === selectedCollaborateur.id)) {
+          setSelectedCollaborateur(compatible[0]);
+        }
+      } else {
+        setSelectedCollaborateur(null);
+      }
+    } else {
+      setSelectedCollaborateur(null);
+    }
+  }
 
   // Check if establishment is in user's favorites
   useEffect(() => {
@@ -405,20 +426,15 @@ export default function EstablishmentDetailPage({ establishmentId, onNavigate }:
   };
   const horaires = establishment.horaires || defaultHoraires;
   const daysOrder = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"];
+  
+  const compatibleCollaborateurs = establishment.collaborateurs?.filter(col => 
+    selectedPrestation?.collaborateurs?.includes(col.id)
+  ) || [];
+  
   const displayedSlots = (!selectedCollaborateur || !selectedPrestation) ? {} : weeklySlots;
 
   const categoryLabel = establishment.secteur?.nom || establishment.category || "Établissement";
-  const mainImage = establishment.image || (establishment.photos && establishment.photos.length > 0
-    ? establishment.photos[0]
-    : "https://images.unsplash.com/photo-1521791136368-1a8b27526d5f?auto=format&fit=crop&w=600&q=80");
-
-  const photos = establishment.photos && establishment.photos.length > 0
-    ? establishment.photos
-    : [
-        mainImage,
-        "https://images.unsplash.com/photo-1580618672591-eb180b1a973f?auto=format&fit=crop&w=600&q=80",
-        "https://images.unsplash.com/photo-1620331311520-246422fd82f9?auto=format&fit=crop&w=600&q=80"
-      ];
+  const photos = establishment.photos || [];
 
   const handleOpenGallery = (index: number) => {
     setActivePhotoIndex(index);
@@ -515,46 +531,99 @@ export default function EstablishmentDetailPage({ establishmentId, onNavigate }:
       <div className="max-w-6xl mx-auto px-6 py-8">
         
         {/* Photo Grid Section (Exactly matching Planity layout) */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-8">
-          {/* Main Photo (left) */}
-          <div 
-            onClick={() => handleOpenGallery(0)}
-            className="md:col-span-2 rounded-2xl overflow-hidden h-[250px] md:h-[360px] bg-neutral-100 relative group cursor-pointer"
-          >
-            <img 
-              src={photos[0]} 
-              alt="Main" 
-              className="w-full h-full object-cover group-hover:scale-[1.01] transition-transform duration-300"
-            />
-          </div>
-          
-          {/* Sub Photos Stack (right) */}
-          <div className="grid grid-rows-2 gap-3 h-[250px] md:h-[360px]">
-            <div 
-              onClick={() => handleOpenGallery(1)}
-              className="rounded-2xl overflow-hidden h-full bg-neutral-100 group cursor-pointer"
-            >
-              <img 
-                src={photos[1] || photos[0]} 
-                className="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-300"
-                alt="Sub 1"
-              />
-            </div>
-            <div 
-              onClick={() => handleOpenGallery(2)}
-              className="relative rounded-2xl overflow-hidden h-full bg-neutral-100 group cursor-pointer"
-            >
-              <img 
-                src={photos[2] || photos[0]} 
-                className="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-300"
-                alt="Sub 2"
-              />
-              <div className="absolute inset-0 bg-black/45 hover:bg-black/40 transition-colors backdrop-blur-[1.5px] flex items-center justify-center text-white font-bold text-xs md:text-sm">
-                Voir les {photos.length} photos
+        {photos && photos.length > 0 ? (
+          photos.length === 1 ? (
+            <div className="mb-8">
+              <div 
+                onClick={() => handleOpenGallery(0)}
+                className="w-full rounded-2xl overflow-hidden h-[250px] md:h-[360px] bg-neutral-100 relative group cursor-pointer"
+              >
+                <img 
+                  src={photos[0]} 
+                  alt="Main" 
+                  className="w-full h-full object-cover group-hover:scale-[1.01] transition-transform duration-300"
+                />
               </div>
             </div>
+          ) : photos.length === 2 ? (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-8">
+              {/* Main Photo (left) */}
+              <div 
+                onClick={() => handleOpenGallery(0)}
+                className="md:col-span-2 rounded-2xl overflow-hidden h-[250px] md:h-[360px] bg-neutral-100 relative group cursor-pointer"
+              >
+                <img 
+                  src={photos[0]} 
+                  alt="Main" 
+                  className="w-full h-full object-cover group-hover:scale-[1.01] transition-transform duration-300"
+                />
+              </div>
+              {/* Sub Photo (right) */}
+              <div 
+                onClick={() => handleOpenGallery(1)}
+                className="rounded-2xl overflow-hidden h-[250px] md:h-[360px] bg-neutral-100 group cursor-pointer"
+              >
+                <img 
+                  src={photos[1]} 
+                  className="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-300"
+                  alt="Sub 1"
+                />
+              </div>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-8">
+              {/* Main Photo (left) */}
+              <div 
+                onClick={() => handleOpenGallery(0)}
+                className="md:col-span-2 rounded-2xl overflow-hidden h-[250px] md:h-[360px] bg-neutral-100 relative group cursor-pointer"
+              >
+                <img 
+                  src={photos[0]} 
+                  alt="Main" 
+                  className="w-full h-full object-cover group-hover:scale-[1.01] transition-transform duration-300"
+                />
+              </div>
+              
+              {/* Sub Photos Stack (right) */}
+              <div className="grid grid-rows-2 gap-3 h-[250px] md:h-[360px]">
+                <div 
+                  onClick={() => handleOpenGallery(1)}
+                  className="rounded-2xl overflow-hidden h-full bg-neutral-100 group cursor-pointer"
+                >
+                  <img 
+                    src={photos[1]} 
+                    className="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-300"
+                    alt="Sub 1"
+                  />
+                </div>
+                <div 
+                  onClick={() => handleOpenGallery(2)}
+                  className="relative rounded-2xl overflow-hidden h-full bg-neutral-100 group cursor-pointer"
+                >
+                  <img 
+                    src={photos[2]} 
+                    className="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-300"
+                    alt="Sub 2"
+                  />
+                  <div className="absolute inset-0 bg-black/45 hover:bg-black/40 transition-colors backdrop-blur-[1.5px] flex items-center justify-center text-white font-bold text-xs md:text-sm">
+                    Voir les {photos.length} photos
+                  </div>
+                </div>
+              </div>
+            </div>
+          )
+        ) : (
+          <div className="mb-8 p-12 border-2 border-dashed border-neutral-900 rounded-2xl bg-white text-center flex flex-col items-center justify-center shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+            <div className="w-12 h-12 rounded-full bg-violet-50 flex items-center justify-center text-neutral-900 border-2 border-neutral-900 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] mb-4">
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0zM18.75 10.5h.008v.008h-.008V10.5z" />
+              </svg>
+            </div>
+            <h4 className="text-sm font-black uppercase text-neutral-900">Aucune photo</h4>
+            <p className="text-xs text-neutral-500 mt-1 max-w-sm">Cet établissement n'a pas encore de photos. Les gérants peuvent ajouter des photos depuis leur espace client.</p>
           </div>
-        </div>
+        )}
 
         {/* Subtitle & Immediate confirmation */}
         <div className="mb-8 border-b border-neutral-200 pb-5">
@@ -631,18 +700,18 @@ export default function EstablishmentDetailPage({ establishmentId, onNavigate }:
 
                       <div className="flex items-center gap-4 shrink-0">
                         {/* Selector Dropdown: "Choisir avec qui ?" */}
-                        {establishment.collaborateurs && establishment.collaborateurs.length > 0 && (
+                        {compatibleCollaborateurs.length > 0 ? (
                           <div className="relative">
                             <select
                               value={selectedCollaborateur?.id || ""}
                               onChange={(e) => {
                                 const val = parseInt(e.target.value);
-                                const found = establishment.collaborateurs?.find(c => c.id === val);
+                                const found = compatibleCollaborateurs.find(c => c.id === val);
                                 if (found) setSelectedCollaborateur(found);
                               }}
                               className="bg-white border border-neutral-200 rounded-xl px-3 py-2 text-xs font-bold text-neutral-800 focus:outline-none focus:border-neutral-900 select-none shadow-sm pr-8 cursor-pointer appearance-none"
                             >
-                              {establishment.collaborateurs.map((col) => (
+                              {compatibleCollaborateurs.map((col) => (
                                 <option key={col.id} value={col.id}>
                                   Avec {col.prenom} ({col.poste})
                                 </option>
@@ -650,6 +719,8 @@ export default function EstablishmentDetailPage({ establishmentId, onNavigate }:
                             </select>
                             <span className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-neutral-400 text-[10px]">▼</span>
                           </div>
+                        ) : (
+                          <span className="text-xs font-bold text-red-500 italic">Aucun professionnel disponible pour ce service</span>
                         )}
 
                         {/* Supprimer button */}
@@ -694,7 +765,7 @@ export default function EstablishmentDetailPage({ establishmentId, onNavigate }:
                           >
                             &lt;
                           </button>
-                          <span>Semaine {weekOffset + 1}</span>
+                          <span className="min-w-[140px] text-center">{weeklyDays[0].dayNum} {weeklyDays[0].monthName} - {weeklyDays[6].dayNum} {weeklyDays[6].monthName}</span>
                           <button
                             onClick={() => setWeekOffset(prev => prev + 1)}
                             className="w-7 h-7 border border-neutral-200 rounded-lg bg-white flex items-center justify-center hover:bg-neutral-50 cursor-pointer text-xs"
@@ -715,7 +786,9 @@ export default function EstablishmentDetailPage({ establishmentId, onNavigate }:
                         <div className="grid grid-cols-7 gap-3 min-w-[700px] text-center select-none">
                           {weeklyDays.map((day) => {
                             const daySlots = displayedSlots[day.fullDate] || [];
-                            const isSunday = day.dayName.toLowerCase() === 'dimanche';
+                            const dayNameCapitalized = day.dayName.charAt(0).toUpperCase() + day.dayName.slice(1).toLowerCase();
+                            const daySchedule = horaires[dayNameCapitalized] || "Fermé";
+                            const isClosed = daySchedule.toLowerCase().includes("fermé");
                             
                             return (
                               <div key={day.fullDate} className="space-y-4">
@@ -727,7 +800,7 @@ export default function EstablishmentDetailPage({ establishmentId, onNavigate }:
 
                                 {/* Vertical Slots List */}
                                 <div className="space-y-2 max-h-[350px] overflow-y-auto pr-0.5 scrollbar-thin">
-                                  {isSunday ? (
+                                  {isClosed ? (
                                     <span className="text-[10px] font-bold text-red-400 block py-4">Fermé</span>
                                   ) : daySlots.length > 0 ? (
                                     daySlots.map((slot) => {

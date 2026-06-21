@@ -7,7 +7,17 @@ import SearchBar from '../../components/SearchBar';
 import Alert from '../../components/Alert';
 import EmptyState from '../../components/EmptyState';
 
-import { SECTOR_IMAGES, DEFAULT_IMAGE } from './seedData';
+const SECTOR_IMAGES: Record<string, string> = {
+  "Coiffure": "/images/coiffure.jpg",
+  "Beauté & Soins": "/images/beaute.jpg",
+  "Massage & Bien-être": "/images/massage.jpg",
+  "Barbier": "/images/barbier.jpg",
+  "Restauration": "/images/restauration.jpg",
+  "Hébergement": "/images/hebergement.jpg",
+  "Voyages & Transports": "/images/voyages.jpg"
+};
+
+const DEFAULT_IMAGE = "/images/default.jpg";
 
 interface SearchPageProps {
   onNavigate: (page: string) => void;

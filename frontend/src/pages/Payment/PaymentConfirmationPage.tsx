@@ -9,29 +9,28 @@ interface PaymentConfirmationPageProps {
 }
 
 export default function PaymentConfirmationPage({ onNavigate }: PaymentConfirmationPageProps) {
-  const [status, setStatus] = useState<'success' | 'cancelled' | 'loading'>('loading');
-  const [bookingId, setBookingId] = useState<string | null>(null);
+  const [status] = useState<'success' | 'cancelled' | 'loading'>(() => {
+    const params = new URLSearchParams(window.location.search);
+    const statusParam = params.get('status');
+    if (statusParam === 'success') return 'success';
+    if (statusParam === 'cancelled') return 'cancelled';
+    return 'success';
+  });
+  const [bookingId] = useState<string | null>(() => {
+    const params = new URLSearchParams(window.location.search);
+    return params.get('booking_id');
+  });
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [showInvoiceModal, setShowInvoiceModal] = useState(false);
   const [error, setError] = useState<string | null>(null);
   
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const statusParam = params.get('status');
-    const bookingIdParam = params.get('booking_id');
-    
-    if (statusParam === 'success') {
-      setStatus('success');
+    if (status === 'success') {
       api.bookings.getInvoices()
         .then(data => setInvoices(data))
         .catch(err => console.error("Error fetching invoice:", err));
-    } else if (statusParam === 'cancelled') {
-      setStatus('cancelled');
-    } else {
-      setStatus('success');
     }
-    setBookingId(bookingIdParam);
-  }, []);
+  }, [status]);
 
   const currentInvoice = invoices.find(inv => String(inv.id) === bookingId);
 

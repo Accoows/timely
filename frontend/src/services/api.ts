@@ -58,14 +58,14 @@ async function request<T>(url: string, options?: RequestInit): Promise<T> {
 }
 
 const getEstablishmentImage = (sectorName?: string) => {
-  if (sectorName === 'Coiffure') return 'https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=600&q=80';
-  if (sectorName === 'Barbier') return 'https://images.unsplash.com/photo-1503951914875-452162b0f3f1?auto=format&fit=crop&w=600&q=80';
-  if (sectorName === 'Massage & Bien-être') return 'https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=600&q=80';
-  if (sectorName === 'Beauté & Soins') return 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=600&q=80';
-  if (sectorName === 'Restauration') return 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=600&q=80';
-  if (sectorName === 'Hébergement') return 'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=600&q=80';
-  if (sectorName === 'Voyages & Transports') return 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&w=600&q=80';
-  return 'https://images.unsplash.com/photo-1521791136368-1a8b27526d5f?auto=format&fit=crop&w=600&q=80';
+  if (sectorName === 'Coiffure') return '/images/coiffure.jpg';
+  if (sectorName === 'Barbier') return '/images/barbier.jpg';
+  if (sectorName === 'Massage & Bien-être') return '/images/massage.jpg';
+  if (sectorName === 'Beauté & Soins') return '/images/beaute.jpg';
+  if (sectorName === 'Restauration') return '/images/restauration.jpg';
+  if (sectorName === 'Hébergement') return '/images/hebergement.jpg';
+  if (sectorName === 'Voyages & Transports') return '/images/voyages.jpg';
+  return '/images/default.jpg';
 };
 
 function mapBackendEtablissement(est: Etablissement): Etablissement {
@@ -102,6 +102,13 @@ interface BackendBooking {
     prenom: string;
     poste: string;
   };
+  client?: {
+    id: number;
+    nom: string;
+    prenom: string;
+    email: string;
+    telephone?: string | null;
+  };
 }
 
 function mapBackendBooking(b: BackendBooking): Booking {
@@ -128,6 +135,13 @@ function mapBackendBooking(b: BackendBooking): Booking {
       nom: b.prestation.nom,
       cout: parseFloat(b.prestation.cout),
       description: b.prestation.description
+    } : undefined,
+    client: b.client ? {
+      id: b.client.id,
+      nom: b.client.nom,
+      prenom: b.client.prenom,
+      email: b.client.email,
+      telephone: b.client.telephone
     } : undefined
   };
 }
@@ -235,14 +249,14 @@ export const api = {
       const response = await request<{ status: string; services: Prestation[] }>(`/api/establishments/${establishmentId}/services/`);
       return response.services;
     },
-    create: async (establishmentId: number, data: { nom: string; cout: number; description?: string }): Promise<Prestation> => {
+     create: async (establishmentId: number, data: { nom: string; cout: number; description?: string; collaborateurs?: number[] }): Promise<Prestation> => {
       const response = await request<{ status: string; message: string; service: Prestation }>(`/api/establishments/${establishmentId}/services/`, {
         method: 'POST',
         body: JSON.stringify(data)
       });
       return response.service;
     },
-    update: async (serviceId: number, data: { nom?: string; cout?: number; description?: string }): Promise<Prestation> => {
+    update: async (serviceId: number, data: { nom?: string; cout?: number; description?: string; collaborateurs?: number[] }): Promise<Prestation> => {
       const response = await request<{ status: string; message: string; service: Prestation }>(`/api/establishments/services/${serviceId}/`, {
         method: 'PUT',
         body: JSON.stringify(data)
@@ -376,6 +390,12 @@ export const api = {
         body: JSON.stringify({ email })
       });
     },
+    resetPassword: async (email: string, code: string, new_password: string): Promise<{ status: string; message: string }> => {
+      return await request<{ status: string; message: string }>('/api/auth/reset-password/', {
+        method: 'POST',
+        body: JSON.stringify({ email, code, new_password })
+      });
+    },
     register: async (email: string, password_raw: string, firstname: string, lastname: string): Promise<{ status: string; message: string }> => {
       return await request<{ status: string; message: string }>('/api/auth/register/', {
         method: 'POST',
@@ -406,6 +426,11 @@ export const api = {
         })
       });
     },
+    removePro: async (userId: number): Promise<{ status: string; message: string }> => {
+      return await request<{ status: string; message: string }>(`/api/auth/remove-pro/${userId}/`, {
+        method: 'DELETE'
+      });
+    },
     logout: async (): Promise<void> => {
       await request<void>('/api/auth/logout/', { method: 'POST' });
     },
@@ -413,6 +438,7 @@ export const api = {
       first_name?: string;
       last_name?: string;
       email?: string;
+      telephone?: string | null;
       old_password?: string;
       new_password?: string;
     }): Promise<User> => {

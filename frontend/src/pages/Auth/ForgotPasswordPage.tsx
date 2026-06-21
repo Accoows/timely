@@ -11,7 +11,8 @@ export default function ForgotPasswordPage({ onNavigate }: ForgotPasswordPagePro
   const [email, setEmail] = useState('');
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
-
+  const [code, setCode] = useState('');
+  const [newPassword, setNewPassword] = useState('');
   const [error, setError] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -23,6 +24,24 @@ export default function ForgotPasswordPage({ onNavigate }: ForgotPasswordPagePro
     try {
       await api.auth.forgotPassword(email);
       setSubmitted(true);
+    } catch (err) {
+      console.error(err);
+      setError(err instanceof Error ? err.message : 'Une erreur est survenue.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResetSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email || !code || !newPassword) return;
+    setLoading(true);
+    setError('');
+
+    try {
+      await api.auth.resetPassword(email, code, newPassword);
+      alert('Votre mot de passe a été réinitialisé avec succès !');
+      onNavigate('login');
     } catch (err) {
       console.error(err);
       setError(err instanceof Error ? err.message : 'Une erreur est survenue.');
@@ -43,23 +62,63 @@ export default function ForgotPasswordPage({ onNavigate }: ForgotPasswordPagePro
         </div>
 
         {submitted ? (
-          <div className="text-center space-y-6">
-            <div className="w-16 h-16 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center mx-auto">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 19v-8.93a2 2 0 01.89-1.664l8-5.333a2 2 0 012.22 0l8 5.333A2 2 0 0121 10.07V19M3 19a2 2 0 002 2h14a2 2 0 002-2M3 19l6.75-4.5M21 19l-6.75-4.5M3 10l6.75 4.5M21 10l-6.75 4.5m0 0l-2.25-1.5a2 2 0 00-2.22 0l-2.25 1.5" />
-              </svg>
+          <form onSubmit={handleResetSubmit} className="space-y-6">
+            <div className="text-center space-y-4 mb-6">
+              <div className="w-16 h-16 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center mx-auto">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 19v-8.93a2 2 0 01.89-1.664l8-5.333a2 2 0 012.22 0l8 5.333A2 2 0 0121 10.07V19M3 19a2 2 0 002 2h14a2 2 0 002-2M3 19l6.75-4.5M21 19l-6.75-4.5M3 10l6.75 4.5M21 10l-6.75 4.5m0 0l-2.25-1.5a2 2 0 00-2.22 0l-2.25 1.5" />
+                </svg>
+              </div>
+              <p className="text-neutral-600 text-sm leading-relaxed">
+                Un code de réinitialisation a été généré pour <strong>{email}</strong>. Veuillez contacter un administrateur pour l'obtenir.
+              </p>
             </div>
-            <p className="text-neutral-600 text-sm leading-relaxed">
-              Un e-mail de récupération a été envoyé à l'adresse <strong>{email}</strong>. Pensez à vérifier vos spams si vous ne le recevez pas dans quelques minutes.
-            </p>
+
+            {error && (
+              <div className="bg-red-50 text-red-600 p-4 rounded-xl border-2 border-red-200 text-sm font-semibold">
+                {error}
+              </div>
+            )}
+
+            <InputField
+              label="Code de réinitialisation (6 chiffres)"
+              type="text"
+              required
+              value={code}
+              onChange={(e) => setCode(e.target.value)}
+              placeholder="Ex: 123456"
+              maxLength={6}
+            />
+
+            <InputField
+              label="Nouveau mot de passe"
+              type="password"
+              required
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              placeholder="••••••••"
+              minLength={6}
+            />
+
             <Button
-              onClick={() => onNavigate('login')}
+              type="submit"
+              loading={loading}
               fullWidth
-              variant="secondary"
             >
-              Retour à la connexion
+              Réinitialiser mon mot de passe
             </Button>
-          </div>
+            
+            <div className="text-center pt-2">
+              <Button
+                onClick={() => onNavigate('login')}
+                fullWidth
+                variant="secondary"
+                type="button"
+              >
+                Retour à la connexion
+              </Button>
+            </div>
+          </form>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-6">
             {error && (
