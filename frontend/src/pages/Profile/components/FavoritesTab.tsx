@@ -1,8 +1,8 @@
-import type { FavoriteSeed } from '../seedData';
+import type { Etablissement } from '../../../types';
 import EmptyState from '../../../components/EmptyState';
 
 interface FavoritesTabProps {
-  favorites: FavoriteSeed[];
+  favorites: Etablissement[];
   onRemoveFavorite: (id: number) => void;
   onNavigate: (page: string) => void;
 }
@@ -53,8 +53,8 @@ export default function FavoritesTab({ favorites, onRemoveFavorite, onNavigate }
                 <div className="mt-4 pt-3 border-t-2 border-neutral-100 flex items-center justify-between text-xs font-black">
                   <span className="flex items-center gap-1">⭐ {est.rating}</span>
                   <button 
-                    onClick={() => onNavigate('home')} 
-                    className="text-neutral-950 hover:underline bg-transparent border-none p-0 cursor-pointer font-black"
+                    onClick={() => onNavigate(`establishment/${est.id}`)} 
+                    className="text-neutral-955 hover:underline bg-transparent border-none p-0 cursor-pointer font-black"
                   >
                     Réserver
                   </button>

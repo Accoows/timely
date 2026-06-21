@@ -1,6 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import InputField from '../../components/InputField';
 import Button from '../../components/Button';
+import { useAuth } from '../../context/AuthContext';
+import { api } from '../../services/api';
 
 interface RegisterEstablishmentPageProps {
   onNavigate: (page: string) => void;
@@ -9,8 +11,18 @@ interface RegisterEstablishmentPageProps {
 type CategoryType = 'beauty' | 'restaurant' | 'hotel' | 'travel';
 
 export default function RegisterEstablishmentPage({ onNavigate }: RegisterEstablishmentPageProps) {
+  const { user, updateUser } = useAuth();
+
+  useEffect(() => {
+    if (!user) {
+      onNavigate('login');
+    }
+  }, [user, onNavigate]);
+
   const [name, setName] = useState('');
   const [address, setAddress] = useState('');
+  const [zipCode, setZipCode] = useState('');
+  const [city, setCity] = useState('');
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
   const [siret, setSiret] = useState('');
@@ -19,17 +31,45 @@ export default function RegisterEstablishmentPage({ onNavigate }: RegisterEstabl
   
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [error, setError] = useState('');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!category) return;
     setLoading(true);
+    setError('');
 
-    // Simulation d'envoi du formulaire d'établissement
-    setTimeout(() => {
-      setLoading(false);
+    try {
+      const res = await api.establishments.register({
+        nom: name,
+        adresse: address,
+        ville: city,
+        code_postal: zipCode,
+        telephone: phone,
+        mail: email,
+        siret,
+        description,
+        category
+      });
+      if (user && res.establishment) {
+        const newEstab = { id: res.establishment.id, nom: res.establishment.nom };
+        const updatedEstabs = user.establishments 
+          ? [...user.establishments, newEstab] 
+          : [newEstab];
+        updateUser({
+          ...user,
+          role: 'gerant',
+          establishment_id: res.establishment.id,
+          establishments: updatedEstabs
+        });
+      }
       setSubmitted(true);
-    }, 1500);
+    } catch (err) {
+      console.error(err);
+      setError(err instanceof Error ? err.message : "Une erreur est survenue lors de l'inscription.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const categories = [
@@ -112,6 +152,11 @@ export default function RegisterEstablishmentPage({ onNavigate }: RegisterEstabl
 
 
             <form onSubmit={handleSubmit} className="space-y-8">
+              {error && (
+                <div className="bg-red-50 text-red-600 p-4 rounded-xl border-2 border-red-200 text-sm font-semibold">
+                  {error}
+                </div>
+              )}
               {/* Category Chooser */}
               <div>
                 <label className="block text-xs font-bold text-neutral-700 uppercase tracking-wider mb-4">
@@ -179,12 +224,28 @@ export default function RegisterEstablishmentPage({ onNavigate }: RegisterEstabl
                     pattern="[0-9]{14}"
                   />
                   <InputField
-                    label="Adresse complète *"
+                    label="Adresse (Rue and number) *"
                     type="text"
                     required
                     value={address}
                     onChange={(e) => setAddress(e.target.value)}
-                    placeholder="Ex: 12 Rue de la Paix, 75002 Paris"
+                    placeholder="Ex: 12 Rue de la Paix"
+                  />
+                  <InputField
+                    label="Code Postal *"
+                    type="text"
+                    required
+                    value={zipCode}
+                    onChange={(e) => setZipCode(e.target.value)}
+                    placeholder="Ex: 75002"
+                  />
+                  <InputField
+                    label="Ville *"
+                    type="text"
+                    required
+                    value={city}
+                    onChange={(e) => setCity(e.target.value)}
+                    placeholder="Ex: Paris"
                   />
                   <InputField
                     label="Téléphone professionnel *"

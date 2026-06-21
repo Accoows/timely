@@ -1,8 +1,8 @@
-import type { BookingSeed } from '../seedData';
+import type { Booking } from '../../../types';
 import EmptyState from '../../../components/EmptyState';
 
 interface BookingsTabProps {
-  bookings: BookingSeed[];
+  bookings: Booking[];
   onNavigate: (page: string) => void;
 }
 

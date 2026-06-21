@@ -4,11 +4,12 @@ interface EstablishmentCardProps {
   badge: string;
   address: string;
   rating: string;
+  onClick?: () => void;
 }
 
-export default function EstablishmentCard({ name, image, badge, address, rating }: EstablishmentCardProps) {
+export default function EstablishmentCard({ name, image, badge, address, rating, onClick }: EstablishmentCardProps) {
   return (
-    <div className="popular-card group">
+    <div className={`popular-card group ${onClick ? 'cursor-pointer' : ''}`} onClick={onClick}>
       <div className="popular-card-image-wrapper">
         <img src={image} alt={name} className="popular-card-image" />
         <span className="popular-card-badge">{badge}</span>

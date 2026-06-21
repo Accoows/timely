@@ -8,9 +8,10 @@ import Alert from '../../../components/Alert';
 interface ProfileTabProps {
   user: User;
   updateUser: (user: User) => void;
+  onNavigate: (page: string) => void;
 }
 
-export default function ProfileTab({ user, updateUser }: ProfileTabProps) {
+export default function ProfileTab({ user, updateUser, onNavigate }: ProfileTabProps) {
   const [firstName, setFirstName] = useState(user.first_name || '');
   const [lastName, setLastName] = useState(user.last_name || '');
   const [email, setEmail] = useState(user.email || '');
@@ -100,7 +101,19 @@ export default function ProfileTab({ user, updateUser }: ProfileTabProps) {
 
   return (
     <div>
-      <h2 className="text-2xl font-black text-neutral-900 uppercase mb-6 pb-2 border-b-2 border-neutral-100">Mon Compte</h2>
+      <div className="flex items-center justify-between mb-6 pb-2 border-b-2 border-neutral-100">
+        <h2 className="text-2xl font-black text-neutral-900 uppercase">Mon Compte</h2>
+        {user.role === 'admin' && (
+          <Button 
+            onClick={() => onNavigate('admin')}
+            variant="primary"
+            size="sm"
+            className="shadow-sm"
+          >
+            Accéder au Dashboard Admin
+          </Button>
+        )}
+      </div>
       
       {error && <Alert type="error" message={error} className="mb-6" />}
       {success && <Alert type="success" message={success} className="mb-6" />}
@@ -113,7 +126,7 @@ export default function ProfileTab({ user, updateUser }: ProfileTabProps) {
             required
             value={firstName}
             onChange={(e) => setFirstName(e.target.value)}
-            placeholder="Arthur"
+            placeholder="Albert"
           />
           <InputField
             label="Nom"
@@ -121,7 +134,7 @@ export default function ProfileTab({ user, updateUser }: ProfileTabProps) {
             required
             value={lastName}
             onChange={(e) => setLastName(e.target.value)}
-            placeholder="Gonzales"
+            placeholder="Einstein"
           />
         </div>
 
@@ -131,7 +144,7 @@ export default function ProfileTab({ user, updateUser }: ProfileTabProps) {
           required
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          placeholder="arthur.gonzales@example.com"
+          placeholder="timely.pro@example.com"
         />
 
         <div>

@@ -13,13 +13,14 @@ const CATEGORIES = [
   { id: 'travel', label: 'Voyages', filterVal: 'travel' }
 ];
 
-export default function HomePage() {
+interface HomePageProps {
+  onNavigate: (page: string) => void;
+}
+
+export default function HomePage({ onNavigate }: HomePageProps) {
   const [activeCategory, setActiveCategory] = useState('all');
   const [establishments, setEstablishments] = useState<Etablissement[]>([]);
   const [loading, setLoading] = useState(true);
-
-  const [searchQuery, setSearchQuery] = useState('');
-  const [searchLocation, setSearchLocation] = useState('');
 
   // Tab indicator calculations
   const [indicatorStyle, setIndicatorStyle] = useState({ left: 4, width: 68 });
@@ -41,7 +42,8 @@ export default function HomePage() {
     api.establishments.explore({
       sector: sectorNom || undefined,
       query: queryVal || undefined,
-      location: locationVal || undefined
+      location: locationVal || undefined,
+      sort: 'rating'
     })
       .then(data => {
         setEstablishments(data);
@@ -54,15 +56,20 @@ export default function HomePage() {
 
   useEffect(() => {
     const categoryObj = CATEGORIES.find(cat => cat.id === activeCategory);
-    fetchEstablishments(categoryObj?.filterVal, searchQuery, searchLocation);
+    fetchEstablishments(categoryObj?.filterVal, '', '');
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeCategory]);
 
   const handleSearch = (query: string, location: string) => {
-    setSearchQuery(query);
-    setSearchLocation(location);
-    const categoryObj = CATEGORIES.find(cat => cat.id === activeCategory);
-    fetchEstablishments(categoryObj?.filterVal, query, location);
+    const url = 'search?';
+    const params = [];
+    if (query) params.push(`query=${encodeURIComponent(query)}`);
+    if (location) params.push(`location=${encodeURIComponent(location)}`);
+    onNavigate(url + params.join('&'));
+  };
+
+  const handleCategoryClick = (categoryName: string) => {
+    onNavigate(`search?category=${encodeURIComponent(categoryName)}`);
   };
 
   return (
@@ -79,9 +86,10 @@ export default function HomePage() {
 
           {/* Search Bar */}
           <SearchBar
-            initialQuery={searchQuery}
-            initialLocation={searchLocation}
+            initialQuery=""
+            initialLocation=""
             onSearch={handleSearch}
+            invertInputs={true}
           />
         </div>
 
@@ -101,16 +109,32 @@ export default function HomePage() {
           <h2 className="categories-title">Découvrez nos secteurs d'activité</h2>
           
           <div className="categories-grid">
-            <CategoryCard name="Beauté & Soins" image="https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=600&q=80" />
-            <CategoryCard name="Tables de Restaurant" image="https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=600&q=80" />
-            <CategoryCard name="Hôtels & Hébergements" image="https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=600&q=80" />
-            <CategoryCard name="Voyages & Transports" image="https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&w=600&q=80" />
+            <CategoryCard 
+              name="Beauté & Soins" 
+              image="https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=600&q=80" 
+              onClick={() => handleCategoryClick('Beauté & Soins')}
+            />
+            <CategoryCard 
+              name="Tables de Restaurant" 
+              image="https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=600&q=80" 
+              onClick={() => handleCategoryClick('Restauration')}
+            />
+            <CategoryCard 
+              name="Hôtels & Hébergements" 
+              image="https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=600&q=80" 
+              onClick={() => handleCategoryClick('Hébergement')}
+            />
+            <CategoryCard 
+              name="Voyages & Transports" 
+              image="https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&w=600&q=80" 
+              onClick={() => handleCategoryClick('Voyages & Transports')}
+            />
           </div>
         </div>
       </section>
 
       {/* Établissements à la une */}
-      <section className="popular-section relative py-12">
+      <section id="popular-section" className="popular-section relative py-12">
         <div className="popular-header">
           <div>
             <h2 className="popular-title">Populaires sur Timely</h2>
@@ -150,7 +174,7 @@ export default function HomePage() {
               <span className="loading loading-spinner loading-lg text-neutral-900"></span>
             </div>
           ) : (
-            establishments.map(est => (
+            establishments.slice(0, 6).map(est => (
               <EstablishmentCard
                 key={est.id}
                 name={est.name || ''}
@@ -158,6 +182,7 @@ export default function HomePage() {
                 badge={est.badge || ''}
                 address={est.address || ''}
                 rating={est.rating || '4.8'}
+                onClick={() => onNavigate(`establishment/${est.id}`)}
               />
             ))
           )}
@@ -238,7 +263,11 @@ export default function HomePage() {
               </p>
             </div>
             <div className="flex-shrink-0">
-              <a href="#" className="inline-flex items-center justify-center px-6 py-3 border border-transparent text-sm font-semibold rounded-xl text-white bg-neutral-900 hover:bg-neutral-800 transition-colors duration-200 shadow-md">
+              <a 
+                href="/register-establishment" 
+                onClick={(e) => { e.preventDefault(); onNavigate('register-establishment'); }} 
+                className="inline-flex items-center justify-center px-6 py-3 border border-transparent text-sm font-semibold rounded-xl text-white bg-neutral-900 hover:bg-neutral-800 transition-colors duration-200 shadow-md"
+              >
                 Inscrire mon établissement
               </a>
             </div>
