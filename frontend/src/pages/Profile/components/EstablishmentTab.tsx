@@ -189,6 +189,25 @@ export default function EstablishmentTab({ user, updateUser, onNavigate }: Estab
     }
   };
 
+  const handleDeletePro = async (proId: number) => {
+    if (!confirm("Voulez-vous vraiment supprimer ce professionnel ? Il perdra son accès professionnel et redeviendra un client simple.")) return;
+    try {
+      setError(null);
+      await api.auth.removePro(proId);
+      if (establishment) {
+        setEstablishment({
+          ...establishment,
+          collaborateurs: (establishment.collaborateurs || []).filter(c => c.id !== proId)
+        });
+      }
+      alert("Professionnel supprimé avec succès.");
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Erreur lors de la suppression du professionnel.";
+      setError(msg);
+      alert(msg);
+    }
+  };
+
   const handleUpdateEstablishment = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!resolvedId || !establishment) return;
@@ -633,6 +652,29 @@ export default function EstablishmentTab({ user, updateUser, onNavigate }: Estab
                 >
                   Ajouter la prestation
                 </button>
+              </div>
+
+              <h4 className="font-bold text-xs text-neutral-500 uppercase tracking-wider border-b border-neutral-250 pb-1 mt-6">Équipe / Professionnels</h4>
+              <div className="space-y-2 max-h-48 overflow-y-auto border-2 border-neutral-900 rounded-xl p-3 bg-neutral-50">
+                {(!establishment?.collaborateurs || establishment.collaborateurs.length === 0) ? (
+                  <p className="text-xs text-neutral-500 italic text-center py-2">Aucun professionnel dans l'équipe.</p>
+                ) : (
+                  establishment.collaborateurs.map(col => (
+                    <div key={col.id} className="flex justify-between items-center bg-white p-2 border border-neutral-200 rounded-lg shadow-sm">
+                      <div className="text-left">
+                        <span className="text-xs font-bold text-neutral-900">{col.prenom}</span>
+                        {col.description && <p className="text-[10px] text-neutral-400 mt-0.5">{col.description}</p>}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleDeletePro(col.id)}
+                        className="text-red-600 hover:text-red-800 font-bold text-xs px-2 py-1 cursor-pointer focus:outline-none"
+                      >
+                        Supprimer
+                      </button>
+                    </div>
+                  ))
+                )}
               </div>
 
               <div className="flex gap-2 justify-end pt-6 border-t-2 border-neutral-900">

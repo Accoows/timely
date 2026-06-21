@@ -464,3 +464,34 @@ class CreateProAccountView(View):
             
         except Exception as e:
             return JsonResponse({"error": str(e)}, status=400)
+
+class RemoveProAccountView(View):
+    def delete(self, request, user_id):
+        if not request.user.is_authenticated:
+            return JsonResponse({"error": "Non authentifié"}, status=401)
+            
+        if not hasattr(request.user, 'profil_gerant'):
+            return JsonResponse({"error": "Seul un gérant peut supprimer un compte professionnel"}, status=403)
+            
+        try:
+            target_user = User.objects.get(id=user_id)
+        except User.DoesNotExist:
+            return JsonResponse({"error": "Utilisateur introuvable"}, status=404)
+            
+        if not hasattr(target_user, 'profil_pro'):
+            return JsonResponse({"error": "Cet utilisateur n'est pas un professionnel"}, status=400)
+            
+        # Verify the pro belongs to one of the manager's establishments
+        if target_user.profil_pro.etablissement.gerant != request.user.profil_gerant:
+            return JsonResponse({"error": "Ce professionnel n'appartient pas à votre établissement"}, status=403)
+            
+        try:
+            # Delete the pro profile
+            target_user.profil_pro.delete()
+            
+            # Revert to a normal client account if not already a client
+            Client.objects.get_or_create(utilisateur=target_user)
+            
+            return JsonResponse({"status": "success", "message": "Le professionnel a été supprimé et basculé en client."}, status=200)
+        except Exception as e:
+            return JsonResponse({"error": str(e)}, status=400)

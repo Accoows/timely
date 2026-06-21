@@ -11,4 +11,5 @@ urlpatterns = [
     path('user/', views.UserView.as_view(), name='auth_user'),
     path('admin/users/', views.AdminUserManagementView.as_view(), name='admin_user_list'),
     path('admin/users/<int:user_id>/', views.AdminUserDetailView.as_view(), name='admin_user_detail'),
+    path('remove-pro/<int:user_id>/', views.RemoveProAccountView.as_view(), name='auth_remove_pro'),
 ]

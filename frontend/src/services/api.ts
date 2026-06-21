@@ -406,6 +406,11 @@ export const api = {
         })
       });
     },
+    removePro: async (userId: number): Promise<{ status: string; message: string }> => {
+      return await request<{ status: string; message: string }>(`/api/auth/remove-pro/${userId}/`, {
+        method: 'DELETE'
+      });
+    },
     logout: async (): Promise<void> => {
       await request<void>('/api/auth/logout/', { method: 'POST' });
     },
