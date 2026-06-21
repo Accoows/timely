@@ -38,6 +38,11 @@ export default function EstablishmentTab({ user, updateUser, onNavigate }: Estab
   const [uploading, setUploading] = useState(false);
   const [photoError, setPhotoError] = useState<string | null>(null);
 
+  // Prestation states
+  const [newPrestationNom, setNewPrestationNom] = useState('');
+  const [newPrestationCout, setNewPrestationCout] = useState('');
+  const [newPrestationDesc, setNewPrestationDesc] = useState('');
+
   const fetchEstablishmentDetails = useCallback(async () => {
     if (!resolvedId) {
       setLoading(false);
@@ -129,6 +134,55 @@ export default function EstablishmentTab({ user, updateUser, onNavigate }: Estab
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Erreur lors de la suppression de la photo.";
       setPhotoError(msg);
+    }
+  };
+
+  const handleAddPrestation = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (!resolvedId || !newPrestationNom || !newPrestationCout) {
+      alert("Veuillez remplir au moins le nom et le tarif.");
+      return;
+    }
+    try {
+      setError(null);
+      const newPrest = await api.prestations.create(resolvedId, {
+        nom: newPrestationNom,
+        cout: parseFloat(newPrestationCout),
+        description: newPrestationDesc
+      });
+      if (establishment) {
+        setEstablishment({
+          ...establishment,
+          prestations: [...(establishment.prestations || []), newPrest]
+        });
+      }
+      setNewPrestationNom('');
+      setNewPrestationCout('');
+      setNewPrestationDesc('');
+      alert("Prestation ajoutée avec succès !");
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Erreur lors de l'ajout de la prestation.";
+      setError(msg);
+      alert(msg);
+    }
+  };
+
+  const handleDeletePrestation = async (prestId: number) => {
+    if (!confirm("Voulez-vous vraiment supprimer cette prestation ?")) return;
+    try {
+      setError(null);
+      await api.prestations.delete(prestId);
+      if (establishment) {
+        setEstablishment({
+          ...establishment,
+          prestations: (establishment.prestations || []).filter(p => p.id !== prestId)
+        });
+      }
+      alert("Prestation supprimée.");
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Erreur lors de la suppression de la prestation.";
+      setError(msg);
+      alert(msg);
     }
   };
 
@@ -466,6 +520,77 @@ export default function EstablishmentTab({ user, updateUser, onNavigate }: Estab
                     />
                   </div>
                 ))}
+              </div>
+
+              <h4 className="font-bold text-xs text-neutral-500 uppercase tracking-wider border-b border-neutral-250 pb-1 mt-6">Prestations / Services</h4>
+              
+              {/* List of existing prestations */}
+              <div className="space-y-2 max-h-48 overflow-y-auto border-2 border-neutral-900 rounded-xl p-3 bg-neutral-50">
+                {(!establishment?.prestations || establishment.prestations.length === 0) ? (
+                  <p className="text-xs text-neutral-500 italic text-center py-2">Aucune prestation pour le moment.</p>
+                ) : (
+                  establishment.prestations.map(prest => (
+                    <div key={prest.id} className="flex justify-between items-center bg-white p-2 border border-neutral-200 rounded-lg shadow-sm">
+                      <div className="text-left">
+                        <span className="text-xs font-bold text-neutral-900">{prest.nom}</span>
+                        <span className="text-xs text-neutral-500 ml-2">({prest.cout} €)</span>
+                        {prest.description && <p className="text-[10px] text-neutral-400 mt-0.5">{prest.description}</p>}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleDeletePrestation(prest.id)}
+                        className="text-red-600 hover:text-red-800 font-bold text-xs px-2 py-1 cursor-pointer focus:outline-none"
+                      >
+                        Supprimer
+                      </button>
+                    </div>
+                  ))
+                )}
+              </div>
+
+              {/* Form to add a new prestation */}
+              <div className="border-2 border-dashed border-neutral-900 rounded-xl p-4 bg-violet-50/20 space-y-3 text-left">
+                <p className="text-xs font-black uppercase text-neutral-900">Ajouter une prestation</p>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="form-control">
+                    <label className="label text-[10px] font-bold text-neutral-500 uppercase py-0.5">Nom</label>
+                    <input
+                      type="text"
+                      placeholder="ex: Coupe Homme"
+                      value={newPrestationNom}
+                      onChange={(e) => setNewPrestationNom(e.target.value)}
+                      className="input w-full bg-white border border-neutral-900 rounded-lg focus:outline-none text-xs text-neutral-900 font-bold p-2"
+                    />
+                  </div>
+                  <div className="form-control">
+                    <label className="label text-[10px] font-bold text-neutral-500 uppercase py-0.5">Tarif (€)</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      placeholder="ex: 25.00"
+                      value={newPrestationCout}
+                      onChange={(e) => setNewPrestationCout(e.target.value)}
+                      className="input w-full bg-white border border-neutral-900 rounded-lg focus:outline-none text-xs text-neutral-900 font-bold p-2"
+                    />
+                  </div>
+                </div>
+                <div className="form-control">
+                  <label className="label text-[10px] font-bold text-neutral-500 uppercase py-0.5">Description (Optionnel)</label>
+                  <input
+                    type="text"
+                    placeholder="Description courte"
+                    value={newPrestationDesc}
+                    onChange={(e) => setNewPrestationDesc(e.target.value)}
+                    className="input w-full bg-white border border-neutral-900 rounded-lg focus:outline-none text-xs text-neutral-900 font-bold p-2"
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={handleAddPrestation}
+                  className="w-full border-2 border-neutral-900 bg-neutral-900 hover:bg-neutral-800 text-white font-black rounded-lg py-2 cursor-pointer text-xs"
+                >
+                  Ajouter la prestation
+                </button>
               </div>
 
               <div className="flex gap-2 justify-end pt-6 border-t-2 border-neutral-900">
