@@ -121,6 +121,31 @@ _Cette commande télécharge les images, installe les dépendances Python et Nod
 - **Site Web (React Frontend)** : [http://localhost:5173](http://localhost:5173) (avec hot-reload instantané lorsque vous modifiez le code du front).
 - **API REST & Console Django Admin** : [http://localhost:8000](http://localhost:8000)
 
+### 4. Accès Administrateur (pour la démo)
+
+##### Interface DB Django
+
+- **Accès Administrateur Django** : [http://localhost:8000/backoffice/](http://localhost:8000/backoffice/)
+- **Username** : `admin`
+- **Mot de passe** : `AZEqsd123!`
+
+##### Compte Administrateur Web:
+
+- **Email** : `admin@example.com`
+- **Mot de passe** : `AZEqsd123!`
+
+##### Compte Utilisateur (Client,Pro,Gérant)
+
+Pour exploiter au maximum le site web, il est recommander de pouvoir se connecter avec les différents types de comptes.
+Via la page "Mon compte", en haut à droite "Dashboard Admin", on peut récupérer les informations des différents comptes existants.
+
+Cas d'usage pour la démo :
+
+1. Récupérer un mail d'un gérant et après un pro
+2. Se connecter avec le mot de passe par défaut (pour la démo) : `AZEqsd123!`
+3. Parcourir toutes les options dispo dans "Mon compte", les établissements, le dashboard établissements.
+4. Chaque rôle permet d'afficher et de gérer plus ou moins des options à la dispositions de l'utilisateur.
+
 ---
 
 ## Workflow de Développement Quotidien
