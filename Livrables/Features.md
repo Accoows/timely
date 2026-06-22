@@ -178,7 +178,7 @@ Le cœur interactif du système, gérant l'orchestration du calendrier des rende
 
 ---
 
-## 4. Exigences et Contraintes Non Fonctionnelles (Exemples)
+## 4. Exigences et Contraintes Non Fonctionnelles
 
 Les exigences non fonctionnelles définissent les critères de qualité, de sécurité et d'exploitabilité du système. Voici les principaux exemples applicables au projet Timely :
 
@@ -197,7 +197,7 @@ Les exigences non fonctionnelles définissent les critères de qualité, de séc
   - Les configurations CORS dans `timely_app/settings.py` doivent restreindre les requêtes uniquement aux domaines de confiance autorisés.
 - **Chiffrement des Mots de Passe** : Les mots de passe stockés en base de données doivent être hachés à l'aide de l'algorithme fort `PBKDF2 SHA256` standard de Django.
 
-### C. Accessibilité (A11y)
+### C. Accessibilité
 
 - **Conformité Accessibilité** : L'interface utilisateur construite avec DaisyUI doit cibler le niveau **AA des WCAG 2.1**. Cela implique :
   - Un ratio de contraste minimal de 4.5:1 pour le texte standard.
